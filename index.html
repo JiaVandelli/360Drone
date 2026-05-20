@@ -1,588 +1,1034 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<!-- Playables SDK -->
-<script>// Playables SDK v1.0.0
-// Game lifecycle bridge: rAF-based game-ready detection + event communication
-(function() {
-  'use strict';
-
-  // Idempotency: skip if already initialized (e.g., server-side injection
-  // followed by client-side inject-javascript via the Bloks webview component).
-  if (window.playablesSDK) return;
-
-  var HANDLER_NAME = 'playablesGameEventHandler';
-  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
-  var RAF_FRAME_THRESHOLD = 3;
-
-  var gameReadySent = false;
-  var firstInteractionSent = false;
-  var errorSent = false;
-  var frameCount = 0;
-  var originalRAF = window.requestAnimationFrame;
-
-  // --- Transport Layer ---
-
-  function hasIOSBridge() {
-    return !!(window.webkit &&
-              window.webkit.messageHandlers &&
-              window.webkit.messageHandlers[HANDLER_NAME]);
-  }
-
-  function hasAndroidBridge() {
-    return !!(window[ANDROID_BRIDGE_NAME] &&
-              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
-  }
-
-  function isInIframe() {
-    return !!(window.parent && window.parent !== window);
-  }
-
-  function sendEvent(eventName, payload) {
-    var message = {
-      type: eventName,
-      payload: payload || {},
-      timestamp: Date.now()
-    };
-
-    if (hasIOSBridge()) {
-      try {
-        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
-      } catch (e) { /* ignore */ }
-      return;
-    }
-
-    if (hasAndroidBridge()) {
-    try {
-      var p = payload || {};
-      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
-      p.timestamp = message.timestamp;
-      window[ANDROID_BRIDGE_NAME].postEvent(
-        eventName,
-        JSON.stringify(p)
-      );
-    } catch (e) { /* ignore */ }
-    return;
-  }
-
-    if (isInIframe()) {
-      try {
-        window.parent.postMessage(message, '*');
-      } catch (e) { /* ignore */ }
-      return;
-    }
-  }
-
-  // --- rAF Game-Ready Detection ---
-
-  function onFrame() {
-    if (gameReadySent) return;
-
-    frameCount++;
-    if (frameCount >= RAF_FRAME_THRESHOLD) {
-      gameReadySent = true;
-      sendEvent('game_ready', {
-        frame_count: frameCount,
-        detected_at: Date.now()
-      });
-      return;
-    }
-
-    originalRAF.call(window, onFrame);
-  }
-
-  if (originalRAF) {
-    window.requestAnimationFrame = function(callback) {
-      if (!gameReadySent) {
-        return originalRAF.call(window, function(timestamp) {
-          frameCount++;
-          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
-            gameReadySent = true;
-            sendEvent('game_ready', {
-              frame_count: frameCount,
-              detected_at: Date.now()
-            });
-          }
-          callback(timestamp);
-        });
-      }
-      return originalRAF.call(window, callback);
-    };
-  }
-
-  // --- First User Interaction Detection ---
-
-  function setupFirstInteractionDetection() {
-    var events = ['touchstart', 'mousedown', 'keydown'];
-
-    function onFirstInteraction() {
-      if (firstInteractionSent) return;
-      firstInteractionSent = true;
-      sendEvent('user_interaction_start', null);
-
-      for (var i = 0; i < events.length; i++) {
-        document.removeEventListener(events[i], onFirstInteraction, true);
-      }
-    }
-
-    for (var i = 0; i < events.length; i++) {
-      document.addEventListener(events[i], onFirstInteraction, true);
-    }
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
-  } else {
-    setupFirstInteractionDetection();
-  }
-
-  // --- Auto Error Capture ---
-
-  window.addEventListener('error', function(event) {
-    if (errorSent) return;
-    errorSent = true;
-    sendEvent('error', {
-      message: event.message || 'Unknown error',
-      source: event.filename || '',
-      lineno: event.lineno || 0,
-      colno: event.colno || 0,
-      auto_captured: true
-    });
-  });
-
-  window.addEventListener('unhandledrejection', function(event) {
-    if (errorSent) return;
-    errorSent = true;
-    var reason = event.reason;
-    sendEvent('error', {
-      message: (reason instanceof Error) ? reason.message : String(reason),
-      type: 'unhandled_promise_rejection',
-      auto_captured: true
-    });
-  });
-
-  // --- Public API ---
-
-  window.playablesSDK = {
-    complete: function(score) {
-      sendEvent('game_ended', {
-        score: score,
-        completed: true
-      });
-    },
-
-    error: function(message) {
-      if (errorSent) return;
-      errorSent = true;
-      sendEvent('error', {
-        message: message || 'Unknown error',
-        auto_captured: false
-      });
-    },
-
-    sendEvent: function(eventName, payload) {
-      if (!eventName || typeof eventName !== 'string') return;
-      sendEvent(eventName, payload);
-    }
-  };
-
-  // Kick off rAF detection in case no game code calls rAF immediately
-  if (originalRAF) {
-    originalRAF.call(window, onFrame);
-  }
-})();</script>
-<!-- PLAYABLE_TOUCH_PATCH_V1 --><script>
-(function() {
-  if (window.__playableTouchPatchInstalled) return;
-  window.__playableTouchPatchInstalled = true;
-  var origAdd = EventTarget.prototype.addEventListener;
-  var blockedTypes = { touchstart: 1, touchmove: 1, wheel: 1 };
-  EventTarget.prototype.addEventListener = function(type, listener, options) {
-    if (blockedTypes[type]) {
-      if (options === undefined || options === null) {
-        options = { passive: true };
-      } else if (typeof options === 'boolean') {
-        options = { capture: options, passive: true };
-      } else {
-        options = Object.assign({}, options, { passive: true });
-      }
-    }
-    return origAdd.call(this, type, listener, options);
-  };
-})();
-</script><script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#0a66c2">
-<title>360Drone – ATM Veloce</title>
+<meta name="theme-color" content="#0a192f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>360Drone – Compilatore ATM</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--blue:#0a66c2;--border:#e5e7eb;--text:#111827;--muted:#6b7280}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0;background:#fff;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.4}
-header{position:sticky;top:0;background:#fff;z-index:40;border-bottom:1px solid var(--border);padding:16px 20px 12px}
-.brand{font-size:22px;font-weight:800;color:var(--blue);letter-spacing:-.2px}
-.sub{font-size:14px;color:var(--muted);margin-top:2px}
-main{padding:16px 16px 110px;max-width:720px;margin:0 auto}
-.card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-h2{font-size:13px;margin:0 0 14px;text-transform:uppercase;letter-spacing:.8px;color:var(--blue);font-weight:700}
-.field{margin-bottom:14px}
-label{display:block;font-size:14px;font-weight:600;margin-bottom:6px;color:#374151}
-input,select,textarea{width:100%;padding:14px 14px;font-size:16px;border:1.5px solid #d1d5db;border-radius:10px;background:#fff;color:var(--text);appearance:none}
-input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(10,102,194,.15)}
-input[readonly]{background:#f9fafb;color:#4b5563}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.hint{font-size:12px;color:var(--muted);margin-top:5px}
-.dms-result{background:#f0f7ff;border:1px dashed var(--blue);padding:10px 12px;border-radius:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;margin-top:8px;font-size:14px;color:#0b3d72}
-details{border-top:1px dashed var(--border);padding-top:8px}
-details summary{cursor:pointer;font-weight:700;color:var(--text);padding:10px 0;list-style:none;font-size:15px}
-details summary::-webkit-details-marker{display:none}
-details summary:after{content:'▾';float:right;color:var(--blue);font-size:18px;transition:transform .2s}
-details[open] summary:after{transform:rotate(180deg)}
-.btn{display:block;width:100%;padding:16px 20px;font-size:16px;font-weight:700;border-radius:12px;border:none;cursor:pointer;margin-bottom:12px;min-height:54px;transition:transform .05s,opacity .2s}
-.btn:active{transform:scale(.99)}
-.btn-primary{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(10,102,194,.25)}
-.btn-secondary{background:#eef5fd;color:var(--blue);border:1.5px solid #cfe2fa}
-#pwaHint{background:#fff7e6;border:1px solid #ffd591;padding:12px 14px;border-radius:12px;margin-bottom:16px;font-size:14px;line-height:1.35;color:#7c2d12}
-#pwaHint strong{color:#9a3412}
-#closeHint{float:right;background:none;border:none;font-size:22px;line-height:1;margin-left:8px;color:#92400e;cursor:pointer;padding:0 4px}
-footer{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid var(--border);padding:12px 16px;text-align:center;font-size:13px;color:#374151;z-index:50}
-@supports(padding:max(0px)){footer{padding-bottom:max(12px,env(safe-area-inset-bottom))}}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;padding:0;z-index:100}
-.modal.open{display:flex}
-.modal-card{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:560px;padding:20px 16px 24px;max-height:85vh;overflow:auto;animation:slideUp .25s ease}
-@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
-pre{white-space:pre-wrap;font-size:13px;background:#f8fafc;padding:12px;border-radius:10px;border:1px solid var(--border);line-height:1.4}
+:root {
+  --bg:       #07090f;
+  --surface:  #0d1117;
+  --panel:    #111827;
+  --card:     #161d2b;
+  --border:   #1e2d45;
+  --border2:  #253349;
+  --text:     #e8f0fe;
+  --muted:    #7a8fb5;
+  --dim:      #3d5280;
+  --accent:   #3b82f6;
+  --accent2:  #60a5fa;
+  --gold:     #f59e0b;
+  --green:    #10b981;
+  --red:      #ef4444;
+  --font:     'Figtree', sans-serif;
+  --display:  'Syne', sans-serif;
+  --mono:     'IBM Plex Mono', monospace;
+  --r:        12px;
+  --r-sm:     8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+/* ── HEADER ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.header-brand { display: flex; align-items: center; gap: 10px; }
+.logo {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent) 0%, #818cf8 100%);
+  border-radius: 9px; display: grid; place-items: center; flex-shrink: 0;
+}
+.brand-text .name { font-family: var(--display); font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
+.brand-text .tagline { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
+/* ── STEP TABS ── */
+.steps-nav {
+  display: flex; background: var(--surface); border-bottom: 1px solid var(--border);
+  overflow-x: auto; scrollbar-width: none; position: sticky; top: 65px; z-index: 40;
+}
+.steps-nav::-webkit-scrollbar { display: none; }
+.step-tab {
+  display: flex; align-items: center; gap: 7px; padding: 12px 18px;
+  font-size: 13px; font-weight: 600; color: var(--dim); cursor: pointer;
+  border-bottom: 2px solid transparent; white-space: nowrap; font-family: var(--font);
+  transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none;
+  flex-shrink: 0;
+}
+.step-tab.active { color: var(--accent2); border-bottom-color: var(--accent); }
+.step-tab .n {
+  width: 20px; height: 20px; border-radius: 50%; background: var(--border2);
+  display: grid; place-items: center; font-size: 10px; font-family: var(--mono); font-weight: 500;
+  flex-shrink: 0;
+}
+.step-tab.active .n { background: var(--accent); color: white; }
+.step-tab.done .n { background: var(--green); color: white; }
+.step-tab.done .n::after { content: '✓'; }
+
+/* ── MAIN ── */
+main { padding: 20px 16px 120px; max-width: 680px; margin: 0 auto; }
+
+/* ── SECTION HEADING ── */
+.sec-head { margin-bottom: 18px; }
+.sec-head h2 { font-family: var(--display); font-size: 22px; font-weight: 800; letter-spacing: -0.4px; margin-bottom: 4px; }
+.sec-head p { font-size: 13px; color: var(--muted); }
+
+/* ── PRECOMPILATO BANNER ── */
+.prefill-banner {
+  background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(129,140,248,0.05));
+  border: 1px solid rgba(59,130,246,0.25);
+  border-radius: var(--r); padding: 12px 14px; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--accent2);
+}
+.prefill-banner svg { flex-shrink: 0; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 16px; margin-bottom: 14px;
+}
+.card-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--muted); margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
+}
+.card-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+/* ── FORM FIELDS ── */
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+.field label {
+  display: block; font-size: 12px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px;
+}
+.field input, .field select, .field textarea {
+  width: 100%; padding: 12px 14px; font-size: 15px; font-family: var(--font);
+  background: var(--surface); border: 1.5px solid var(--border2);
+  color: var(--text); border-radius: var(--r-sm); outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s; appearance: none;
+  -webkit-appearance: none;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+.field input[readonly] {
+  background: var(--panel); color: var(--muted); cursor: default;
+  border-color: var(--border);
+}
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a8fb5' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+  padding-right: 36px;
+}
+.field select option { background: var(--panel); }
+.field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.field .hint { font-size: 11px; color: var(--muted); margin-top: 5px; font-family: var(--mono); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+/* ── UTC PILL ── */
+.utc-pill {
+  display: inline-block; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+  color: var(--green); font-family: var(--mono); font-size: 11px; font-weight: 500;
+  padding: 3px 8px; border-radius: 4px; margin-top: 5px;
+}
+
+/* ── DMS BOX ── */
+.dms-box {
+  background: rgba(59,130,246,0.06); border: 1px dashed var(--accent);
+  border-radius: var(--r-sm); padding: 10px 12px; margin-top: 8px;
+  font-family: var(--mono); font-size: 13px; color: var(--accent2);
+  display: none;
+}
+
+/* ── FIXED DATA ── */
+.fixed-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--border2);
+}
+.fixed-row:last-child { border-bottom: none; padding-bottom: 0; }
+.fixed-label { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+.fixed-value { font-size: 13px; font-weight: 600; color: var(--text); text-align: right; max-width: 60%; word-break: break-all; }
+
+/* ── PREVIEW MODULO ── */
+.modulo-preview {
+  background: #fff; color: #111; border-radius: var(--r); overflow: hidden;
+  border: 2px solid var(--border2); font-size: 12px; font-family: 'Times New Roman', serif;
+}
+.mod-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-bottom: 2px solid #000;
+  background: #fff;
+}
+.mod-logo { font-weight: 900; font-size: 18px; color: #0047ab; letter-spacing: 1px; font-family: Arial, sans-serif; }
+.mod-title { text-align: center; }
+.mod-title .big { font-size: 13px; font-weight: 800; font-family: Arial, sans-serif; }
+.mod-title .small { font-size: 10px; color: #555; font-family: Arial, sans-serif; }
+.mod-bollo { border: 1px solid #999; padding: 6px 8px; font-size: 9px; color: #444; text-align: right; max-width: 170px; font-family: Arial, sans-serif; line-height: 1.3; }
+.mod-row {
+  display: flex; align-items: stretch; border-bottom: 1px solid #ccc;
+  font-family: Arial, sans-serif;
+}
+.mod-row:last-child { border-bottom: none; }
+.mod-label {
+  background: #f5f5f5; font-size: 9px; font-weight: 700; color: #333;
+  padding: 6px 8px; border-right: 1px solid #ccc; min-width: 80px; max-width: 80px;
+  display: flex; align-items: flex-start; word-break: break-word; line-height: 1.3;
+}
+.mod-value {
+  padding: 6px 8px; font-size: 10px; color: #111; flex: 1; line-height: 1.4;
+  word-break: break-word;
+}
+.mod-value.blue { color: #0047ab; text-decoration: underline; }
+.mod-value.bold { font-weight: 700; }
+.mod-section-label {
+  background: #e8edf5; font-size: 9px; font-weight: 900; color: #000033;
+  padding: 4px 8px; writing-mode: vertical-rl; text-orientation: mixed;
+  transform: rotate(180deg); min-width: 22px; display: flex; align-items: center; justify-content: center;
+  border-right: 1px solid #ccc; letter-spacing: 0.5px;
+}
+.mod-group { flex: 1; display: flex; flex-direction: column; }
+
+/* ── BOTTONI AZIONE ── */
+.action-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 60;
+  background: rgba(7,9,15,0.95); backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border); padding: 12px 16px;
+}
+.action-bar-inner { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+@supports(padding: max(0px)) { .action-bar { padding-bottom: max(12px, env(safe-area-inset-bottom)); } }
+
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 15px 20px; font-size: 15px; font-weight: 700; font-family: var(--font);
+  border: none; border-radius: var(--r-sm); cursor: pointer; transition: all 0.15s;
+  min-height: 52px;
+}
+.btn:active { transform: scale(0.98); opacity: 0.9; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-secondary { background: var(--panel); color: var(--accent2); border: 1.5px solid var(--border2); }
+.btn-gold { background: var(--gold); color: #000; }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* ── MODAL ── */
+.modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+  display: none; align-items: flex-end; justify-content: center; z-index: 200;
+}
+.modal.open { display: flex; }
+.modal-sheet {
+  background: var(--panel); border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 680px; padding: 20px 16px 32px;
+  max-height: 88vh; overflow-y: auto;
+  animation: slideUp 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 16px; }
+.modal-title { font-family: var(--display); font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+/* ── ATM09 TEXT ── */
+.atm09-text {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm);
+  padding: 14px; font-family: var(--mono); font-size: 12px; line-height: 1.7;
+  color: var(--muted); white-space: pre-wrap; max-height: 55vh; overflow-y: auto; margin-bottom: 12px;
+}
+.atm09-text .kw { color: var(--accent2); font-weight: 500; }
+.atm09-text .val { color: var(--text); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 130px; left: 50%; transform: translateX(-50%) translateY(10px);
+  background: var(--green); color: #fff; padding: 10px 18px; border-radius: 24px;
+  font-size: 13px; font-weight: 700; z-index: 300; opacity: 0; transition: all 0.2s;
+  white-space: nowrap; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── PANEL VIEWS ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── RIEPILOGO ── */
+.recap-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border2); font-size: 13px; }
+.recap-item:last-child { border-bottom: none; }
+.recap-k { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+.recap-v { font-weight: 600; text-align: right; max-width: 65%; word-break: break-word; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 420px) {
+  .grid2 { grid-template-columns: 1fr; }
+  .grid3 { grid-template-columns: 1fr 1fr; }
+}
 </style>
 </head>
 <body>
-<header>
-  <div class="brand">360Drone – ATM Veloce</div>
-  <div class="sub">Compila in 2 minuti</div>
-</header>
 
-<main>
-  <div id="pwaHint" style="display:none">
-    <button id="closeHint" aria-label="Chiudi">×</button>
-    <strong>Aggiungi a Home:</strong><br>
-    iPhone: Condividi ↗︎ > "Aggiungi a schermata Home".<br>
-    Android: Menu ⋮ > "Aggiungi a schermata Home".
-  </div>
-
-  <section class="card">
-    <h2>Dati Variabili</h2>
-    <form id="atmForm" autocomplete="on">
-      <div class="field">
-        <label for="richiedente">Richiedente</label>
-        <input id="richiedente" type="text" placeholder="Nome Cognome" inputmode="text">
-      </div>
-      <div class="field">
-        <label for="attestato">N. attestato / IT-STS</label>
-        <input id="attestato" type="text" placeholder="ITA-RP-..." autocapitalize="characters">
-      </div>
-      <div class="field">
-        <label for="scopo">Scopo</label>
-        <select id="scopo">
-          <option>Riprese video VLOS</option>
-          <option>Ispezione tecnica</option>
-          <option>Rilievo fotogrammetrico</option>
-          <option>Riprese per evento</option>
-          <option>Altro</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="localita">Località</label>
-        <input id="localita" type="text" placeholder="Piazza Colosseo, Roma">
-      </div>
-
-      <div class="field">
-        <label>Coordinate decimali</label>
-        <div class="grid-2">
-          <input id="lat" type="number" step="any" placeholder="Lat 41.89021" inputmode="decimal">
-          <input id="lon" type="number" step="any" placeholder="Lon 12.49223" inputmode="decimal">
-        </div>
-        <button type="button" class="btn btn-secondary" id="btnConvert" style="margin-top:10px;padding:12px;min-height:46px">Converti in DMS</button>
-        <div id="dmsResult" class="dms-result" style="display:none"></div>
-      </div>
-
-      <div class="grid-2">
-        <div class="field">
-          <label for="dataInizio">Data inizio</label>
-          <input id="dataInizio" type="date">
-        </div>
-        <div class="field">
-          <label for="oraInizio">Ora inizio locale</label>
-          <input id="oraInizio" type="time">
-          <div class="hint" id="utcInizio">UTC: -</div>
-        </div>
-      </div>
-      <div class="grid-2">
-        <div class="field">
-          <label for="dataFine">Data fine</label>
-          <input id="dataFine" type="date">
-        </div>
-        <div class="field">
-          <label for="oraFine">Ora fine locale</label>
-          <input id="oraFine" type="time">
-          <div class="hint" id="utcFine">UTC: -</div>
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="zona">Zona interessata</label>
-        <select id="zona">
-          <option>LI P244 - Roma Edifici Istituzionali</option>
-          <option>LI P186 - Carceri</option>
-          <option>LI RXX - Militare</option>
-          <option>CTR Aeroporto</option>
-          <option>Altro</option>
-        </select>
-      </div>
-
-      <div class="grid-2">
-        <div class="field">
-          <label for="raggio">Raggio operativo (m)</label>
-          <input id="raggio" type="number" value="200" inputmode="numeric">
-        </div>
-        <div class="field">
-          <label for="quota">Quota max AGL (m)</label>
-          <input id="quota" type="number" value="45" inputmode="numeric">
-        </div>
-      </div>
-
-      <div class="field">
-        <label for="drone">Drone</label>
-        <input id="drone" type="text" value="DJI Mini 3 Pro (249g - C0)">
-      </div>
-    </form>
-  </section>
-
-  <section class="card">
-    <details>
-      <summary>DATI FISSI (precompilati)</summary>
-      <div class="field">
-        <label>Tel</label>
-        <input id="telFisso" type="text" value="+39 3887989630" readonly>
-      </div>
-      <div class="field">
-        <label>Email/PEC</label>
-        <input id="emailFisso" type="text" value="360drone@pec.it" readonly>
-      </div>
-      <div class="field">
-        <label>Cc ENAC</label>
-        <input id="ccEnac" type="text" value="protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it" readonly>
-      </div>
-      <div class="field">
-        <label>Destinatario A (auto)</label>
-        <input id="destA" type="text" value="seleziona ente" readonly>
-        <div class="hint">Si aggiorna in base alla Zona</div>
-      </div>
-    </details>
-  </section>
-
-  <section>
-    <button id="btnPDF" class="btn btn-primary">Genera ATM-05 PDF</button>
-    <button id="btnCopy" class="btn btn-secondary">Copia dati PEC</button>
-    <button id="btnATM09" class="btn btn-secondary">Genera ATM-09A (testo)</button>
-  </section>
-</main>
-
-<footer>
-  Tel: +39 3887989630 | PEC: 360drone@pec.it
-</footer>
-
-<div id="modal" class="modal" role="dialog" aria-modal="true">
-  <div class="modal-card">
-    <h3 style="margin:0 0 12px;font-size:18px">ATM-09A – Testo notifica</h3>
-    <pre id="atm09text"></pre>
-    <button id="btnCopy09" class="btn btn-primary">Copia testo</button>
-    <button id="btnClose" class="btn btn-secondary">Chiudi</button>
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">
+    <div class="logo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 2l3.5 6.5 7 1-5 4.9 1.2 7-6.7-3.5-6.7 3.5 1.2-7-5-4.9 7-1z"/></svg>
+    </div>
+    <div class="brand-text">
+      <div class="name">360Drone</div>
+      <div class="tagline">Compilatore ATM-05B / ATM-09A</div>
+    </div>
   </div>
 </div>
 
+<!-- STEP NAV -->
+<nav class="steps-nav">
+  <button class="step-tab active" onclick="goPanel('p-dati')" id="tab-dati">
+    <span class="n">1</span> Dati volo
+  </button>
+  <button class="step-tab" onclick="goPanel('p-anteprima')" id="tab-anteprima">
+    <span class="n">2</span> Anteprima ATM-05B
+  </button>
+  <button class="step-tab" onclick="goPanel('p-09a')" id="tab-09a">
+    <span class="n">3</span> ATM-09A
+  </button>
+  <button class="step-tab" onclick="goPanel('p-riepilogo')" id="tab-riepilogo">
+    <span class="n">4</span> Riepilogo PEC
+  </button>
+</nav>
+
+<main>
+
+<!-- ══════════════════════════════════════
+     PANEL 1 – DATI VARIABILI
+══════════════════════════════════════ -->
+<div class="panel active" id="p-dati">
+
+  <div class="sec-head">
+    <h2>Dati variabili</h2>
+    <p>Inserisci solo i dati del cliente/missione — tutto il resto è già precompilato.</p>
+  </div>
+
+  <div class="prefill-banner">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    Dati 360Drone (tel, PEC, CC ENAC) già inseriti automaticamente.
+  </div>
+
+  <!-- RICHIEDENTE -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span> Cliente / Pilota</div>
+    <div class="field">
+      <label>Nome e Cognome richiedente</label>
+      <input id="richiedente" type="text" placeholder="Mario Rossi" inputmode="text" autocomplete="name">
+    </div>
+    <div class="field">
+      <label>N. Attestato / IT-STS</label>
+      <input id="attestato" type="text" placeholder="ITA-RP-000000000" autocapitalize="characters">
+    </div>
+    <div class="field">
+      <label>Tipo di attività</label>
+      <select id="scopo">
+        <option value="Riprese con drone per motivi personali e senza fini di lucro come libera espressione creativa – Volo VLOS">Riprese personali/creative – VLOS</option>
+        <option value="Riprese video professionali in VLOS con osservatore dedicato">Riprese professionali VLOS</option>
+        <option value="Ispezione tecnica strutturale in VLOS">Ispezione tecnica VLOS</option>
+        <option value="Rilievo fotogrammetrico in VLOS">Rilievo fotogrammetrico VLOS</option>
+        <option value="Riprese per evento in VLOS con osservatore dedicato">Riprese per evento VLOS</option>
+        <option value="custom">✏️ Personalizzato...</option>
+      </select>
+    </div>
+    <div class="field" id="scopo-custom-wrap" style="display:none;">
+      <label>Descrivi l'attività</label>
+      <textarea id="scopo-custom" placeholder="Descrivi il tipo di attività..."></textarea>
+    </div>
+  </div>
+
+  <!-- LUOGO -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span> Luogo del volo</div>
+    <div class="field">
+      <label>Località (decollo e atterraggio)</label>
+      <input id="localita" type="text" placeholder="Piazza del Colosseo, Roma" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Zona interessata (D-Flight)</label>
+      <select id="zona" onchange="updateDestA()">
+        <option value="LI P244 – Roma Edifici Istituzionali">LI P244 – Roma Edifici Istituzionali</option>
+        <option value="LI P186 – Carceri Roma">LI P186 – Carceri Roma</option>
+        <option value="LI R – Zona Militare">LI R – Zona Militare</option>
+        <option value="CTR Aeroporto Roma Fiumicino">CTR Aeroporto Roma Fiumicino</option>
+        <option value="CTR Aeroporto Roma Ciampino">CTR Aeroporto Roma Ciampino</option>
+        <option value="custom-zona">✏️ Altra zona...</option>
+      </select>
+    </div>
+    <div class="field" id="zona-custom-wrap" style="display:none;">
+      <label>Codice zona personalizzato</label>
+      <input id="zona-custom" type="text" placeholder="Es. LI P123 – Descrizione">
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Latitudine (decimale)</label>
+        <input id="lat" type="number" step="any" placeholder="41.89021" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label>Longitudine (decimale)</label>
+        <input id="lon" type="number" step="any" placeholder="12.49223" inputmode="decimal">
+      </div>
+    </div>
+    <button type="button" class="btn btn-secondary" style="margin-bottom:8px;" onclick="convertDMS()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      Converti in gradi°minuti'secondi"
+    </button>
+    <div class="dms-box" id="dmsBox"></div>
+  </div>
+
+  <!-- ORARI -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span> Date e orari</div>
+    <div class="grid2">
+      <div class="field">
+        <label>Data inizio</label>
+        <input id="dataInizio" type="date" onchange="updateUTC()">
+      </div>
+      <div class="field">
+        <label>Data fine</label>
+        <input id="dataFine" type="date" onchange="updateUTC()">
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Ora inizio (locale)</label>
+        <input id="oraInizio" type="time" onchange="updateUTC()">
+        <div class="utc-pill" id="utcInizio">UTC: –</div>
+      </div>
+      <div class="field">
+        <label>Ora fine (locale)</label>
+        <input id="oraFine" type="time" onchange="updateUTC()">
+        <div class="utc-pill" id="utcFine">UTC: –</div>
+      </div>
+    </div>
+    <div class="field" style="margin-top:4px;">
+      <label>Fuso orario attuale</label>
+      <select id="fuso" onchange="updateUTC()">
+        <option value="1">CET – UTC+1 (ora solare, ott–mar)</option>
+        <option value="2" selected>CEST – UTC+2 (ora legale, mar–ott)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- DRONE & LIMITI -->
+  <div class="card">
+    <div class="card-title"><span class="dot"></span> Aeromobile e limiti operativi</div>
+    <div class="field">
+      <label>Aeromobile</label>
+      <select id="drone">
+        <option value="DJI Mini 2 (0.249g – C0)">DJI Mini 2 (0.249g – C0)</option>
+        <option value="DJI Mini 3 Pro (249g – C0)">DJI Mini 3 Pro (249g – C0)</option>
+        <option value="DJI Mini 4 Pro (249g – C0)">DJI Mini 4 Pro (249g – C0)</option>
+        <option value="DJI Air 3 (720g – C1)">DJI Air 3 (720g – C1)</option>
+        <option value="DJI Mavic 3 (895g – C1)">DJI Mavic 3 (895g – C1)</option>
+        <option value="custom-drone">✏️ Altro drone...</option>
+      </select>
+    </div>
+    <div class="field" id="drone-custom-wrap" style="display:none;">
+      <label>Specifica drone</label>
+      <input id="drone-custom" type="text" placeholder="Marca Modello (XXXg – CX)">
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Raggio operativo (m)</label>
+        <input id="raggio" type="number" value="200" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Quota max AGL (m)</label>
+        <input id="quota" type="number" value="45" inputmode="numeric">
+      </div>
+    </div>
+    <div class="field">
+      <label>Distanza dall'aeroporto più vicino</label>
+      <input id="distAeroporto" type="text" value="Roma ROMA/URBE 16/36 – 4,32 NM (8,00 Km)" placeholder="Aeroporto – NM (Km)">
+    </div>
+  </div>
+
+  <!-- DATI FISSI (sola lettura) -->
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--gold)"></span> Dati 360Drone (precompilati)</div>
+    <div class="fixed-row">
+      <span class="fixed-label">Tel</span>
+      <span class="fixed-value">+39 388 7989630</span>
+    </div>
+    <div class="fixed-row">
+      <span class="fixed-label">PEC</span>
+      <span class="fixed-value">360drone@pec.it</span>
+    </div>
+    <div class="fixed-row">
+      <span class="fixed-label">CC ENAC</span>
+      <span class="fixed-value">protocollo@pec.enac.gov.it</span>
+    </div>
+    <div class="fixed-row">
+      <span class="fixed-label">CC ENAC 2</span>
+      <span class="fixed-value">mobilita.innovativa@enac.gov.it</span>
+    </div>
+    <div class="fixed-row" id="dest-a-row">
+      <span class="fixed-label">A (ente)</span>
+      <span class="fixed-value" id="dest-a-display">–</span>
+    </div>
+  </div>
+
+</div><!-- /panel dati -->
+
+
+<!-- ══════════════════════════════════════
+     PANEL 2 – ANTEPRIMA ATM-05B
+══════════════════════════════════════ -->
+<div class="panel" id="p-anteprima">
+  <div class="sec-head">
+    <h2>Anteprima ATM-05B</h2>
+    <p>Verifica tutti i campi prima di generare il PDF.</p>
+  </div>
+
+  <div class="card" style="padding:0; overflow:hidden;">
+    <div class="modulo-preview" id="mod-preview">
+      <!-- generato da JS -->
+    </div>
+  </div>
+
+  <div style="margin-top:14px;">
+    <button class="btn btn-primary" onclick="generaPDF()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Genera PDF ATM-05B
+    </button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     PANEL 3 – ATM-09A
+══════════════════════════════════════ -->
+<div class="panel" id="p-09a">
+  <div class="sec-head">
+    <h2>ATM-09A – Notifica</h2>
+    <p>Testo precompilato da copiare e inviare alla torre di controllo.</p>
+  </div>
+
+  <div class="atm09-text" id="atm09-preview"></div>
+
+  <button class="btn btn-primary" onclick="copyATM09()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    Copia testo ATM-09A
+  </button>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     PANEL 4 – RIEPILOGO PEC
+══════════════════════════════════════ -->
+<div class="panel" id="p-riepilogo">
+  <div class="sec-head">
+    <h2>Riepilogo PEC</h2>
+    <p>Tutti i dati pronti — copia l'oggetto e il corpo della mail.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot" style="background:var(--gold)"></span> Oggetto PEC</div>
+    <div style="background:var(--surface); border:1px dashed var(--border2); border-radius:var(--r-sm); padding:12px; font-family:var(--mono); font-size:13px; color:var(--accent2); margin-bottom:10px;" id="ogg-pec">–</div>
+    <button class="btn btn-secondary" style="padding:10px;" onclick="copyOgg()">Copia oggetto</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span> Destinatari</div>
+    <div class="recap-item"><span class="recap-k">A:</span><span class="recap-v" id="r-desta">–</span></div>
+    <div class="recap-item"><span class="recap-k">CC 1:</span><span class="recap-v">protocollo@pec.enac.gov.it</span></div>
+    <div class="recap-item"><span class="recap-k">CC 2:</span><span class="recap-v">mobilita.innovativa@enac.gov.it</span></div>
+    <div class="recap-item"><span class="recap-k">CC 3:</span><span class="recap-v">360drone@pec.it</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="dot"></span> Riepilogo dati pratica</div>
+    <div class="recap-item"><span class="recap-k">Richiedente</span><span class="recap-v" id="r-rich">–</span></div>
+    <div class="recap-item"><span class="recap-k">Attestato</span><span class="recap-v" id="r-att">–</span></div>
+    <div class="recap-item"><span class="recap-k">Attività</span><span class="recap-v" id="r-scopo">–</span></div>
+    <div class="recap-item"><span class="recap-k">Località</span><span class="recap-v" id="r-loc">–</span></div>
+    <div class="recap-item"><span class="recap-k">Zona</span><span class="recap-v" id="r-zona">–</span></div>
+    <div class="recap-item"><span class="recap-k">Coordinate</span><span class="recap-v" id="r-coord">–</span></div>
+    <div class="recap-item"><span class="recap-k">Orario UTC</span><span class="recap-v" id="r-utc">–</span></div>
+    <div class="recap-item"><span class="recap-k">Quota max</span><span class="recap-v" id="r-quota">–</span></div>
+    <div class="recap-item"><span class="recap-k">Raggio</span><span class="recap-v" id="r-raggio">–</span></div>
+    <div class="recap-item"><span class="recap-k">Drone</span><span class="recap-v" id="r-drone">–</span></div>
+  </div>
+
+  <button class="btn btn-primary" onclick="copyTuttoPEC()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    Copia riepilogo completo
+  </button>
+</div>
+
+</main><!-- /main -->
+
+<!-- ACTION BAR -->
+<div class="action-bar" id="action-bar-dati">
+  <div class="action-bar-inner">
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="generaPDF()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        PDF ATM-05B
+      </button>
+      <button class="btn btn-gold" onclick="goPanel('p-09a'); buildATM09();">
+        ATM-09A →
+      </button>
+    </div>
+    <button class="btn btn-primary" onclick="goPanel('p-riepilogo'); buildRiepilogo();">
+      Riepilogo PEC completo →
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const $ = id => document.getElementById(id);
-  const fields = ['richiedente','attestato','scopo','localita','lat','lon','dataInizio','oraInizio','dataFine','oraFine','zona','raggio','quota','drone'];
-  let utcInizioText = '-', utcFineText = '-';
+// ═══════════════════════════════════════════════
+// COSTANTI 360DRONE
+// ═══════════════════════════════════════════════
+const FISSI = {
+  tel:    '+39 388 7989630',
+  pec:    '360drone@pec.it',
+  cc1:    'protocollo@pec.enac.gov.it',
+  cc2:    'mobilita.innovativa@enac.gov.it',
+  cfEnac: '97158180584',
+};
 
-  function toDMS(dec,isLat){
-    const abs=Math.abs(dec); let deg=Math.floor(abs); let minFloat=(abs-deg)*60; let min=Math.floor(minFloat); let sec=Math.round((minFloat-min)*60);
-    if(sec===60){sec=0;min++} if(min===60){min=0;deg++}
-    const dir=isLat?(dec>=0?'N':'S'):(dec>=0?'E':'W');
-    return `${dir} ${deg}°${min}'${sec}"`;
+const ENTI = {
+  'LI P244 – Roma Edifici Istituzionali':  'protocollo.prefrm@pec.interno.it',
+  'LI P186 – Carceri Roma':                'protocollo.prefrm@pec.interno.it',
+  'LI R – Zona Militare':                  'coa@postacert.aeronautica.difesa.it',
+  'CTR Aeroporto Roma Fiumicino':          'torre.fiumicino@enav.it',
+  'CTR Aeroporto Roma Ciampino':           'torre.ciampino@enav.it',
+};
+
+// ═══════════════════════════════════════════════
+// NAVIGAZIONE PANEL
+// ═══════════════════════════════════════════════
+const PANELS = ['p-dati','p-anteprima','p-09a','p-riepilogo'];
+const TABS   = ['tab-dati','tab-anteprima','tab-09a','tab-riepilogo'];
+
+function goPanel(id) {
+  PANELS.forEach(p => document.getElementById(p).classList.remove('active'));
+  TABS.forEach(t => document.getElementById(t).classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const idx = PANELS.indexOf(id);
+  if (idx >= 0) document.getElementById(TABS[idx]).classList.add('active');
+  window.scrollTo(0, 0);
+
+  if (id === 'p-anteprima') buildPreview();
+  if (id === 'p-09a') buildATM09();
+  if (id === 'p-riepilogo') buildRiepilogo();
+}
+
+// ═══════════════════════════════════════════════
+// LETTURA CAMPI
+// ═══════════════════════════════════════════════
+function g(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function getZona() { const z = g('zona'); return z === 'custom-zona' ? g('zona-custom') : z; }
+function getDrone() { const d = g('drone'); return d === 'custom-drone' ? g('drone-custom') : d; }
+function getScopo() { const s = g('scopo'); return s === 'custom' ? g('scopo-custom') : s; }
+function getDestA() { const z = getZona(); return ENTI[z] || g('zona').includes('Militare') ? 'coa@postacert.aeronautica.difesa.it' : 'Verifica ente gestore in AIP ENR 5.1'; }
+
+let utcInizioText = '–', utcFineText = '–', dmsText = '';
+
+// ═══════════════════════════════════════════════
+// UTC
+// ═══════════════════════════════════════════════
+function updateUTC() {
+  utcInizioText = calcUTC(g('dataInizio'), g('oraInizio'));
+  utcFineText   = calcUTC(g('dataFine'), g('oraFine'));
+  document.getElementById('utcInizio').textContent = utcInizioText !== '–' ? utcInizioText : 'UTC: –';
+  document.getElementById('utcFine').textContent   = utcFineText   !== '–' ? utcFineText   : 'UTC: –';
+}
+function calcUTC(dateStr, timeStr) {
+  if (!dateStr || !timeStr) return '–';
+  const tz = parseInt(g('fuso')) || 1;
+  const d = new Date(`${dateStr}T${timeStr}`);
+  if (isNaN(d)) return '–';
+  const utc = new Date(d.getTime() - tz * 3600000);
+  const pad = n => String(n).padStart(2,'0');
+  return `${pad(utc.getUTCDate())}/${pad(utc.getUTCMonth()+1)}/${utc.getUTCFullYear()} ${pad(utc.getUTCHours())}:${pad(utc.getUTCMinutes())} UTC`;
+}
+
+// ═══════════════════════════════════════════════
+// DMS
+// ═══════════════════════════════════════════════
+function toDMS(dec, isLat) {
+  const abs = Math.abs(dec);
+  let deg = Math.floor(abs);
+  let minF = (abs - deg) * 60;
+  let min = Math.floor(minF);
+  let sec = Math.round((minF - min) * 60);
+  if (sec === 60) { sec = 0; min++; }
+  if (min === 60) { min = 0; deg++; }
+  const dir = isLat ? (dec >= 0 ? 'N' : 'S') : (dec >= 0 ? 'E' : 'W');
+  return `${dir} ${deg}°${String(min).padStart(2,'0')}'${String(sec).padStart(2,'0')}"`;
+}
+function convertDMS() {
+  const lat = parseFloat(g('lat')), lon = parseFloat(g('lon'));
+  if (isNaN(lat) || isNaN(lon)) { showToast('⚠ Inserisci latitudine e longitudine'); return; }
+  dmsText = `Lat ${toDMS(lat,true)} – Lon ${toDMS(lon,false)}`;
+  const box = document.getElementById('dmsBox');
+  box.textContent = dmsText; box.style.display = 'block';
+  showToast('✓ Coordinate convertite');
+}
+
+// ═══════════════════════════════════════════════
+// DEST-A
+// ═══════════════════════════════════════════════
+function updateDestA() {
+  const zona = getZona();
+  const isCustom = g('zona') === 'custom-zona';
+  document.getElementById('zona-custom-wrap').style.display = isCustom ? 'block' : 'none';
+  const dest = ENTI[zona] || '– verifica AIP ENR 5.1 –';
+  document.getElementById('dest-a-display').textContent = dest;
+}
+
+// ═══════════════════════════════════════════════
+// PREVIEW ATM-05B
+// ═══════════════════════════════════════════════
+function buildPreview() {
+  const zona     = getZona();
+  const drone    = getDrone();
+  const scopo    = getScopo();
+  const destA    = ENTI[zona] || '— verifica AIP ENR 5.1 —';
+  const ccFull   = `${FISSI.cc1}; ${FISSI.cc2}`;
+  const latval   = g('lat'), lonval = g('lon');
+  if (!dmsText && latval && lonval) {
+    const lat = parseFloat(latval), lon = parseFloat(lonval);
+    if (!isNaN(lat) && !isNaN(lon)) dmsText = `Lat ${toDMS(lat,true)} – Lon ${toDMS(lon,false)}`;
   }
-  function formatUTC(dateStr,timeStr){
-    if(!dateStr||!timeStr) return '-';
-    const d=new Date(`${dateStr}T${timeStr}`);
-    if(isNaN(d)) return '-';
-    const dd=String(d.getUTCDate()).padStart(2,'0');
-    const mm=String(d.getUTCMonth()+1).padStart(2,'0');
-    const yy=d.getUTCFullYear();
-    const hh=String(d.getUTCHours()).padStart(2,'0');
-    const mi=String(d.getUTCMinutes()).padStart(2,'0');
-    return `${dd}/${mm}/${yy} ${hh}:${mi} UTC`;
+  const coord    = dmsText ? `${g('localita')} – ${dmsText}` : g('localita') || '–';
+  const quota    = g('quota') || '–';
+  const quotaFt  = quota !== '–' ? Math.round(parseInt(quota) * 3.28084) : '–';
+  const orario   = (utcInizioText !== '–' && utcFineText !== '–')
+    ? `Dal ${utcInizioText} al ${utcFineText}`
+    : `${g('dataInizio')||'–'} ore ${g('oraInizio')||'–'}–${g('oraFine')||'–'} (locale)`;
+  const altreNote = `Il sorvolo sarà sempre svolto secondo i parametri della categoria Open (Reg. EU 2019/947, art. 3 e 4). I droni sono dotati di: RTH (return to home), geofencing, classe C0 (Reg. EU 2019/947 e Reg. EU 2019/945). Sarà sempre presente un osservatore per garantire la sicurezza del volo. Il sorvolo durerà il tempo strettamente necessario all'ottenimento delle riprese, sarà sempre condotto in VLOS. Non verranno sorvolati edifici particolari quali: caserme, ospedali, edifici istituzionali ecc... Pilota contattabile al ${FISSI.tel}. Attività interrompibile su richiesta autorità competente.`;
+
+  document.getElementById('mod-preview').innerHTML = `
+    <div class="mod-header">
+      <div class="mod-logo">ENAC</div>
+      <div class="mod-title">
+        <div class="big">MODELLO ATM-05</div>
+        <div class="small">(All. "A" Circ. ATM-05)</div>
+        <div class="small">C.F.: ${FISSI.cfEnac}</div>
+      </div>
+      <div class="mod-bollo">Bollo assolto in modo virtuale<br>(aut. Direz. Reg. entrate Lazio N. 135047/98 del 30/11/1998)<br><br>Dati fattura BD3 · prot. N. 59172</div>
+    </div>
+    ${row('A <sup>(2)</sup>:', `<span class="blue">${destA}</span>`)}
+    ${row('Cc <sup>(2)</sup>:', `<span class="blue">${FISSI.cc1} ; ${FISSI.cc2}</span>`)}
+    ${row('Il richiedente <sup>(3)</sup>:', `${g('richiedente')||'–'} – Attestato: ${g('attestato')||'–'}`)}
+    ${row('Tel/Mob.:', FISSI.tel, 'E-mail/Pec:', FISSI.pec)}
+    <div class="mod-row">
+      <div class="mod-section-label">Evento/attività</div>
+      <div class="mod-group">
+        ${srow('Tipo di attività <sup>(4)</sup>:', scopo || '–')}
+        ${srow('Tipo aeromobile <sup>(5)</sup>:', drone || '–')}
+        ${srow('Loc. decollo e coordinate <sup>(5)</sup>:', coord)}
+        ${srow('Loc. atterraggio e coordinate <sup>(5)</sup>:', coord + ' (stessa area)')}
+        ${srow("Loc. dove si svolge l'attività:", g('localita') || '–')}
+      </div>
+    </div>
+    <div class="mod-row">
+      <div class="mod-section-label">Elementi identificativi dello spazio aereo</div>
+      <div class="mod-group">
+        ${srow('Zona R,P o D interessata <sup>(6)</sup>:', zona || '–')}
+        ${srow('Limiti laterali <sup>(6)</sup>:', `Raggio ${g('raggio')||'–'} m con centro nel punto di coordinate geografiche`)}
+        ${srow('Limiti verticali <sup>(7)</sup>:', `inferiore GND / superiore ${quota} m AGL (${quotaFt} ft)`)}
+        ${srow('Ubicazione rispetto al capoluogo:', g('localita')||'–')}
+        ${srow("Distanza dall'ARP/coord. aeroporto:", g('distAeroporto')||'–')}
+        ${srow('Data e orario attività <sup>(8)</sup>:', orario)}
+        ${srow('Altre notizie utili <sup>(9)</sup>:', altreNote)}
+      </div>
+    </div>
+    <div class="mod-row">
+      <div class="mod-section-label">Valutazione ATS</div>
+      <div class="mod-group">
+        ${srow('Fornitore SNA civile:', '')}
+        ${srow('Fornitore SNA militare:', '')}
+      </div>
+    </div>
+    <div style="padding:10px 14px;font-style:italic;font-size:9px;border-top:1px solid #ccc;font-family:Arial,sans-serif;color:#444;line-height:1.4;">
+      Imposta di bollo assolta in modo virtuale ex art. 15 D.P.R. n. 642/1972 su autorizzazione dell'Agenzia delle Entrate, Direzione Provinciale della Spezia prot. N. 59172 del 28/09/2023
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:12px 14px 14px;font-family:Arial,sans-serif;font-size:10px;border-top:1px solid #ccc;">
+      <span>Luogo e data Roma, ${new Date().toLocaleDateString('it-IT')}</span>
+      <span>Firma operatore APR____________________________</span>
+    </div>
+  `;
+}
+
+function row(l1, v1, l2, v2) {
+  if (l2) {
+    return `<div class="mod-row">
+      <div class="mod-label">${l1}</div>
+      <div class="mod-value" style="border-right:1px solid #ccc;">${v1}</div>
+      <div class="mod-label">${l2}</div>
+      <div class="mod-value">${v2}</div>
+    </div>`;
   }
-  function showToast(msg){
-    const t=document.createElement('div');
-    t.textContent=msg;
-    t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;z-index:200;opacity:0;transition:opacity .2s;box-shadow:0 4px 12px rgba(0,0,0,.2)';
-    document.body.appendChild(t);
-    setTimeout(()=>t.style.opacity='1',10);
-    setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),250)},2200);
+  return `<div class="mod-row"><div class="mod-label">${l1}</div><div class="mod-value">${v1}</div></div>`;
+}
+function srow(l, v) {
+  return `<div style="border-bottom:1px solid #e8e8e8;display:flex;align-items:stretch;">
+    <div class="mod-label" style="font-size:8px;">${l}</div>
+    <div class="mod-value" style="font-size:9.5px;">${v}</div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// PDF
+// ═══════════════════════════════════════════════
+function generaPDF() {
+  if (typeof window.jspdf === 'undefined') { showToast('⚠ Libreria PDF non caricata'); return; }
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({unit:'mm', format:'a4'});
+  const zona   = getZona();
+  const drone  = getDrone();
+  const scopo  = getScopo();
+  const destA  = ENTI[zona] || '— verifica AIP ENR 5.1 —';
+  const latval = g('lat'), lonval = g('lon');
+  if (!dmsText && latval && lonval) {
+    const lat = parseFloat(latval), lon = parseFloat(lonval);
+    if (!isNaN(lat) && !isNaN(lon)) dmsText = `Lat ${toDMS(lat,true)} – Lon ${toDMS(lon,false)}`;
   }
-  function saveData(){
-    const data={};
-    fields.forEach(f=>data[f]=$(f).value);
-    data.dms=$('dmsResult').textContent;
-    try{localStorage.setItem('atm360',JSON.stringify(data))}catch(e){}
+  const coord   = dmsText ? `${g('localita')} – ${dmsText}` : (g('localita')||'–');
+  const quota   = g('quota') || '–';
+  const quotaFt = quota !== '–' ? Math.round(parseInt(quota)*3.28084) : '–';
+  const orario  = (utcInizioText !== '–' && utcFineText !== '–')
+    ? `Dal ${utcInizioText} al ${utcFineText}`
+    : `${g('dataInizio')||'–'} ore ${g('oraInizio')||'–'}–${g('oraFine')||'–'} (locale)`;
+  const altreNote = `Il sorvolo sarà sempre svolto secondo i parametri della categoria Open (Reg. EU 2019/947). RTH, geofencing, classe C0. Osservatore sempre presente. Sorvolo in VLOS. Pilota al ${FISSI.tel}. Interrompibile su richiesta autorità.`;
+  const ccFull = `${FISSI.cc1}; ${FISSI.cc2}`;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text('ENAC',15,18);
+  doc.setFontSize(14); doc.text('MODELLO ATM-05',195,18,{align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(8);
+  doc.text('(All. "A" Circ. ATM-05) – C.F.: '+FISSI.cfEnac,195,24,{align:'right'});
+  doc.text('Bollo assolto in modo virtuale (aut. Direz. Reg. Lazio N.135047/98 del 30/11/1998)',195,28,{align:'right'});
+
+  let y = 34;
+  const add = (label, val, h=11) => {
+    doc.setDrawColor(180); doc.rect(15,y,180,h);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8);
+    doc.text(label, 17, y+4.5);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    const lines = doc.splitTextToSize(val||'–', 174);
+    doc.text(lines, 17, y+9); y += h;
+  };
+
+  add('A:', destA, 12);
+  add('Cc:', ccFull, 12);
+  add('Il richiedente:', `${g('richiedente')||'–'} – Attestato: ${g('attestato')||'–'}`, 11);
+  add('Tel/Mob. / E-mail/Pec:', `${FISSI.tel} / ${FISSI.pec}`, 11);
+  add('Tipo di attività:', scopo||'–', 11);
+  add('Tipo aeromobile:', drone||'–', 11);
+  add('Loc. decollo e coordinate (DMS):', coord, 13);
+  add('Loc. atterraggio:', coord+' (stessa area)', 13);
+  add("Loc. dove si svolge l'attività:", g('localita')||'–', 11);
+  add('Zona R,P o D interessata:', zona||'–', 11);
+  add('Limiti laterali:', `Raggio ${g('raggio')||'–'} m dal punto di decollo`, 11);
+  add('Limiti verticali:', `SFC/GND – ${quota} m AGL (${quotaFt} ft)`, 11);
+  add('Ubicazione rispetto al capoluogo:', g('localita')||'–', 11);
+  add("Distanza dall'ARP / aeroporto:", g('distAeroporto')||'–', 11);
+  add('Data e orario (UTC):', orario, 13);
+  add('Altre notizie utili:', altreNote, 30);
+
+  const oggi = new Date().toLocaleDateString('it-IT');
+  doc.setFontSize(10);
+  doc.text(`Luogo e data: Roma, ${oggi}`, 15, y+10);
+  doc.text('Firma operatore APR', 15, y+22);
+  doc.setDrawColor(0); doc.line(15,y+20,90,y+20);
+  doc.setFont('helvetica','italic'); doc.text(g('richiedente')||'', 17, y+27);
+
+  const fname = `ATM-05B_${(zona||'zona').replace(/[^a-z0-9]/gi,'_')}_${g('dataInizio')||'data'}.pdf`;
+  doc.save(fname);
+  showToast('✓ PDF generato: '+fname);
+}
+
+// ═══════════════════════════════════════════════
+// ATM-09A
+// ═══════════════════════════════════════════════
+function buildATM09() {
+  const zona    = getZona();
+  const drone   = getDrone();
+  const latval  = g('lat'), lonval = g('lon');
+  if (!dmsText && latval && lonval) {
+    const lat = parseFloat(latval), lon = parseFloat(lonval);
+    if (!isNaN(lat) && !isNaN(lon)) dmsText = `Lat ${toDMS(lat,true)} – Lon ${toDMS(lon,false)}`;
   }
-  function loadData(){
-    try{
-      const raw=localStorage.getItem('atm360');
-      if(raw){const data=JSON.parse(raw); fields.forEach(f=>{if(data[f]!==undefined)$(f).value=data[f]}); if(data.dms){$('dmsResult').textContent=data.dms;$('dmsResult').style.display='block'}}
-    }catch(e){}
-    const today=new Date().toISOString().slice(0,10);
-    if(!$('dataInizio').value) $('dataInizio').value=today;
-    if(!$('dataFine').value) $('dataFine').value=today;
-    if(!$('oraInizio').value) $('oraInizio').value='09:00';
-    if(!$('oraFine').value) $('oraFine').value='12:00';
+  const txt = `MODELLO ATM-09A – NOTIFICA OPERAZIONI APR
+Categoria OPEN – Sottocategoria A1/A3
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+A:  Torre di Controllo / Gestore aeroporto
+Cc: ${FISSI.cc1}
+    ${FISSI.cc2}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Il sottoscritto ${g('richiedente')||'–'}, in qualità di operatore APR
+attestato n. ${g('attestato')||'–'}, NOTIFICA la seguente operazione:
+
+LOCALITÀ:       ${g('localita')||'–'}
+COORDINATE:     ${dmsText||'–'}
+ZONA:           ${zona||'–'}
+DATA/ORA UTC:   Dal ${utcInizioText} al ${utcFineText}
+QUOTA MAX:      ${g('quota')||'–'} m AGL
+RAGGIO:         ${g('raggio')||'–'} m
+AEROMOBILE:     ${drone||'–'}
+SCOPO:          ${getScopo()||'–'}
+
+MISURE DI SICUREZZA:
+• Categoria OPEN – VLOS con osservatore dedicato
+• RTH e geofencing attivi
+• Classe C0 – Reg. EU 2019/947 / 2019/945
+• Disponibilità a interruzione immediata su richiesta ATS
+
+CONTATTO H24:   ${FISSI.tel}
+PEC OPERATORE:  ${FISSI.pec}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Firma: ${g('richiedente')||'–'}`;
+
+  document.getElementById('atm09-preview').textContent = txt;
+}
+
+function copyATM09() {
+  const txt = document.getElementById('atm09-preview').textContent;
+  navigator.clipboard.writeText(txt).then(() => showToast('✓ ATM-09A copiato'));
+}
+
+// ═══════════════════════════════════════════════
+// RIEPILOGO PEC
+// ═══════════════════════════════════════════════
+function buildRiepilogo() {
+  const zona  = getZona();
+  const destA = ENTI[zona] || '— verifica AIP ENR 5.1 —';
+  const latval = g('lat'), lonval = g('lon');
+  if (!dmsText && latval && lonval) {
+    const lat = parseFloat(latval), lon = parseFloat(lonval);
+    if (!isNaN(lat) && !isNaN(lon)) dmsText = `Lat ${toDMS(lat,true)} – Lon ${toDMS(lon,false)}`;
   }
-  function updateA(){
-    const z=$('zona').value||'';
-    const isPref = z.includes('P244')||z.includes('P186')||z.toLowerCase().includes('carceri');
-    $('destA').value = isPref ? 'protocollo.prefrm@pec.interno.it' : 'seleziona ente';
-  }
-  function updateUTC(){
-    utcInizioText = formatUTC($('dataInizio').value,$('oraInizio').value);
-    utcFineText = formatUTC($('dataFine').value,$('oraFine').value);
-    $('utcInizio').textContent='UTC: '+utcInizioText.replace(' UTC','');
-    $('utcFine').textContent='UTC: '+utcFineText.replace(' UTC','');
-  }
-  function convertDMS(){
-    const lat=parseFloat($('lat').value), lon=parseFloat($('lon').value);
-    if(isNaN(lat)||isNaN(lon)){showToast('Inserisci latitudine e longitudine');return}
-    const res=`Lat ${toDMS(lat,true)} – Lon ${toDMS(lon,false)}`;
-    $('dmsResult').textContent=res;
-    $('dmsResult').style.display='block';
-    saveData();
-  }
 
-  $('btnConvert').addEventListener('click',convertDMS);
-  $('zona').addEventListener('change',()=>{updateA();saveData()});
-  ['dataInizio','oraInizio','dataFine','oraFine'].forEach(id=>$(id).addEventListener('change',()=>{updateUTC();saveData()}));
-  document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',saveData));
+  const ogg = `Istanza Nulla Osta ATM-05B – ${zona||'[zona]'} – ${utcInizioText} – ${g('richiedente')||'[Operatore]'}`;
+  document.getElementById('ogg-pec').textContent = ogg;
+  document.getElementById('r-desta').textContent  = destA;
+  document.getElementById('r-rich').textContent   = g('richiedente') || '–';
+  document.getElementById('r-att').textContent    = g('attestato') || '–';
+  document.getElementById('r-scopo').textContent  = getScopo() || '–';
+  document.getElementById('r-loc').textContent    = g('localita') || '–';
+  document.getElementById('r-zona').textContent   = zona || '–';
+  document.getElementById('r-coord').textContent  = dmsText || '–';
+  document.getElementById('r-utc').textContent    = `Dal ${utcInizioText} al ${utcFineText}`;
+  document.getElementById('r-quota').textContent  = (g('quota')||'–') + ' m AGL';
+  document.getElementById('r-raggio').textContent = (g('raggio')||'–') + ' m';
+  document.getElementById('r-drone').textContent  = getDrone() || '–';
+}
 
-  loadData(); updateA(); updateUTC();
+function copyOgg() {
+  const txt = document.getElementById('ogg-pec').textContent;
+  navigator.clipboard.writeText(txt).then(() => showToast('✓ Oggetto copiato'));
+}
 
-  // PWA hint
-  const hint=$('pwaHint');
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  if(!isStandalone && !localStorage.getItem('pwaDismissed')) hint.style.display='block';
-  $('closeHint').onclick=()=>{hint.style.display='none';localStorage.setItem('pwaDismissed','1')};
+function copyTuttoPEC() {
+  const zona  = getZona();
+  const destA = ENTI[zona] || '— verifica AIP ENR 5.1 —';
+  const txt = `OGGETTO: ${document.getElementById('ogg-pec').textContent}
 
-  // PDF
-  $('btnPDF').addEventListener('click',()=>{
-    const {jsPDF}=window.jspdf;
-    const doc=new jsPDF({unit:'mm',format:'a4'});
-    const richiedente=$('richiedente').value||'-';
-    const attestato=$('attestato').value||'-';
-    const scopo=$('scopo').value;
-    const localita=$('localita').value||'-';
-    const lat=parseFloat($('lat').value), lon=parseFloat($('lon').value);
-    const dms=$('dmsResult').textContent || ( !isNaN(lat)&&!isNaN(lon) ? `Lat ${toDMS(lat,true)} – Lon ${toDMS(lon,false)}` : '-');
-    const zona=$('zona').value;
-    const raggio=$('raggio').value;
-    const quota=$('quota').value;
-    const drone=$('drone').value;
-    const tel=$('telFisso').value;
-    const email=$('emailFisso').value;
-    const cc=$('ccEnac').value;
-    const A=$('destA').value;
-    const Cc=`${cc}; ${email}`;
-    const altre=`Operazione in categoria OPEN – sottocategoria A1/A3 in VLOS con osservatore dedicato. Quota massima ${quota} m AGL. Sistema RTH attivo, geofencing configurato. Drone ${drone}. Assicurazione RCT in corso di validità. Pilota contattabile al ${tel}. Attività immediatamente interrompibile su richiesta autorità competente.`;
+A: ${destA}
+CC: ${FISSI.cc1}; ${FISSI.cc2}; ${FISSI.pec}
 
-    // Header
-    doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text('ENAC',15,18);
-    doc.setFontSize(14);doc.text('MODELLO ATM-05',195,18,{align:'right'});
-    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text('Istanza di nulla osta per attività APR in zona regolamentata',195,24,{align:'right'});
-    doc.setFontSize(7);doc.text('Imposta di bollo assolta in modo virtuale',195,28,{align:'right'});
+DATI PRATICA:
+Richiedente:  ${g('richiedente')||'–'}
+Attestato:    ${g('attestato')||'–'}
+Attività:     ${getScopo()||'–'}
+Località:     ${g('localita')||'–'}
+Zona:         ${zona||'–'}
+Coordinate:   ${dmsText||'–'}
+Orario UTC:   Dal ${utcInizioText} al ${utcFineText}
+Quota max:    ${g('quota')||'–'} m AGL
+Raggio:       ${g('raggio')||'–'} m
+Drone:        ${getDrone()||'–'}
+Tel:          ${FISSI.tel}
+PEC:          ${FISSI.pec}`;
+  navigator.clipboard.writeText(txt).then(() => showToast('✓ Riepilogo copiato'));
+}
 
-    let y=34;
-    const add=(l,v,h=11)=>{
-      doc.setDrawColor(200);doc.rect(15,y,180,h);
-      doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.text(l,17,y+4.5);
-      doc.setFont('helvetica','normal');doc.setFontSize(9.5);
-      const lines=doc.splitTextToSize(v||'-',176);
-      doc.text(lines,17,y+9);
-      y+=h;
-    };
-    add('A:',A,12);
-    add('CC:',Cc,14);
-    add('IL RICHIEDENTE:',`${richiedente} – Attestato: ${attestato}`,12);
-    add('TELEFONO / E-MAIL:',`${tel} / ${email}`,11);
-    add('TIPO DI ATTIVITA PROPOSTA:',scopo,11);
-    add('TIPO AEROMOBILE IMPIEGATO:',drone,11);
-    add('LOCALITA DI DECOLLO E COORDINATE:',`${localita} – ${dms}`,14);
-    add('LOCALITA DI ATTERRAGGIO:',`${localita} (stessa area)`,12);
-    add("LOCALITA DELL'ATTIVITA:",`${localita}`,11);
-    add('ZONA INTERESSATA:',zona,11);
-    add('LIMITI LATERALI:',`Raggio ${raggio} m dal punto di decollo`,11);
-    add('LIMITI VERTICALI:',`SFC / GND a ${quota} m AGL (circa ${Math.round(quota*3.28084)} ft)`,11);
-    add('DATA E ORARIO ATTIVITA (UTC):',`Inizio: ${utcInizioText} – Fine: ${utcFineText}`,14);
-    add('ALTRE NOTIZIE UTILI:',altre,34);
+// ═══════════════════════════════════════════════
+// PERSISTENZA
+// ═══════════════════════════════════════════════
+const SAVE_FIELDS = ['richiedente','attestato','scopo','localita','lat','lon','dataInizio','dataFine','oraInizio','oraFine','zona','raggio','quota','drone','distAeroporto','fuso'];
 
-    const oggi=new Date().toLocaleDateString('it-IT');
-    doc.setFontSize(10);doc.text(`Luogo e data: Roma, ${oggi}`,15,y+10);
-    doc.text('Firma operatore APR',15,y+24);
-    doc.line(15,y+22,85,y+22);
-    doc.setFont('helvetica','italic');doc.text(richiedente,17,y+29);
+function saveAll() {
+  const data = {};
+  SAVE_FIELDS.forEach(f => { const el = document.getElementById(f); if(el) data[f]=el.value; });
+  data.dms = dmsText;
+  try { localStorage.setItem('360drone_atm2', JSON.stringify(data)); } catch(e){}
+}
 
-    doc.save(`ATM-05_${zona.replace(/[^a-z0-9]/gi,'_')}_${$('dataInizio').value}.pdf`);
-    showToast('PDF ATM-05 generato');
-  });
+function loadAll() {
+  try {
+    const raw = localStorage.getItem('360drone_atm2');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    SAVE_FIELDS.forEach(f => { const el = document.getElementById(f); if(el && data[f]!==undefined) el.value=data[f]; });
+    if (data.dms) { dmsText = data.dms; const b=document.getElementById('dmsBox'); b.textContent=data.dms; b.style.display='block'; }
+  } catch(e){}
+}
 
-  // Copia PEC
-  $('btnCopy').addEventListener('click', async ()=>{
-    const A=$('destA').value;
-    const Cc=`${$('ccEnac').value}; ${$('emailFisso').value}`;
-    const zona=$('zona').value;
-    const data=$('dataInizio').value;
-    const ora=utcInizioText.replace(' UTC','z');
-    const text=`A: ${A}\nCC: ${Cc}\nOggetto: Istanza Nulla Osta ATM-05 – ${zona} – ${data} ${ora}`;
-    try{await navigator.clipboard.writeText(text);showToast('Dati PEC copiati')}
-    catch(e){showToast('Copia non riuscita')}
-  });
-
-  // ATM-09A
-  const modal=$('modal');
-  $('btnATM09').addEventListener('click',()=>{
-    const txt=`MODELLO ATM-09A – NOTIFICA OPERAZIONI APR
-
-A: Torre di Controllo / Gestore Aeroporto
-Cc: protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it
-
-Il sottoscritto ${$('richiedente').value||'-'}, attestato ${$('attestato').value||'-'}, NOTIFICA:
-
-- Località: ${$('localita').value||'-'}
-- Coordinate: ${$('dmsResult').textContent||'-'}
-- Data/ora UTC: dal ${utcInizioText} al ${utcFineText}
-- Quota max: ${$('quota').value} m AGL
-- Raggio operativo: ${$('raggio').value} m
-- Aeromobile: ${$('drone').value}
-- Scopo: ${$('scopo').value}
-- Zona: ${$('zona').value}
-
-Operazione in categoria OPEN, VLOS, con osservatore. RTH e geofencing attivi. Contatto tel ${$('telFisso').value} attivo H24. Disponibilità a interruzione immediata su richiesta ATS.
-
-Firma: ${$('richiedente').value||''}`;
-    $('atm09text').textContent=txt;
-    modal.classList.add('open');
-  });
-  $('btnClose').onclick=()=>modal.classList.remove('open');
-  modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('open')});
-  $('btnCopy09').onclick=async()=>{try{await navigator.clipboard.writeText($('atm09text').textContent);showToast('Testo ATM-09A copiato')}catch{} };
+// ═══════════════════════════════════════════════
+// SELECT CUSTOM
+// ═══════════════════════════════════════════════
+document.getElementById('scopo').addEventListener('change', function(){
+  document.getElementById('scopo-custom-wrap').style.display = this.value === 'custom' ? 'block' : 'none';
 });
+document.getElementById('zona').addEventListener('change', function(){
+  document.getElementById('zona-custom-wrap').style.display = this.value === 'custom-zona' ? 'block' : 'none';
+  updateDestA();
+});
+document.getElementById('drone').addEventListener('change', function(){
+  document.getElementById('drone-custom-wrap').style.display = this.value === 'custom-drone' ? 'block' : 'none';
+});
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ═══════════════════════════════════════════════
+// AUTO-SAVE
+// ═══════════════════════════════════════════════
+document.querySelectorAll('input,select,textarea').forEach(el => {
+  el.addEventListener('input', saveAll);
+  el.addEventListener('change', saveAll);
+});
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+(function init() {
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('dataInizio').value = today;
+  document.getElementById('dataFine').value   = today;
+  document.getElementById('oraInizio').value  = '09:00';
+  document.getElementById('oraFine').value    = '12:00';
+  loadAll();
+  updateUTC();
+  updateDestA();
+})();
 </script>
 </body>
 </html>
