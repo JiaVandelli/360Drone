@@ -1,111 +1,804 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>360Drone – Compilatore ATM-05b</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: linear-gradient(135deg, #e8f0f7 0%, #f5f9ff 100%); min-height: 100vh; font-family: 'Trebuchet MS', Georgia, serif; }
-    input, textarea, button, select { font-family: inherit; }
-    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #1a3c5e44; border-radius: 3px; }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>360Drone – ATM-05b</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(135deg,#e8f0f7,#f5f9ff);min-height:100vh;font-family:'Segoe UI',Georgia,serif}
+input,textarea,button,select{font-family:inherit}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:#1a3c5e55;border-radius:3px}
+@media print{body{background:#fff}}
+#pdf-template{display:none}
+</style>
 </head>
 <body>
 <div id="root"></div>
+
+<!-- PDF TEMPLATE (hidden, used for export) -->
+<div id="pdf-template"></div>
+
 <script type="text/babel">
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef, useCallback } = React;
 
-const FIXED = { tel360: "0187 1755700", email360: "360drone@pec.it" };
+/* ═══════════════════════════════════════════════
+   COSTANTI
+═══════════════════════════════════════════════ */
+const FIXED = { tel: "0187 1755700", email: "360drone@pec.it", nome360: "360 Drone S.r.l." };
 
-// ✅ DATI DA ZONE.JS - IDENTICI AI TUOI
-const destinatari = {
-  "LI P244": { A: "protocollo.prefrm@pec.interno.it", Cc: "protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it" },
-  "R1": { A: "operazioni@enav.it", Cc: "mobilita.innovativa@enac.gov.it" },
-  "P123": { A: "enac@pec.enac.gov.it", Cc: "" },
+const ZONE_DB = {
+  "P - Carcere (DAP)": {
+    A:"segreteriasicurezza.dap@giustiziacert.it",
+    Cc:"protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it",
+    tipo:"P", badge:"🔴", avviso:"Zona PROIBITA – Istituto penitenziario. Anticipo min. 30 gg. Bollo €16 obbligatorio."
+  },
+  "P - Quirinale / Presidenziale": {
+    A:"segreteria.quirinale@pec.quirinale.it",
+    Cc:"protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it",
+    tipo:"P", badge:"🔴", avviso:"Zona PROIBITA – Presidenziale. Autorizzazione molto difficile da ottenere."
+  },
+  "P - Ministero / Istituzione (Roma LI P244)": {
+    A:"protocollo.prefrm@pec.interno.it",
+    Cc:"protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it",
+    tipo:"P", badge:"🔴", avviso:"Zona PROIBITA – Edifici istituzionali Roma. Prefettura RM."
+  },
+  "R - Prefettura (scegli provincia)": {
+    A:"protocollo.pref{PROV}@pec.interno.it",
+    Cc:"protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it",
+    tipo:"R", badge:"🟠", avviso:"Zona RISERVATA – Prefettura. Seleziona la provincia per generare l'email.", needsProv:true
+  },
+  "R - Militare (COA Difesa)": {
+    A:"aerosquadra.coa@postacert.difesa.it",
+    Cc:"protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it",
+    tipo:"R", badge:"🟠", avviso:"Zona RISERVATA – Militare. Anticipo min. 15 gg. Coordinarsi con ATS."
+  },
+  "R - ENAV / Aeroporto": {
+    A:"operazioni.atm@enav.it",
+    Cc:"protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it",
+    tipo:"R", badge:"🟠", avviso:"Zona RISERVATA – Aeroportuale. Verifica sempre D-Flight e contatta torre di controllo."
+  },
+  "D - Altra zona (manuale)": {
+    A:"",
+    Cc:"protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it",
+    tipo:"D", badge:"🟡", avviso:"Zona D – Inserisci il destinatario manualmente."
+  }
 };
 
-const riferimenti = {
-  regolamenti: [
-    { nome: "Reg. (UE) 947/2019", url: "https://eur-lex.europa.eu/eli/reg/2019/947" },
-    { nome: "Reg. (UE) 945/2019", url: "https://eur-lex.europa.eu/eli/reg/2019/945" },
-    { nome: "ATM-05b", url: "https://www.enac.gov.it/sites/default/files/allegati/2021-01/ATM-05b.pdf" },
-    { nome: "ATM-09a", url: "https://www.enac.gov.it/sites/default/files/allegati/2021-01/ATM-09a.pdf" },
-    { nome: "NOTAM Italia", url: "https://www.enav.it/it/servizi/notam" },
-    { nome: "AIP Italia", url: "https://www.enav.it/it/servizi/aip" },
-    { nome: "D-Flight", url: "https://www.d-flight.it" },
-    { nome: "UAS Italia", url: "https://www.enac.gov.it/mezzi-aerei-a-piloti-remote" },
-  ],
+const PROVINCE = ["AG","AL","AN","AO","AP","AQ","AR","AT","AV","BA","BG","BI","BL","BN","BO",
+"BR","BS","BT","BZ","CA","CB","CE","CH","CL","CN","CO","CR","CS","CT","CZ","EN","FC","FE",
+"FG","FI","FM","FR","GE","GO","GR","IM","IS","KR","LC","LE","LI","LO","LT","LU","MB","MC",
+"ME","MI","MN","MO","MS","MT","NA","NO","NU","OR","PA","PC","PD","PE","PG","PI","PN","PO",
+"PR","PT","PU","PV","PZ","RA","RC","RE","RG","RI","RM","RN","RO","SA","SI","SO","SP","SR",
+"SS","SU","SV","TA","TE","TN","TO","TP","TR","TS","TV","UD","VA","VB","VC","VE","VI","VR","VT","VV"];
+
+const DRONI = [
+  { label:"DJI Mini 2 (249g – C0)", peso:249, cat:"C0", licMin:"A1" },
+  { label:"DJI Mini 3 (249g – C0)", peso:249, cat:"C0", licMin:"A1" },
+  { label:"DJI Mini 4 Pro (249g – C0)", peso:249, cat:"C0", licMin:"A1" },
+  { label:"DJI Air 3 (720g – C1)", peso:720, cat:"C1", licMin:"A1" },
+  { label:"DJI Mavic 3 (895g – C1)", peso:895, cat:"C1", licMin:"A1" },
+  { label:"DJI Mavic 3 Pro (958g – C2)", peso:958, cat:"C2", licMin:"A2" },
+  { label:"DJI Phantom 4 Pro (1375g – C2)", peso:1375, cat:"C2", licMin:"A2" },
+  { label:"DJI Inspire 2 (3440g – C2)", peso:3440, cat:"C2", licMin:"A2" },
+  { label:"Drone >4kg (C3)", peso:4001, cat:"C3", licMin:"A3" },
+  { label:"Altro (inserisci manualmente)", peso:0, cat:"", licMin:"" },
+];
+
+const LINK_UTILI = [
+  { label:"🗺 D-Flight (verifica zona)", url:"https://www.d-flight.it/new_portal/" },
+  { label:"⚠️ NOTAM Italia (ENAV)", url:"https://notamweb.enav.it/" },
+  { label:"📋 AIP Italia", url:"https://www.enav.it/it/servizi/aip" },
+  { label:"📄 Modulo ATM-05b ufficiale", url:"https://www.enac.gov.it/sites/default/files/allegati/2021-01/ATM-05b.pdf" },
+  { label:"📄 Modulo ATM-09a", url:"https://www.enac.gov.it/sites/default/files/allegati/2021-01/ATM-09a.pdf" },
+  { label:"🔍 Reg. (UE) 947/2019", url:"https://eur-lex.europa.eu/eli/reg/2019/947" },
+  { label:"🌐 UAS – ENAC", url:"https://www.enac.gov.it/mezzi-aerei-a-piloti-remoti" },
+  { label:"📡 LUT – ENAC", url:"https://www.enac.gov.it/lut" },
+];
+
+const empty = {
+  zona:"", provincia:"", destA:"", destCc:"protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it",
+  richiedente:"", attestato:"", tipoLic:"",
+  dronePreset:"", aeromobile:"", tipoAttivita:"",
+  decollo:"", latDecollo:"", lonDecollo:"",
+  atterraggio:"", latAtterraggio:"", lonAtterraggio:"",
+  localita:"", capoluogo:"", aeroporto:"", distanza:"",
+  puntiLaterali:[{nome:"",lat:"",lon:""},{nome:"",lat:"",lon:""}],
+  limVerticali:"inferiore GND / superiore 45 m AGL (147 ft)",
+  dateOrari:"", nomePilota:"", telPilota:"", altreNotizie:"",
+  dataRichiesta: new Date().toLocaleDateString("it-IT"),
+  luogo:"Roma",
 };
 
-const emptyForm = {
-  destA: "protocollo.prefrm@pec.interno.it",
-  destCc: "protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it",
-  richiedente: "", attestato: "", tipoAttivita: "", aeromobile: "",
-  decollo: "", latDecollo: "", lonDecollo: "", atterraggio: "", latAtterraggio: "", lonAtterraggio: "",
-  localita: "", zona: "", puntiLaterali: [{ nome: "", lat: "", lon: "" }, { nome: "", lat: "", lon: "" }],
-  limVerticali: "inferiore GND / superiore 45 m AGL (147 ft)", capoluogo: "", aeroporto: "", distanza: "",
-  dateOrari: "", nomePilota: "", telPilota: "", altreNotizie: "",
+/* ═══════════════════════════════════════════════
+   VALIDAZIONE
+═══════════════════════════════════════════════ */
+function valida(f) {
+  const warn = []; const err = [];
+  
+  // Controllo date anticipo 15 gg
+  if (f.dateOrari) {
+    const oggi = new Date();
+    const match = f.dateOrari.match(/(\d{1,2})[\/\-\s](\w+)[\/\-\s]?(\d{4})?/);
+    if (match) {
+      const mesi = {gennaio:0,febbraio:1,marzo:2,aprile:3,maggio:4,giugno:5,luglio:6,agosto:7,settembre:8,ottobre:9,novembre:10,dicembre:11};
+      const meseNum = mesi[match[2]?.toLowerCase()];
+      if (meseNum !== undefined) {
+        const anno = match[3] ? parseInt(match[3]) : oggi.getFullYear();
+        const dataVolo = new Date(anno, meseNum, parseInt(match[1]));
+        const diff = (dataVolo - oggi) / (1000*60*60*24);
+        if (diff < 0) err.push({ tipo:"errore", msg:"⛔ Le date inserite sono già passate!" });
+        else if (diff < 15) err.push({ tipo:"errore", msg:`⛔ Anticipo insufficiente: ${Math.round(diff)} giorni. Servono ALMENO 15 giorni prima dell'attività.` });
+        else if (diff < 20) warn.push({ tipo:"avviso", msg:`⚠️ Anticipo breve: ${Math.round(diff)} giorni. Consigliati almeno 20 giorni per sicurezza.` });
+      }
+    }
+  }
+  
+  // Controllo licenza vs drone
+  const licOk = { "A1":["A1","A2","A3"], "A2":["A2","A3"], "A3":["A3"] };
+  const droneObj = DRONI.find(d=>d.label===f.dronePreset);
+  if (droneObj && droneObj.licMin && f.tipoLic) {
+    const licenze_accettate = licOk[droneObj.licMin] || [];
+    if (!licenze_accettate.includes(f.tipoLic)) {
+      err.push({ tipo:"errore", msg:`⛔ LICENZA INCOMPATIBILE: ${f.dronePreset} richiede almeno patentino ${droneObj.licMin}, ma il pilota ha ${f.tipoLic}.` });
+    }
+  }
+  
+  // Zona P con drone >4kg
+  const zoneObj = ZONE_DB[f.zona];
+  if (zoneObj?.tipo === "P" && droneObj && droneObj.peso > 900) {
+    warn.push({ tipo:"avviso", msg:"⚠️ Drone pesante in zona P: le probabilità di autorizzazione sono molto basse. Considera un drone <250g." });
+  }
+  
+  // Zona R militare
+  if (f.zona && f.zona.includes("Militare")) {
+    warn.push({ tipo:"avviso", msg:"⚠️ Zona militare: richiedere anche nulla osta al comando militare competente. Anticipo consigliato 30 giorni." });
+  }
+  
+  // Attestato mancante
+  if (!f.attestato && f.richiedente) {
+    err.push({ tipo:"errore", msg:"⛔ Numero attestato/patentino mancante: campo obbligatorio." });
+  }
+  
+  // Destinatario vuoto
+  if (!f.destA) {
+    warn.push({ tipo:"avviso", msg:"⚠️ Email destinatario (A) non compilata. Seleziona la zona per auto-compilarla." });
+  }
+  
+  // Ricordare NOTAM
+  warn.push({ tipo:"info", msg:"ℹ️ Ricorda di verificare i NOTAM attivi su ENAV prima di inviare la richiesta." });
+  
+  // Ricordare bollo
+  if (zoneObj?.tipo === "P") {
+    warn.push({ tipo:"info", msg:"ℹ️ Zona P: allegare marca da bollo €16 (o pagamento virtuale) alla PEC." });
+  }
+  
+  return [...err, ...warn];
+}
+
+/* ═══════════════════════════════════════════════
+   COMPONENTI UI
+═══════════════════════════════════════════════ */
+const si = {
+  inp:{ width:"100%", padding:"8px 10px", border:"1.5px solid #c5d8ea", borderRadius:6, fontSize:13, background:"#f7fbff", color:"#1a2a3a", outline:"none" },
+  lbl:{ fontSize:11, fontWeight:700, color:"#1a3c5e", textTransform:"uppercase", letterSpacing:"0.06em", display:"block", marginBottom:4 },
 };
 
-const s = {
-  input: { width: "100%", padding: "8px 10px", border: "1.5px solid #c5d8ea", borderRadius: 6, fontSize: 13, background: "#f7fbff", color: "#1a2a3a", outline: "none" },
-  label: { fontSize: 11, fontWeight: 700, color: "#1a3c5e", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 },
-  td: { border: "1px solid #c5d8ea", padding: "6px 10px", verticalAlign: "top" },
-};
+const Inp = ({value,onChange,placeholder,style,type="text"}) =>
+  <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} style={{...si.inp,...style}}/>;
 
-function Field({ label, required, children }) { return (<div style={{ marginBottom: 10 }}><label style={s.label}>{label} {required && <span style={{ color: "#c0392b" }}>*</span>}</label>{children}</div>); }
-function Inp(props) { return <input {...props} onChange={e=>props.onChange(e.target.value)} style={{...s.input,...props.style}} />; }
-function Txt(props) { return <textarea {...props} onChange={e=>props.onChange(e.target.value)} rows={props.rows||3} style={{...s.input, resize:"vertical"}} />; }
-function Sec({ letter, title, color="#1a3c5e", children }) { return (<div style={{marginBottom:18,background:"#fff",borderRadius:10,boxShadow:"0 1px 6px #1a3c5e18",overflow:"hidden"}}><div style={{background:color,padding:"8px 16px",display:"flex",gap:10,alignItems:"center"}}><span style={{background:"#fff",color,borderRadius:"50%",width:24,height:24,display:"grid",placeItems:"center",fontWeight:900,fontSize:13}}>{letter}</span><span style={{color:"#fff",fontWeight:700,fontSize:13}}>{title}</span></div><div style={{padding:"14px 16px"}}>{children}</div></div>); }
+const Txt = ({value,onChange,placeholder,rows=3}) =>
+  <textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={rows} style={{...si.inp,resize:"vertical",width:"100%"}}/>;
 
-function App() {
-  const [f, setF] = useState({...emptyForm});
-  const [tab, setTab] = useState("form");
-  useEffect(()=>{ const s=localStorage.getItem('atm05'); if(s) setF(JSON.parse(s)); },[]);
-  useEffect(()=>{ localStorage.setItem('atm05', JSON.stringify(f)); },[f]);
+const Lbl = ({children,required}) =>
+  <label style={si.lbl}>{children} {required&&<span style={{color:"#c0392b"}}>*</span>}</label>;
 
-  const set = k => v => setF(p=>({...p,[k]:v}));
-  const setPunto = (i,field,v)=>{ const p=[...f.puntiLaterali]; p[i]={...p[i],[field]:v}; setF(prev=>({...prev,puntiLaterali:p})); };
-  const grid2 = {display:"grid",gridTemplateColumns:"1fr 1fr",gap:12};
+const F = ({label,required,children}) =>
+  <div style={{marginBottom:10}}><Lbl required={required}>{label}</Lbl>{children}</div>;
+
+const Sec = ({letter,title,color="#1a3c5e",children}) =>
+  <div style={{marginBottom:18,background:"#fff",borderRadius:10,boxShadow:"0 1px 8px #1a3c5e18",overflow:"hidden"}}>
+    <div style={{background:color,padding:"8px 16px",display:"flex",gap:10,alignItems:"center"}}>
+      <span style={{background:"#fff",color,borderRadius:"50%",width:24,height:24,display:"grid",placeItems:"center",fontWeight:900,fontSize:13,flexShrink:0}}>{letter}</span>
+      <span style={{color:"#fff",fontWeight:700,fontSize:13}}>{title}</span>
+    </div>
+    <div style={{padding:"14px 16px"}}>{children}</div>
+  </div>;
+
+const Btn = ({onClick,children,color="#1a3c5e",style={}}) =>
+  <button onClick={onClick} style={{background:color,color:"#fff",border:"none",borderRadius:8,padding:"10px 20px",fontWeight:700,fontSize:13,cursor:"pointer",...style}}>{children}</button>;
+
+/* ═══════════════════════════════════════════════
+   AI ASSISTANT
+═══════════════════════════════════════════════ */
+function AIAssistant({ f, setF, apiKey }) {
+  const [input, setInput] = useState("");
+  const [risposta, setRisposta] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const chiedi = async () => {
+    if (!apiKey) { setRisposta("⚠️ Inserisci prima la tua API Key Claude nella sezione Impostazioni."); return; }
+    if (!input.trim()) return;
+    setLoading(true); setRisposta("");
+
+    const sys = `Sei un assistente esperto di permessi di volo droni in Italia per la società 360 Drone.
+Il tuo compito è aiutare a compilare il modello ATM-05b per richieste di autorizzazione volo in zone P/R/D.
+Dati fissi 360Drone: Tel ${FIXED.tel}, Email ${FIXED.email}.
+Quando l'utente ti descrive una situazione o incolla un link, estrai le informazioni rilevanti e rispondi SEMPRE con un JSON valido (e solo quello, senza markdown) con i campi che riesci a determinare tra questi:
+richiedente, attestato, tipoLic (A1/A2/A3), aeromobile, tipoAttivita, decollo, latDecollo, lonDecollo, atterraggio, latAtterraggio, lonAtterraggio, localita, zona, capoluogo, aeroporto, distanza, dateOrari, nomePilota, telPilota, altreNotizie.
+Se non riesci a determinare un campo, omettilo dal JSON.
+Aggiungi sempre un campo "note_ai" con spiegazioni, avvisi importanti, e se c'è un link NOTAM o D-Flight, verifica la zona e segnala eventuali criticità.
+Se l'utente chiede informazioni generali (non compilazione), rispondi in italiano come testo normale (non JSON).`;
+
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST",
+        headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+        body: JSON.stringify({
+          model:"claude-sonnet-4-20250514",
+          max_tokens:2000,
+          system: sys,
+          tools:[{type:"web_search_20250305",name:"web_search"}],
+          messages:[{role:"user",content:input}]
+        })
+      });
+      const data = await res.json();
+      const testo = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n");
+      
+      // Prova a parsare JSON per auto-fill
+      try {
+        const clean = testo.replace(/```json|```/g,"").trim();
+        const j = JSON.parse(clean);
+        const note = j.note_ai || "";
+        delete j.note_ai;
+        // Auto-fill campi non vuoti
+        const update = {};
+        Object.keys(j).forEach(k=>{ if(j[k] && empty.hasOwnProperty(k)) update[k]=j[k]; });
+        if (Object.keys(update).length > 0) setF(prev=>({...prev,...update}));
+        setRisposta("✅ Campi aggiornati automaticamente!\n\n" + (note || "Nessuna nota aggiuntiva dall'AI."));
+      } catch {
+        setRisposta(testo || "Nessuna risposta ricevuta.");
+      }
+    } catch(e) {
+      setRisposta("❌ Errore: " + e.message);
+    }
+    setLoading(false);
+  };
 
   return (
     <div>
-      <div style={{background:"#1a3c5e",color:"#fff",padding:"14px 20px",display:"flex",justifyContent:"space-between"}}><div><div style={{fontSize:10,opacity:.7}}>360DRONE — PERMESSI DI VOLO</div><div style={{fontSize:19,fontWeight:900}}>Compilatore ATM-05b</div></div><div style={{fontSize:11,textAlign:"right"}}>📞 {FIXED.tel360}<br/>✉️ {FIXED.email360}</div></div>
-
-      <div style={{maxWidth:820,margin:"0 auto",padding:"20px 14px"}}>
-        <Sec letter="A" title="Destinatari PEC"><Field label="A — Destinatario"><Inp value={f.destA} onChange={set("destA")}/></Field><Field label="Cc"><Txt value={f.destCc} onChange={set("destCc")} rows={2}/></Field></Sec>
-
-        <Sec letter="H" title="Zona R, P o D" color="#6e2f1a">
-          <Field label="Denominazione zona" required>
-            <select value={f.zona} onChange={e=>{ const v=e.target.value; set("zona")(v); const d=destinatari[v]; if(d){ set("destA")(d.A); set("destCc")(d.Cc); } }} style={s.input}>
-              <option value="">Seleziona...</option>
-              {Object.keys(destinatari).map(k=> <option key={k} value={k}>{k}</option>)}
-            </select>
-          </Field>
-        </Sec>
-
-        <Sec letter="N" title="Altre notizie utili" color="#1e5799">
-          <div style={grid2}><Field label="Nome pilota" required><Inp value={f.nomePilota} onChange={set("nomePilota")}/></Field><Field label="Tel pilota" required><Inp value={f.telPilota} onChange={set("telPilota")}/></Field></div>
-        </Sec>
-
-        {/* ✅ SEZIONE Z CON I TUOI LINK */}
-        <Sec letter="Z" title="Riferimenti utili" color="#1a3c5e">
-          <ul style={{fontSize:13,lineHeight:1.8,paddingLeft:18}}>
-            {riferimenti.regolamenti.map((r,i)=>(
-              <li key={i}><a href={r.url} target="_blank" rel="noopener" style={{color:"#1a3c5e",textDecoration:"underline"}}>{r.nome}</a></li>
-            ))}
-          </ul>
-        </Sec>
+      <p style={{fontSize:13,color:"#555",marginBottom:12}}>Descrivi la situazione, incolla coordinate, link D-Flight, o chiedi informazioni. L'AI compilerà i campi automaticamente e segnalerà problemi.</p>
+      <Txt value={input} onChange={setInput} rows={4}
+        placeholder="Es: 'Devo volare il 15 luglio a Firenze in zona LI R34 con DJI Mini 3. Il pilota Mario Rossi ha patentino A1 n. LUX-RP-... Coordinate zona: 43.7696°N, 11.2558°E'"/>
+      <div style={{marginTop:8,display:"flex",gap:8,flexWrap:"wrap"}}>
+        <Btn onClick={chiedi} color="#7d3c98">{loading?"⏳ Elaborazione...":"🤖 Compila con AI"}</Btn>
+        <Btn onClick={()=>{setInput("Verifica se ci sono NOTAM attivi per la zona "+f.zona+" area "+f.localita+" nelle date "+f.dateOrari);}} color="#2471a3" style={{fontSize:12}}>🔍 Cerca NOTAM</Btn>
+        <Btn onClick={()=>{setInput("Il pilota "+f.richiedente+" con attestato "+f.attestato+" ("+f.tipoLic+") può volare con "+f.aeromobile+" in zona "+f.zona+"? Ci sono problemi legali?");}} color="#1e8449" style={{fontSize:12}}>✅ Verifica idoneità</Btn>
+      </div>
+      {risposta && (
+        <div style={{marginTop:14,background:"#f0f6ff",border:"1.5px solid #1a3c5e33",borderRadius:8,padding:"12px 14px",fontSize:13,whiteSpace:"pre-wrap",lineHeight:1.7,color:"#1a2a3a"}}>
+          {risposta}
+        </div>
+      )}
+      <div style={{marginTop:12,borderTop:"1px solid #eee",paddingTop:10}}>
+        <p style={{fontSize:11,fontWeight:700,color:"#1a3c5e",marginBottom:6}}>LINK UTILI</p>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+          {LINK_UTILI.map((l,i)=>(
+            <a key={i} href={l.url} target="_blank" rel="noopener"
+               style={{fontSize:11.5,padding:"4px 10px",background:"#e8f0f7",borderRadius:20,color:"#1a3c5e",textDecoration:"none",border:"1px solid #c5d8ea"}}>
+              {l.label}
+            </a>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+/* ═══════════════════════════════════════════════
+   PDF TEMPLATE BUILDER
+═══════════════════════════════════════════════ */
+function buildPdfHtml(f) {
+  const notizie = `Il pilota in comando sig. ${f.nomePilota} dichiara la disponibilità all'immediata interruzione dell'operazione in caso di necessità del gestore tramite comunicazione al numero ${f.telPilota}.\nI droni sono dotati di: RTH (return to home), geofencing.\nIl sorvolo durerà il tempo strettamente necessario all'ottenimento delle riprese e sarà sempre condotto in VLOS.\nNon verranno sorvolati assembramenti ed edifici particolari quali: caserme, ospedali, etc.${f.altreNotizie ? "\n" + f.altreNotizie : ""}`;
+  
+  const punti = f.puntiLaterali.filter(p=>p.nome||p.lat);
+  const puntiHtml = punti.length > 0
+    ? punti.map(p=>`<tr><td style="border:1px solid #999;padding:5px 8px">${p.nome}</td><td style="border:1px solid #999;padding:5px 8px">Lat N ${p.lat}</td><td style="border:1px solid #999;padding:5px 8px">Lon E ${p.lon}</td></tr>`).join("")
+    : `<tr><td style="border:1px solid #999;padding:5px 8px" colspan="3">—</td></tr>`;
+
+  return `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"/>
+<style>
+  body{font-family:'Times New Roman',serif;font-size:11pt;color:#000;margin:0;padding:0}
+  .page{width:210mm;min-height:297mm;margin:0 auto;padding:18mm 16mm 15mm 16mm}
+  h1{font-size:14pt;font-weight:bold;text-align:center;margin-bottom:4px;letter-spacing:1px}
+  h2{font-size:11pt;text-align:center;margin-bottom:18px;font-weight:normal}
+  table.main{width:100%;border-collapse:collapse;margin-bottom:12px}
+  table.main td,table.main th{border:1px solid #333;padding:6px 8px;vertical-align:top;font-size:10.5pt}
+  table.main .cat{background:#f0f0f0;font-weight:bold;width:28%}
+  .nota{font-size:9pt;margin-top:3px;color:#444;font-style:italic}
+  .firma-row{display:flex;justify-content:space-between;margin-top:28px;font-size:10.5pt}
+  .firma-box{display:inline-block;width:45%}
+  .firma-line{border-top:1px solid #000;margin-top:40px;font-size:9pt;text-align:center}
+  .header-box{border:2px solid #000;padding:10px 14px;margin-bottom:16px;text-align:center}
+  .subfield{font-size:9pt;color:#555;margin-top:2px}
+  .page-break{page-break-before:always}
+  @page{size:A4;margin:0}
+</style></head><body>
+<div class="page">
+  <div class="header-box">
+    <div style="font-size:8pt;margin-bottom:6px">MINISTERO DELLE INFRASTRUTTURE E DEI TRASPORTI – ENAC</div>
+    <h1>MODELLO ATM - 05b</h1>
+    <h2>RICHIESTA DI AUTORIZZAZIONE AD EFFETTUARE ATTIVITÀ CON APR<br/>
+    IN ZONE VIETATE, RISERVATE O PERICOLOSE (P/R/D)</h2>
+    <div style="font-size:8.5pt">Ai sensi del Reg. (UE) 2019/947 e delle norme ENAC sugli UAS</div>
+  </div>
+
+  <table class="main">
+    <tr>
+      <td class="cat">A — Destinatario (PEC)</td>
+      <td><strong>A:</strong> ${f.destA}<br/><strong>Cc:</strong> ${f.destCc}</td>
+    </tr>
+    <tr>
+      <td class="cat">B — Il/La richiedente</td>
+      <td>
+        ${f.richiedente}<br/>
+        <span class="subfield">Attestato/Patentino: ${f.attestato}</span><br/>
+        <span class="subfield">Tel./Mob.: ${FIXED.tel}</span><br/>
+        <span class="subfield">E-mail/PEC: ${FIXED.email}</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="cat">C — CHIEDE</td>
+      <td>
+        l'autorizzazione ad effettuare attività con APR come di seguito specificato, ai sensi del Reg. (UE) 2019/947
+        e delle disposizioni ENAC vigenti in materia di UAS.
+      </td>
+    </tr>
+    <tr>
+      <td class="cat">D — Tipo di attività <sup>(3)</sup></td>
+      <td>${f.tipoAttivita}</td>
+    </tr>
+    <tr>
+      <td class="cat">E — Tipo di aeromobile <sup>(4)</sup></td>
+      <td>${f.aeromobile}</td>
+    </tr>
+    <tr>
+      <td class="cat">F1 — Loc. decollo <sup>(5)</sup></td>
+      <td>${f.decollo}${f.latDecollo ? ` — Lat N ${f.latDecollo} / Lon E ${f.lonDecollo}` : ""}</td>
+    </tr>
+    <tr>
+      <td class="cat">F2 — Loc. atterraggio <sup>(5)</sup></td>
+      <td>${f.atterraggio || f.decollo}${f.latAtterraggio ? ` — Lat N ${f.latAtterraggio} / Lon E ${f.lonAtterraggio}` : (f.latDecollo ? ` — Lat N ${f.latDecollo} / Lon E ${f.lonDecollo}` : "")}</td>
+    </tr>
+    <tr>
+      <td class="cat">G — Loc. dove si svolge l'attività</td>
+      <td>${f.localita}</td>
+    </tr>
+    <tr>
+      <td class="cat">H — Zona R, P o D <sup>(6)</sup></td>
+      <td>${f.zona}</td>
+    </tr>
+    <tr>
+      <td class="cat">I — Limiti laterali <sup>(5)</sup></td>
+      <td>
+        <table style="width:100%;border-collapse:collapse">
+          <tr>
+            <th style="border:1px solid #999;padding:4px 8px;background:#f5f5f5;font-size:10pt">Punto/Località</th>
+            <th style="border:1px solid #999;padding:4px 8px;background:#f5f5f5;font-size:10pt">Latitudine</th>
+            <th style="border:1px solid #999;padding:4px 8px;background:#f5f5f5;font-size:10pt">Longitudine</th>
+          </tr>
+          ${puntiHtml}
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td class="cat">J — Limiti verticali <sup>(7)</sup></td>
+      <td>${f.limVerticali}</td>
+    </tr>
+    <tr>
+      <td class="cat">K — Capoluogo di riferimento</td>
+      <td>${f.capoluogo}</td>
+    </tr>
+    <tr>
+      <td class="cat">L — Distanza dall'ARP</td>
+      <td>${f.aeroporto}${f.distanza ? ` — ${f.distanza}` : ""}</td>
+    </tr>
+    <tr>
+      <td class="cat">M — Data/e dell'attività <sup>(8)</sup></td>
+      <td>${f.dateOrari}</td>
+    </tr>
+    <tr>
+      <td class="cat">N — Altre notizie utili <sup>(9)(10)</sup></td>
+      <td style="white-space:pre-line">${notizie}</td>
+    </tr>
+  </table>
+
+  <div style="margin-top:20px;font-size:10.5pt">
+    <p>In attesa di un gentile riscontro, si porgono cordiali saluti.</p>
+  </div>
+
+  <div class="firma-row" style="margin-top:28px;display:flex;justify-content:space-between">
+    <div class="firma-box">
+      <div>Luogo e data: ${f.luogo || "Roma"}, ${f.dataRichiesta}</div>
+    </div>
+    <div class="firma-box" style="text-align:right">
+      <div>Firma operatore APR</div>
+      <div class="firma-line">____________________________</div>
+    </div>
+  </div>
+</div>
+
+<div class="page page-break">
+  <h2 style="font-size:13pt;font-weight:bold;text-align:center;margin-bottom:20px">Note:</h2>
+  <ol style="font-size:10pt;line-height:1.9;padding-left:22px">
+    <li>Inserire il codice alfa numerico della fattura (casella centrale) e anno versamento (casella di destra).</li>
+    <li>Vedere Capitolo 6 e Capitolo 11, a seconda dei casi;</li>
+    <li>Specificare il tipo di attività (lanci para, innalzamento palloni liberi, attraversamento zone soggette a restrizione, ecc.);</li>
+    <li>Specificare il modello e le caratteristiche (peso, equipaggiamenti, dotazioni ecc.);</li>
+    <li>Coordinate geografiche sessagesimali (gradi, minuti primi, minuti secondi) espresse in formato WGS 84 con risoluzione a 1 secondo, del centro della zona o dei vertici della spezzata che la delimita; località geografica.</li>
+    <li>Denominazione della zona come riportato in AIP-Italia (es. LI R34)</li>
+    <li>Limiti verticali inferiori e superiori espressi in piedi al di sopra del mare/suolo (FT AMSL/AGL);</li>
+    <li>Data dell'attività: per indicare singoli giorni utilizzare la virgola (es. 1, 2, 5, 10); per indicare periodi di giorni consecutivi utilizzare il trattino (es. 1-3, 5-11). Orario sempre in UTC (ora di Greenwich). È possibile utilizzare in chiaro le dizioni "ALBA/TRAMONTO" o "H24".</li>
+    <li>Specificare disponibilità collegamenti T/B/T e transponder SSR, sistemi di sicurezza (es. cavo di vincolo), ecc.;</li>
+    <li>Valutazione ATS Fornitore SNA responsabile di riferimento (ENAV o AM, a seconda dei casi).</li>
+  </ol>
+  
+  <div style="margin-top:30px;border-top:1px solid #ccc;padding-top:14px;font-size:9pt;color:#666;text-align:center">
+    Documento generato da 360Drone – Compilatore ATM-05b — ${new Date().toLocaleString("it-IT")}
+  </div>
+</div>
+</body></html>`;
+}
+
+/* ═══════════════════════════════════════════════
+   APP PRINCIPALE
+═══════════════════════════════════════════════ */
+export default function App() {
+  const [f, setF] = useState({...empty});
+  const [tab, setTab] = useState("form");
+  const [apiKey, setApiKey] = useState("");
+  const [showKey, setShowKey] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  // Persistenza localStorage
+  useEffect(()=>{ try { const s=localStorage.getItem("atm05b"); if(s) setF(JSON.parse(s)); const k=localStorage.getItem("apikey"); if(k) setApiKey(k); } catch{} },[]);
+  useEffect(()=>{ try { localStorage.setItem("atm05b",JSON.stringify(f)); } catch{} },[f]);
+  useEffect(()=>{ try { localStorage.setItem("apikey",apiKey); } catch{} },[apiKey]);
+
+  const set = k => v => setF(p=>({...p,[k]:v}));
+  const g2 = {display:"grid",gridTemplateColumns:"1fr 1fr",gap:12};
+
+  // Selezione zona → auto-fill email
+  const selZona = (v) => {
+    const z = ZONE_DB[v];
+    if (!z) { set("zona")(v); return; }
+    let destA = z.A;
+    if (z.needsProv && f.provincia) destA = z.A.replace("{PROV}", f.provincia.toLowerCase());
+    setF(p=>({...p, zona:v, destA: z.needsProv ? (f.provincia ? destA : "") : destA, destCc: z.Cc}));
+  };
+
+  const selProv = (v) => {
+    const z = ZONE_DB[f.zona];
+    let destA = f.destA;
+    if (z?.needsProv) destA = z.A.replace("{PROV}", v.toLowerCase());
+    setF(p=>({...p, provincia:v, destA}));
+  };
+
+  // Estrai coordinate da link Google Maps
+  const estraiCoord = (testo) => {
+    const re = /@(-?\d+\.?\d*),(-?\d+\.?\d*)/;
+    const m = testo.match(re);
+    if (m) {
+      const lat = parseFloat(m[1]).toFixed(6);
+      const lon = parseFloat(m[2]).toFixed(6);
+      setF(p=>({...p, latDecollo:lat, lonDecollo:lon, latAtterraggio:lat, lonAtterraggio:lon}));
+      alert(`✅ Coordinate estratte:\nLat: ${lat}\nLon: ${lon}`);
+    } else {
+      alert("Nessuna coordinata trovata nel testo. Incolla un link Google Maps tipo: https://maps.google.com/@41.9027,12.4963,17z");
+    }
+  };
+
+  const allarmi = valida(f);
+
+  // PDF Export
+  const generaPDF = async () => {
+    setPdfLoading(true);
+    const html = buildPdfHtml(f);
+    const el = document.createElement("div");
+    el.innerHTML = html;
+    document.body.appendChild(el);
+    const opt = {
+      margin:[0,0,0,0], filename:`ATM-05b_${f.nomePilota||"richiesta"}_${f.dataRichiesta.replace(/\//g,"-")}.pdf`,
+      image:{type:"jpeg",quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}
+    };
+    await html2pdf().set(opt).from(el.querySelector(".page,.page-break") ? el : el.firstChild).save();
+    document.body.removeChild(el);
+    setPdfLoading(false);
+  };
+
+  const TABS = [["form","✏️ Compila"],["alert","🚨 Allarmi"],["ai","🤖 AI"],["settings","⚙️"]];
+
+  return (
+    <div style={{minHeight:"100vh"}}>
+      {/* Header */}
+      <div style={{background:"#1a3c5e",color:"#fff",padding:"12px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:"0 2px 10px #0004"}}>
+        <div>
+          <div style={{fontSize:9,opacity:.65,letterSpacing:".15em",textTransform:"uppercase"}}>360Drone – Permessi di volo</div>
+          <div style={{fontSize:18,fontWeight:900}}>Compilatore ATM-05b</div>
+        </div>
+        <div style={{fontSize:10.5,textAlign:"right",opacity:.85}}>📞 {FIXED.tel}<br/>✉️ {FIXED.email}</div>
+      </div>
+
+      {/* Allarmi bar */}
+      {allarmi.filter(a=>a.tipo==="errore").length > 0 && (
+        <div style={{background:"#c0392b",color:"#fff",padding:"8px 18px",fontSize:12.5,fontWeight:700,cursor:"pointer"}} onClick={()=>setTab("alert")}>
+          ⛔ {allarmi.filter(a=>a.tipo==="errore").length} ERRORI critici — clicca per vedere gli allarmi
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div style={{display:"flex",background:"#e0ecf7",borderBottom:"2px solid #1a3c5e22"}}>
+        {TABS.map(([k,l])=>(
+          <button key={k} onClick={()=>setTab(k)} style={{padding:"10px 16px",border:"none",cursor:"pointer",fontWeight:tab===k?800:500,background:tab===k?"#1a3c5e":"transparent",color:tab===k?"#fff":"#1a3c5e",fontSize:13,borderRight:"1px solid #c5d8ea",position:"relative"}}>
+            {l}
+            {k==="alert" && allarmi.filter(a=>a.tipo==="errore").length > 0 && <span style={{position:"absolute",top:4,right:4,background:"#c0392b",color:"#fff",borderRadius:"50%",width:14,height:14,fontSize:9,display:"grid",placeItems:"center"}}>{allarmi.filter(a=>a.tipo==="errore").length}</span>}
+          </button>
+        ))}
+        <Btn onClick={()=>{if(window.confirm("Cancellare tutti i dati del cliente?"))setF({...empty});}} color="#c0392b" style={{marginLeft:"auto",padding:"8px 14px",fontSize:11,borderRadius:0}}>🗑 Reset</Btn>
+      </div>
+
+      <div style={{maxWidth:840,margin:"0 auto",padding:"16px 12px 60px"}}>
+
+        {/* ── TAB FORM ─────────────────────────────── */}
+        {tab==="form" && <>
+
+          {/* Zona → auto email */}
+          <Sec letter="H" title="Zona R, P o D — seleziona per auto-compilare email" color="#6e2f1a">
+            <F label="Tipo di zona" required>
+              <select value={f.zona} onChange={e=>selZona(e.target.value)} style={si.inp}>
+                <option value="">— Seleziona zona —</option>
+                {Object.keys(ZONE_DB).map(k=><option key={k} value={k}>{ZONE_DB[k].badge} {k}</option>)}
+              </select>
+            </F>
+            {ZONE_DB[f.zona]?.needsProv && (
+              <F label="Provincia">
+                <select value={f.provincia} onChange={e=>selProv(e.target.value)} style={si.inp}>
+                  <option value="">— Seleziona provincia —</option>
+                  {PROVINCE.map(p=><option key={p} value={p}>{p}</option>)}
+                </select>
+              </F>
+            )}
+            {f.zona && ZONE_DB[f.zona] && (
+              <div style={{background:"#fff3cd",border:"1px solid #ffc107",borderRadius:6,padding:"8px 12px",fontSize:12.5,color:"#856404",marginTop:6}}>
+                {ZONE_DB[f.zona].avviso}
+              </div>
+            )}
+          </Sec>
+
+          <Sec letter="A" title="Destinatari PEC (auto-compilati dalla zona)">
+            <F label="A — Destinatario principale">
+              <Inp value={f.destA} onChange={set("destA")} placeholder="Seleziona zona qui sopra per auto-compilare"/>
+            </F>
+            <F label="Cc — In copia">
+              <Txt value={f.destCc} onChange={set("destCc")} rows={2}/>
+            </F>
+          </Sec>
+
+          <Sec letter="B" title="Richiedente / Attestato" color="#2471a3">
+            <div style={g2}>
+              <F label="Nome e cognome pilota" required>
+                <Inp value={f.richiedente} onChange={set("richiedente")} placeholder="Es. Mario Rossi"/>
+              </F>
+              <F label="Nome pilota in comando (N)">
+                <Inp value={f.nomePilota} onChange={set("nomePilota")} placeholder="Es. Mario Rossi"/>
+              </F>
+            </div>
+            <div style={g2}>
+              <F label="Numero attestato UAS" required>
+                <Inp value={f.attestato} onChange={set("attestato")} placeholder="Es. LUX-RP-19930106xxxx"/>
+              </F>
+              <F label="Tipo patentino">
+                <select value={f.tipoLic} onChange={e=>set("tipoLic")(e.target.value)} style={si.inp}>
+                  <option value="">— Tipo —</option>
+                  <option value="A1">A1 (max 900g, vicino a persone)</option>
+                  <option value="A2">A2 (max 4kg, distanza sicura)</option>
+                  <option value="A3">A3 (>4kg, lontano da persone)</option>
+                </select>
+              </F>
+            </div>
+            <div style={g2}>
+              <F label="Tel pilota (sezione N)">
+                <Inp value={f.telPilota} onChange={set("telPilota")} placeholder="Es. 339 5746866"/>
+              </F>
+            </div>
+          </Sec>
+
+          <Sec letter="D" title="Tipo di attività" color="#1e8449">
+            <F label="Descrizione attività" required>
+              <Txt value={f.tipoAttivita} onChange={set("tipoAttivita")} rows={2}
+                placeholder="Es. riprese video e foto aeree per documentazione - volo VLOS"/>
+            </F>
+          </Sec>
+
+          <Sec letter="E" title="Aeromobile" color="#7d3c98">
+            <F label="Scegli drone (pre-compilato)">
+              <select value={f.dronePreset} onChange={e=>{
+                const d=DRONI.find(x=>x.label===e.target.value);
+                set("dronePreset")(e.target.value);
+                if(d&&d.peso>0) set("aeromobile")(d.label);
+              }} style={si.inp}>
+                <option value="">— Seleziona modello —</option>
+                {DRONI.map(d=><option key={d.label} value={d.label}>{d.label}</option>)}
+              </select>
+            </F>
+            <F label="Descrizione aeromobile (campo E documento)" required>
+              <Inp value={f.aeromobile} onChange={set("aeromobile")} placeholder="Es. DJI Mini 3 – 249g – Categoria C0"/>
+            </F>
+          </Sec>
+
+          <Sec letter="F" title="Decollo e Atterraggio" color="#c0392b">
+            <div style={{background:"#f0f8ff",border:"1px solid #aad",borderRadius:6,padding:"8px 12px",marginBottom:10,fontSize:12}}>
+              📍 <b>Estrai coordinate da link Google Maps:</b>
+              <Txt value="" onChange={v=>estraiCoord(v)} rows={1} placeholder="Incolla qui un link Google Maps o coordinate e premi Invio"/>
+            </div>
+            <F label="F1 — Località di decollo" required>
+              <Inp value={f.decollo} onChange={set("decollo")} placeholder="Es. Ponte Sant'Angelo, Roma" style={{marginBottom:6}}/>
+              <div style={g2}>
+                <Inp value={f.latDecollo} onChange={set("latDecollo")} placeholder='Lat N es. 41°54\'07"'/>
+                <Inp value={f.lonDecollo} onChange={set("lonDecollo")} placeholder='Lon E es. 12°27\'59"'/>
+              </div>
+            </F>
+            <F label="F2 — Atterraggio (lascia vuoto se uguale)">
+              <Inp value={f.atterraggio} onChange={set("atterraggio")} placeholder="Es. stesso punto decollo" style={{marginBottom:6}}/>
+              <div style={g2}>
+                <Inp value={f.latAtterraggio} onChange={set("latAtterraggio")} placeholder="Lat N"/>
+                <Inp value={f.lonAtterraggio} onChange={set("lonAtterraggio")} placeholder="Lon E"/>
+              </div>
+            </F>
+          </Sec>
+
+          <Sec letter="G·K" title="Località e Capoluogo" color="#1a5276">
+            <div style={g2}>
+              <F label="G — Comune/Città attività" required><Inp value={f.localita} onChange={set("localita")} placeholder="Es. Roma"/></F>
+              <F label="K — Capoluogo di riferimento"><Inp value={f.capoluogo} onChange={set("capoluogo")} placeholder="Es. Roma"/></F>
+            </div>
+          </Sec>
+
+          <Sec letter="I" title="Limiti laterali — Coordinate vertici" color="#0e6655">
+            {f.puntiLaterali.map((p,i)=>(
+              <div key={i} style={{display:"grid",gridTemplateColumns:"2fr 1.5fr 1.5fr auto",gap:8,marginBottom:8,alignItems:"end"}}>
+                {i===0&&<><Lbl>Punto/Località</Lbl><Lbl>Lat N</Lbl><Lbl>Lon E</Lbl><span/></>}
+                <Inp value={p.nome} onChange={v=>{const ps=[...f.puntiLaterali];ps[i]={...ps[i],nome:v};setF(prev=>({...prev,puntiLaterali:ps}));}} placeholder="Luogo"/>
+                <Inp value={p.lat}  onChange={v=>{const ps=[...f.puntiLaterali];ps[i]={...ps[i],lat:v};setF(prev=>({...prev,puntiLaterali:ps}));}} placeholder='41°54\'07"'/>
+                <Inp value={p.lon}  onChange={v=>{const ps=[...f.puntiLaterali];ps[i]={...ps[i],lon:v};setF(prev=>({...prev,puntiLaterali:ps}));}} placeholder='12°27\'59"'/>
+                <button onClick={()=>setF(prev=>({...prev,puntiLaterali:prev.puntiLaterali.filter((_,idx)=>idx!==i)}))}
+                  style={{background:"#fee",border:"1px solid #fbb",borderRadius:6,padding:"7px 10px",cursor:"pointer",color:"#c0392b",fontSize:15}}>✕</button>
+              </div>
+            ))}
+            <Btn onClick={()=>setF(p=>({...p,puntiLaterali:[...p.puntiLaterali,{nome:"",lat:"",lon:""}]}))} color="#0e6655" style={{fontSize:12}}>+ Aggiungi punto</Btn>
+          </Sec>
+
+          <Sec letter="J" title="Limiti verticali" color="#2c3e50">
+            <F label="Inferiore / Superiore"><Inp value={f.limVerticali} onChange={set("limVerticali")} placeholder="Es. inferiore GND / superiore 45 m AGL (147 ft)"/></F>
+          </Sec>
+
+          <Sec letter="L" title="Distanza dall'ARP" color="#4a235a">
+            <div style={g2}>
+              <F label="Aeroporto di riferimento"><Inp value={f.aeroporto} onChange={set("aeroporto")} placeholder="Es. ROMA URBE 16/34"/></F>
+              <F label="Distanza"><Inp value={f.distanza} onChange={set("distanza")} placeholder="Es. 3,02 NM (5,6 km)"/></F>
+            </div>
+          </Sec>
+
+          <Sec letter="M" title="Date e orari (UTC!)" color="#922b21">
+            <F label="Date e orari attività" required>
+              <Txt value={f.dateOrari} onChange={set("dateOrari")} rows={3}
+                placeholder="Es. 9, 10, 11 luglio 2025 dalle ore 05:00 UTC alle ore 08:00 UTC"/>
+            </F>
+            <div style={{fontSize:11,color:"#c0392b",marginTop:-4}}>⚠️ Orario SEMPRE in UTC (non ora italiana)! Per agosto considera +2h rispetto all'ora locale.</div>
+          </Sec>
+
+          <Sec letter="N" title="Altre notizie (auto-generate)" color="#1e5799">
+            <F label="Note aggiuntive (opzionale)">
+              <Txt value={f.altreNotizie} onChange={set("altreNotizie")} rows={2} placeholder="Info extra da aggiungere al testo standard..."/>
+            </F>
+            <div style={{background:"#f0f6ff",border:"1px solid #aac",borderRadius:6,padding:"8px 12px",fontSize:11.5,color:"#334",lineHeight:1.7}}>
+              <b>Testo N generato:</b><br/>
+              Il pilota in comando sig. <b>{f.nomePilota||"[nome]"}</b> dichiara la disponibilità all'immediata interruzione dell'operazione… Tel: <b>{f.telPilota||"[tel]"}</b>. I droni sono dotati di RTH, geofencing. Volo VLOS.
+            </div>
+          </Sec>
+
+          <Sec letter="Doc" title="Data e luogo documento" color="#34495e">
+            <div style={g2}>
+              <F label="Luogo"><Inp value={f.luogo} onChange={set("luogo")} placeholder="Es. Roma"/></F>
+              <F label="Data documento"><Inp value={f.dataRichiesta} onChange={set("dataRichiesta")} placeholder="Es. 01/06/2025"/></F>
+            </div>
+          </Sec>
+
+          {/* Genera PDF */}
+          <div style={{textAlign:"center",marginTop:10,display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
+            <Btn onClick={generaPDF} color="#27ae60" style={{fontSize:15,padding:"13px 30px"}}>
+              {pdfLoading?"⏳ Generazione...":"📄 Genera PDF ufficiale ATM-05b"}
+            </Btn>
+            <Btn onClick={()=>setTab("alert")} color="#e67e22" style={{fontSize:13}}>🚨 Verifica allarmi</Btn>
+          </div>
+        </>}
+
+        {/* ── TAB ALLARMI ─────────────────────────────── */}
+        {tab==="alert" && (
+          <div>
+            <h3 style={{fontSize:15,fontWeight:800,color:"#1a3c5e",marginBottom:16}}>🚨 Verifica pratica</h3>
+            {allarmi.length===0 && <div style={{background:"#d4edda",border:"1.5px solid #28a745",borderRadius:8,padding:"14px 16px",color:"#155724",fontSize:14}}>✅ Nessun problema rilevato! La pratica sembra OK.</div>}
+            {allarmi.map((a,i)=>(
+              <div key={i} style={{
+                marginBottom:10,padding:"12px 16px",borderRadius:8,fontSize:13,lineHeight:1.6,
+                background: a.tipo==="errore"?"#fdecea": a.tipo==="avviso"?"#fff3cd":"#e8f4f8",
+                border:`1.5px solid ${a.tipo==="errore"?"#c0392b":a.tipo==="avviso"?"#ffc107":"#5bc0de"}`,
+                color: a.tipo==="errore"?"#922b21": a.tipo==="avviso"?"#856404":"#2c6e7a"
+              }}>
+                {a.msg}
+              </div>
+            ))}
+            <div style={{marginTop:16,display:"flex",gap:10,flexWrap:"wrap"}}>
+              {LINK_UTILI.slice(0,4).map((l,i)=>(
+                <a key={i} href={l.url} target="_blank" rel="noopener"
+                   style={{fontSize:12,padding:"8px 14px",background:"#1a3c5e",color:"#fff",borderRadius:8,textDecoration:"none"}}>
+                  {l.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── TAB AI ─────────────────────────────── */}
+        {tab==="ai" && (
+          <div>
+            <Sec letter="🤖" title="Assistente AI — Compila con Claude">
+              {!apiKey && (
+                <div style={{background:"#fff3cd",border:"1px solid #ffc107",borderRadius:6,padding:"10px 14px",marginBottom:14,fontSize:13,color:"#856404"}}>
+                  ⚠️ Per usare l'AI vai su <b>⚙️ Impostazioni</b> e inserisci la tua API Key Anthropic (Claude). È gratuita per piccoli utilizzi su <a href="https://console.anthropic.com" target="_blank" rel="noopener" style={{color:"#1a3c5e"}}>console.anthropic.com</a>
+                </div>
+              )}
+              <AIAssistant f={f} setF={setF} apiKey={apiKey}/>
+            </Sec>
+          </div>
+        )}
+
+        {/* ── TAB SETTINGS ─────────────────────────────── */}
+        {tab==="settings" && (
+          <div>
+            <Sec letter="⚙️" title="Impostazioni">
+              <F label="Claude API Key (salvata localmente nel browser)">
+                <div style={{display:"flex",gap:8}}>
+                  <Inp value={apiKey} onChange={v=>{setApiKey(v);}} type={showKey?"text":"password"} placeholder="sk-ant-..."/>
+                  <button onClick={()=>setShowKey(!showKey)} style={{padding:"8px 12px",border:"1.5px solid #c5d8ea",borderRadius:6,cursor:"pointer",background:"#f7fbff",fontSize:12}}>
+                    {showKey?"🙈":"👁"}
+                  </button>
+                </div>
+                <div style={{fontSize:11,color:"#888",marginTop:4}}>Ottieni la tua chiave su <a href="https://console.anthropic.com/keys" target="_blank" rel="noopener" style={{color:"#1a3c5e"}}>console.anthropic.com/keys</a>. La chiave non lascia il tuo dispositivo.</div>
+              </F>
+            </Sec>
+            <Sec letter="📎" title="Link e riferimenti normativi">
+              {LINK_UTILI.map((l,i)=>(
+                <div key={i} style={{marginBottom:8}}>
+                  <a href={l.url} target="_blank" rel="noopener" style={{color:"#1a3c5e",fontSize:13,display:"flex",alignItems:"center",gap:6}}>
+                    {l.label} <span style={{fontSize:10,opacity:.6}}>↗</span>
+                  </a>
+                </div>
+              ))}
+            </Sec>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
