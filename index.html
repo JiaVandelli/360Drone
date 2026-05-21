@@ -10,7 +10,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: linear-gradient(135deg, #e8f0f7 0%, #f5f9ff 100%); min-height: 100vh; font-family: 'Trebuchet MS', Georgia, serif; }
-    input, textarea, button { font-family: inherit; }
+    input, textarea, button, select { font-family: inherit; }
     ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #1a3c5e44; border-radius: 3px; }
   </style>
 </head>
@@ -20,6 +20,14 @@
 const { useState } = React;
 
 const FIXED = { tel360: "0187 1755700", email360: "360drone@pec.it" };
+
+// ✅ NUOVO: dizionario destinatari
+const destinatari = {
+  "LI P244": { A: "protocollo.prefrm@pec.interno.it", Cc: "protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it" },
+  "R1": { A: "operazioni@enav.it", Cc: "mobilita.innovativa@enac.gov.it" },
+  "P123": { A: "enac@pec.enac.gov.it", Cc: "" },
+  // Aggiungi altre zone qui...
+};
 
 const emptyForm = {
   destA: "protocollo.prefrm@pec.interno.it",
@@ -49,15 +57,12 @@ function Field({ label, required, children }) {
     </div>
   );
 }
-
 function Inp({ value, onChange, placeholder, style }) {
-  return <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{ ...s.input, ...style }} />;
+  return <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={{...s.input,...style }} />;
 }
-
 function Txt({ value, onChange, placeholder, rows = 3 }) {
-  return <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows} style={{ ...s.input, resize: "vertical", width: "100%" }} />;
+  return <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows} style={{...s.input, resize: "vertical", width: "100%" }} />;
 }
-
 function Sec({ letter, title, color = "#1a3c5e", children }) {
   return (
     <div style={{ marginBottom: 18, background: "#fff", borderRadius: 10, boxShadow: "0 1px 6px #1a3c5e18", overflow: "hidden" }}>
@@ -69,7 +74,6 @@ function Sec({ letter, title, color = "#1a3c5e", children }) {
     </div>
   );
 }
-
 function Preview({ f }) {
   const punti = f.puntiLaterali.filter(p => p.nome);
   const notizie = `Il pilota in comando sig. ${f.nomePilota} dichiara la disponibilità all'immediata interruzione dell'operazione in caso di necessità del gestore tramite comunicazione al numero ${f.telPilota}.\nI droni sono dotati di: RTH (return to home), geofencing.\nIl sorvolo durerà il tempo strettamente necessario all'ottenimento delle riprese e sarà sempre condotto in VLOS.\nNon verranno sorvolati assembramenti ed edifici particolari quali: caserme, ospedali, etc…\n${f.altreNotizie || ""}`.trim();
@@ -94,7 +98,7 @@ function Preview({ f }) {
           <tr><td style={s.td} colSpan={2}><b>Ubicazione (K):</b> {f.capoluogo}</td></tr>
           <tr><td style={s.td} colSpan={2}><b>Distanza ARP (L):</b> {f.aeroporto} – {f.distanza}</td></tr>
           <tr><td style={s.td} colSpan={2}><b>Date/Orari (M):</b> {f.dateOrari}</td></tr>
-          <tr><td style={s.td} colSpan={2} style={{ ...s.td, whiteSpace: "pre-line" }}><b>Altre notizie (N):</b><br/>{notizie}</td></tr>
+          <tr><td style={s.td} colSpan={2} style={{...s.td, whiteSpace: "pre-line" }}><b>Altre notizie (N):</b><br/>{notizie}</td></tr>
         </tbody></table>
       </div>
     </div>
@@ -102,29 +106,29 @@ function Preview({ f }) {
 }
 
 function App() {
-  const [f, setF] = useState({ ...emptyForm });
+  const [f, setF] = useState({...emptyForm });
   const [tab, setTab] = useState("form");
   const [copied, setCopied] = useState(false);
 
-  const set = key => val => setF(p => ({ ...p, [key]: val }));
+  const set = key => val => setF(p => ({...p, [key]: val }));
   const setPunto = (i, field, val) => {
-    const p = [...f.puntiLaterali]; p[i] = { ...p[i], [field]: val };
-    setF(prev => ({ ...prev, puntiLaterali: p }));
+    const p = [...f.puntiLaterali]; p[i] = {...p[i], [field]: val };
+    setF(prev => ({...prev, puntiLaterali: p }));
   };
-  const addPunto = () => setF(p => ({ ...p, puntiLaterali: [...p.puntiLaterali, { nome: "", lat: "", lon: "" }] }));
-  const removePunto = i => setF(p => ({ ...p, puntiLaterali: p.puntiLaterali.filter((_, idx) => idx !== i) }));
+  const addPunto = () => setF(p => ({...p, puntiLaterali: [...p.puntiLaterali, { nome: "", lat: "", lon: "" }] }));
+  const removePunto = i => setF(p => ({...p, puntiLaterali: p.puntiLaterali.filter((_, idx) => idx!== i) }));
 
   const notizie = `Il pilota in comando sig. ${f.nomePilota} dichiara la disponibilità all'immediata interruzione dell'operazione in caso di necessità del gestore tramite comunicazione al numero ${f.telPilota}.\nI droni sono dotati di: RTH (return to home), geofencing.\nIl sorvolo durerà il tempo strettamente necessario all'ottenimento delle riprese e sarà sempre condotto in VLOS.\nNon verranno sorvolati assembramenti ed edifici particolari quali: caserme, ospedali, etc…\n${f.altreNotizie || ""}`.trim();
 
-  const fullText = `MODELLO ATM-05b\n\nA: ${f.destA}\nCc: ${f.destCc}\n\nRichiedente: ${f.richiedente} – ${f.attestato}\nTel: ${FIXED.tel360}\nEmail: ${FIXED.email360}\n\nTipo attività (D): ${f.tipoAttivita}\nAeromobile (E): ${f.aeromobile}\nDecollo (F1): ${f.decollo}, Lat N ${f.latDecollo} Lon E ${f.lonDecollo}\nAtterraggio (F2): ${f.atterraggio}, Lat N ${f.latAtterraggio} Lon E ${f.lonAtterraggio}\nLocalità (G): ${f.localita}\nZona (H): ${f.zona}\n\nLimiti laterali (I):\n${f.puntiLaterali.filter(p=>p.nome).map(p=>`  ${p.nome}, Lat N ${p.lat} Lon E ${p.lon}`).join("\n")}\n\nLimiti verticali (J): ${f.limVerticali}\nUbicazione (K): ${f.capoluogo}\nDistanza ARP (L): ${f.aeroporto} – ${f.distanza}\nDate/Orari (M): ${f.dateOrari}\n\nAltre notizie (N):\n${notizie}`;
+  const fullText = `MODELLO ATM-05b\n\nA: ${f.destA}\nCc: ${f.destCc}\n\nRichiedente: ${f.richiedente} – ${f.attestato}\nTel: ${FIXED.tel360}\nEmail: ${FIXED.email360}\n\nTipo attività (D): ${f.tipoAttivita}\nAeromobile (E): ${f.aeromobile}\nDecollo (F1): ${f.decollo}, Lat N ${f.latDecollo} Lon E ${f.lonDecollo}\nAtterraggio (F2): ${f.atterraggio}, Lat N ${f.latAtterraggio} Lon E ${f.lonAtterraggio}\nLocalità (G): ${f.localita}\nZona (H): ${f.zona}\n\nLimiti laterali (I):\n${f.puntiLaterali.filter(p=>p.nome).map(p=>` ${p.nome}, Lat N ${p.lat} Lon E ${p.lon}`).join("\n")}\n\nLimiti verticali (J): ${f.limVerticali}\nUbicazione (K): ${f.capoluogo}\nDistanza ARP (L): ${f.aeroporto} – ${f.distanza}\nDate/Orari (M): ${f.dateOrari}\n\nAltre notizie (N):\n${notizie}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(fullText).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   };
 
   const btnStyle = active => ({
-    padding: "10px 20px", border: "none", cursor: "pointer", fontWeight: active ? 800 : 500,
-    background: active ? "#1a3c5e" : "transparent", color: active ? "#fff" : "#1a3c5e",
+    padding: "10px 20px", border: "none", cursor: "pointer", fontWeight: active? 800 : 500,
+    background: active? "#1a3c5e" : "transparent", color: active? "#fff" : "#1a3c5e",
     fontSize: 13, borderRight: "1px solid #c5d8ea", transition: "all 0.15s",
   });
 
@@ -132,7 +136,6 @@ function App() {
 
   return (
     <div style={{ minHeight: "100vh" }}>
-      {/* Header */}
       <div style={{ background: "#1a3c5e", color: "#fff", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 2px 12px #0004" }}>
         <div>
           <div style={{ fontSize: 10, opacity: 0.7, letterSpacing: "0.15em", textTransform: "uppercase" }}>360Drone — Permessi di volo</div>
@@ -144,7 +147,6 @@ function App() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div style={{ display: "flex", background: "#e0ecf7", borderBottom: "2px solid #1a3c5e20" }}>
         {[["form","✏️ Compila"],["preview","👁 Anteprima"],["testo","📋 Copia testo"]].map(([k,l]) => (
           <button key={k} onClick={() => setTab(k)} style={btnStyle(tab===k)}>{l}</button>
@@ -203,8 +205,28 @@ function App() {
             <Field label="Comune / Città" required><Inp value={f.localita} onChange={set("localita")} placeholder="Es. Roma" /></Field>
           </Sec>
 
+          {/* ✅ MODIFICATO QUI */}
           <Sec letter="H" title="Zona R, P o D" color="#6e2f1a">
-            <Field label="Denominazione zona (AIP-Italia)" required><Inp value={f.zona} onChange={set("zona")} placeholder="Es. LI P244-ROMA (Edifici istituzionali)" /></Field>
+            <Field label="Denominazione zona (AIP-Italia)" required>
+              <select
+                value={f.zona}
+                onChange={(e) => {
+                  const valore = e.target.value;
+                  set("zona")(valore);
+                  const d = destinatari[valore];
+                  if (d) {
+                    set("destA")(d.A);
+                    set("destCc")(d.Cc);
+                  }
+                }}
+                style={{...s.input, appearance: "none" }}
+              >
+                <option value="">Seleziona...</option>
+                <option value="LI P244">LI P244 - Roma</option>
+                <option value="R1">R1 - Zona aeroportuale</option>
+                <option value="P123">P123 - Zona proibita</option>
+              </select>
+            </Field>
           </Sec>
 
           <Sec letter="I" title="Limiti laterali — Coordinate" color="#0e6655">
@@ -212,8 +234,8 @@ function App() {
               <div key={i} style={{ display: "grid", gridTemplateColumns: "2fr 1.5fr 1.5fr auto", gap: 8, marginBottom: 8, alignItems: "end" }}>
                 {i === 0 && <><label style={s.label}>Località</label><label style={s.label}>Lat N</label><label style={s.label}>Lon E</label><span/></>}
                 <Inp value={p.nome} onChange={v => setPunto(i,"nome",v)} placeholder="Luogo" />
-                <Inp value={p.lat}  onChange={v => setPunto(i,"lat",v)}  placeholder='41°:54&apos;:07"' />
-                <Inp value={p.lon}  onChange={v => setPunto(i,"lon",v)}  placeholder='12°:27&apos;:59"' />
+                <Inp value={p.lat} onChange={v => setPunto(i,"lat",v)} placeholder='41°:54&apos;:07"' />
+                <Inp value={p.lon} onChange={v => setPunto(i,"lon",v)} placeholder='12°:27&apos;:59"' />
                 <button onClick={() => removePunto(i)} style={{ background:"#fee",border:"1px solid #fbb",borderRadius:6,padding:"7px 10px",cursor:"pointer",color:"#c0392b",fontSize:16 }}>✕</button>
               </div>
             ))}
@@ -272,7 +294,7 @@ function App() {
             <div style={{ background:"#1a3c5e",color:"#fff",padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
               <span style={{ fontWeight:700 }}>📄 Testo pronto da copiare</span>
               <button onClick={handleCopy} style={{ background:copied?"#27ae60":"#fff",color:copied?"#fff":"#1a3c5e",border:"none",borderRadius:6,padding:"6px 16px",fontWeight:700,cursor:"pointer",fontSize:13,transition:"all 0.2s" }}>
-                {copied ? "✅ Copiato!" : "📋 Copia"}
+                {copied? "✅ Copiato!" : "📋 Copia"}
               </button>
             </div>
             <pre style={{ padding:20,margin:0,whiteSpace:"pre-wrap",wordBreak:"break-word",fontSize:12.5,fontFamily:"Georgia,serif",color:"#1a2a3a",lineHeight:1.8 }}>
