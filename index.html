@@ -1,347 +1,452 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#0a192f">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>360Drone – Compilatore ATM</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
+import { useState } from "react";
 
-<!-- ── HEADER ── -->
-<div class="header">
-  <div class="header-brand">
-    <div class="logo">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
-        <path d="M12 2l3.5 6.5 7 1-5 4.9 1.2 7-6.7-3.5-6.7 3.5 1.2-7-5-4.9 7-1z"/>
-      </svg>
+const FIXED = {
+  tel360: "0187 1755700",
+  email360: "360drone@pec.it",
+};
+
+const emptyForm = {
+  // A - destinatari PEC
+  destA: "protocollo.prefrm@pec.interno.it",
+  destCc: "protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it",
+  // B - richiedente
+  richiedente: "",
+  attestato: "",
+  // D - tipo attività
+  tipoAttivita: "",
+  // E - tipo aeromobile
+  aeromobile: "",
+  // F1 - decollo
+  decollo: "",
+  latDecollo: "",
+  lonDecollo: "",
+  // F2 - atterraggio
+  atterraggio: "",
+  latAtterraggio: "",
+  lonAtterraggio: "",
+  // G - località
+  localita: "",
+  // H - zona
+  zona: "",
+  // I - limiti laterali (tabella punti)
+  puntiLaterali: [
+    { nome: "", lat: "", lon: "" },
+    { nome: "", lat: "", lon: "" },
+  ],
+  // J - limiti verticali
+  limVerticali: "inferiore GND / superiore 45 m AGL (147 ft)",
+  // K - capoluogo
+  capoluogo: "",
+  // L - distanza aeroporto
+  aeroporto: "",
+  distanza: "",
+  // M - date/orari
+  dateOrari: "",
+  // N - altre notizie
+  nomePilota: "",
+  telPilota: "",
+  altreNotizie: "",
+};
+
+const Label = ({ children, required }) => (
+  <label style={{ fontSize: 11, fontWeight: 700, color: "#1a3c5e", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 4 }}>
+    {children} {required && <span style={{ color: "#c0392b" }}>*</span>}
+  </label>
+);
+
+const Input = ({ value, onChange, placeholder, style = {} }) => (
+  <input
+    value={value}
+    onChange={e => onChange(e.target.value)}
+    placeholder={placeholder}
+    style={{
+      width: "100%", boxSizing: "border-box", padding: "8px 10px",
+      border: "1.5px solid #c5d8ea", borderRadius: 6, fontSize: 13,
+      fontFamily: "Georgia, serif", background: "#f7fbff", color: "#1a2a3a",
+      outline: "none", transition: "border 0.2s",
+      ...style,
+    }}
+  />
+);
+
+const Textarea = ({ value, onChange, placeholder, rows = 3 }) => (
+  <textarea
+    value={value}
+    onChange={e => onChange(e.target.value)}
+    placeholder={placeholder}
+    rows={rows}
+    style={{
+      width: "100%", boxSizing: "border-box", padding: "8px 10px",
+      border: "1.5px solid #c5d8ea", borderRadius: 6, fontSize: 13,
+      fontFamily: "Georgia, serif", background: "#f7fbff", color: "#1a2a3a",
+      outline: "none", resize: "vertical",
+    }}
+  />
+);
+
+const Section = ({ letter, title, children, color = "#1a3c5e" }) => (
+  <div style={{ marginBottom: 20, background: "#fff", borderRadius: 10, boxShadow: "0 1px 6px #1a3c5e18", overflow: "hidden" }}>
+    <div style={{ background: color, padding: "8px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+      <span style={{ background: "#fff", color: color, borderRadius: "50%", width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 13, flexShrink: 0 }}>{letter}</span>
+      <span style={{ color: "#fff", fontWeight: 700, fontSize: 13, letterSpacing: "0.04em" }}>{title}</span>
     </div>
-    <div class="brand-text">
-      <div class="name">360Drone</div>
-      <div class="tagline">Compilatore ATM-05B / ATM-09A</div>
-    </div>
+    <div style={{ padding: "14px 16px" }}>{children}</div>
   </div>
-</div>
+);
 
-<!-- ── STEP NAV ── -->
-<nav class="steps-nav">
-  <button class="step-tab active" onclick="goPanel('p-dati')" id="tab-dati">
-    <span class="n">1</span> Dati volo
-  </button>
-  <button class="step-tab" onclick="goPanel('p-anteprima')" id="tab-anteprima">
-    <span class="n">2</span> Anteprima ATM-05B
-  </button>
-  <button class="step-tab" onclick="goPanel('p-09a')" id="tab-09a">
-    <span class="n">3</span> ATM-09A
-  </button>
-  <button class="step-tab" onclick="goPanel('p-riepilogo')" id="tab-riepilogo">
-    <span class="n">4</span> Riepilogo PEC
-  </button>
-</nav>
+function Preview({ f }) {
+  const puntiRows = f.puntiLaterali.filter(p => p.nome || p.lat || p.lon);
+  const notizie = `Il pilota in comando sig. ${f.nomePilota} dichiara la disponibilità all'immediata interruzione dell'operazione in caso di necessità del gestore tramite comunicazione al numero ${f.telPilota}.
+I droni sono dotati di: RTH (return to home), geofencing.
+Il sorvolo durerà il tempo strettamente necessario all'ottenimento delle riprese e sarà sempre condotto in VLOS.
+Non verranno sorvolati assembramenti ed edifici particolari quali: caserme, ospedali, etc…
+${f.altreNotizie ? f.altreNotizie : ""}`.trim();
 
-<main>
-
-  <!-- ══════════════════════════════════════
-       PANEL 1 – DATI VARIABILI
-  ══════════════════════════════════════ -->
-  <div class="panel active" id="p-dati">
-
-    <div class="sec-head">
-      <h2>Dati variabili</h2>
-      <p>Inserisci solo i dati del cliente/missione — tutto il resto è già precompilato.</p>
-    </div>
-
-    <div class="prefill-banner">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
-      </svg>
-      Dati 360Drone (tel, PEC, CC ENAC) già inseriti automaticamente.
-    </div>
-
-    <!-- RICHIEDENTE -->
-    <div class="card">
-      <div class="card-title"><span class="dot"></span> Cliente / Pilota</div>
-      <div class="field">
-        <label>Nome e Cognome richiedente</label>
-        <input id="richiedente" type="text" placeholder="Mario Rossi" inputmode="text" autocomplete="name">
+  return (
+    <div style={{ fontFamily: "Georgia, serif", fontSize: 12.5, color: "#1a2a3a", lineHeight: 1.6 }}>
+      <div style={{ background: "#1a3c5e", color: "#fff", padding: "10px 16px", borderRadius: "8px 8px 0 0", fontWeight: 800, fontSize: 14, letterSpacing: "0.05em" }}>
+        MODELLO ATM-05b — ANTEPRIMA
       </div>
-      <div class="field">
-        <label>N. Attestato / IT-STS</label>
-        <input id="attestato" type="text" placeholder="ITA-RP-000000000" autocapitalize="characters">
-      </div>
-      <div class="field">
-        <label>Tipo di attività</label>
-        <select id="scopo">
-          <option value="Riprese con drone per motivi personali e senza fini di lucro come libera espressione creativa – Volo VLOS">Riprese personali/creative – VLOS</option>
-          <option value="Riprese video professionali in VLOS con osservatore dedicato">Riprese professionali VLOS</option>
-          <option value="Ispezione tecnica strutturale in VLOS">Ispezione tecnica VLOS</option>
-          <option value="Rilievo fotogrammetrico in VLOS">Rilievo fotogrammetrico VLOS</option>
-          <option value="Riprese per evento in VLOS con osservatore dedicato">Riprese per evento VLOS</option>
-          <option value="custom">✏️ Personalizzato...</option>
-        </select>
-      </div>
-      <div class="field" id="scopo-custom-wrap" style="display:none;">
-        <label>Descrivi l'attività</label>
-        <textarea id="scopo-custom" placeholder="Descrivi il tipo di attività..."></textarea>
-      </div>
-    </div>
-
-    <!-- LUOGO -->
-    <div class="card">
-      <div class="card-title"><span class="dot"></span> Luogo del volo</div>
-      <div class="field">
-        <label>Località (decollo e atterraggio)</label>
-        <input id="localita" type="text" placeholder="Piazza del Colosseo, Roma" autocomplete="off">
-      </div>
-      <div class="field">
-        <label>Zona interessata (D-Flight)</label>
-        <select id="zona" onchange="updateDestA()">
-          <option value="LI P244 – Roma Edifici Istituzionali">LI P244 – Roma Edifici Istituzionali</option>
-          <option value="LI P186 – Carceri Roma">LI P186 – Carceri Roma</option>
-          <option value="LI R – Zona Militare">LI R – Zona Militare</option>
-          <option value="CTR Aeroporto Roma Fiumicino">CTR Aeroporto Roma Fiumicino</option>
-          <option value="CTR Aeroporto Roma Ciampino">CTR Aeroporto Roma Ciampino</option>
-          <option value="custom-zona">✏️ Altra zona...</option>
-        </select>
-      </div>
-      <div class="field" id="zona-custom-wrap" style="display:none;">
-        <label>Codice zona personalizzato</label>
-        <input id="zona-custom" type="text" placeholder="Es. LI P123 – Descrizione">
-      </div>
-      <div class="grid2">
-        <div class="field">
-          <label>Latitudine (decimale)</label>
-          <input id="lat" type="number" step="any" placeholder="41.89021" inputmode="decimal">
-        </div>
-        <div class="field">
-          <label>Longitudine (decimale)</label>
-          <input id="lon" type="number" step="any" placeholder="12.49223" inputmode="decimal">
-        </div>
-      </div>
-      <button type="button" class="btn btn-secondary" style="margin-bottom:8px;" onclick="convertDMS()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
-        </svg>
-        Converti in gradi°minuti'secondi"
-      </button>
-      <div class="dms-box" id="dmsBox"></div>
-    </div>
-
-    <!-- ORARI -->
-    <div class="card">
-      <div class="card-title"><span class="dot"></span> Date e orari</div>
-      <div class="grid2">
-        <div class="field">
-          <label>Data inizio</label>
-          <input id="dataInizio" type="date" onchange="updateUTC()">
-        </div>
-        <div class="field">
-          <label>Data fine</label>
-          <input id="dataFine" type="date" onchange="updateUTC()">
-        </div>
-      </div>
-      <div class="grid2">
-        <div class="field">
-          <label>Ora inizio (locale)</label>
-          <input id="oraInizio" type="time" onchange="updateUTC()">
-          <div class="utc-pill" id="utcInizio">UTC: –</div>
-        </div>
-        <div class="field">
-          <label>Ora fine (locale)</label>
-          <input id="oraFine" type="time" onchange="updateUTC()">
-          <div class="utc-pill" id="utcFine">UTC: –</div>
-        </div>
-      </div>
-      <div class="field" style="margin-top:4px;">
-        <label>Fuso orario attuale</label>
-        <select id="fuso" onchange="updateUTC()">
-          <option value="1">CET – UTC+1 (ora solare, ott–mar)</option>
-          <option value="2" selected>CEST – UTC+2 (ora legale, mar–ott)</option>
-        </select>
+      <div style={{ border: "1.5px solid #1a3c5e", borderTop: "none", borderRadius: "0 0 8px 8px", padding: 16 }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <tbody>
+            <tr>
+              <td style={td} colSpan={2}><b>A:</b> {f.destA}<br /><b>Cc:</b> {f.destCc}</td>
+            </tr>
+            <tr>
+              <td style={td} colSpan={2}><b>Il richiedente (B):</b> {f.richiedente} – {f.attestato}</td>
+            </tr>
+            <tr>
+              <td style={td}><b>Tel/Mob.:</b> {FIXED.tel360}</td>
+              <td style={td}><b>E-mail/Pec:</b> {FIXED.email360}</td>
+            </tr>
+            <tr>
+              <td style={td} colSpan={2}><b>Tipo di attività (D):</b> {f.tipoAttivita}</td>
+            </tr>
+            <tr>
+              <td style={td} colSpan={2}><b>Tipo di aeromobile (E):</b> {f.aeromobile}</td>
+            </tr>
+            <tr>
+              <td style={td} colSpan={2}><b>Località di decollo (F1):</b> {f.decollo}, Lat N {f.latDecollo} Lon E {f.lonDecollo}</td>
+            </tr>
+            <tr>
+              <td style={td} colSpan={2}><b>Località di atterraggio (F2):</b> {f.atterraggio}, Lat N {f.latAtterraggio} Lon E {f.lonAtterraggio}</td>
+            </tr>
+            <tr>
+              <td style={td} colSpan={2}><b>Località attività (G):</b> {f.localita}</td>
+            </tr>
+            <tr>
+              <td style={td} colSpan={2}><b>Zona R/P/D (H):</b> {f.zona}</td>
+            </tr>
+            {puntiRows.length > 0 && (
+              <tr>
+                <td style={td} colSpan={2}>
+                  <b>Limiti laterali (I):</b>
+                  <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 6 }}>
+                    <tbody>
+                      {puntiRows.map((p, i) => (
+                        <tr key={i}>
+                          <td style={{ ...td, background: "#f0f6ff" }}>{p.nome}</td>
+                          <td style={td}>Lat N {p.lat} Lon E {p.lon}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            )}
+            <tr>
+              <td style={td} colSpan={2}><b>Limiti verticali (J):</b> {f.limVerticali}</td>
+            </tr>
+            <tr>
+              <td style={td} colSpan={2}><b>Ubicazione (K):</b> {f.capoluogo}</td>
+            </tr>
+            <tr>
+              <td style={td} colSpan={2}><b>Distanza dall'ARP (L):</b> {f.aeroporto} – {f.distanza}</td>
+            </tr>
+            <tr>
+              <td style={td} colSpan={2}><b>Date/Orari (M):</b> {f.dateOrari}</td>
+            </tr>
+            <tr>
+              <td style={td} colSpan={2} style={{ ...td, whiteSpace: "pre-line" }}><b>Altre notizie (N):</b><br />{notizie}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
+  );
+}
 
-    <!-- DRONE & LIMITI -->
-    <div class="card">
-      <div class="card-title"><span class="dot"></span> Aeromobile e limiti operativi</div>
-      <div class="field">
-        <label>Aeromobile</label>
-        <select id="drone">
-          <option value="DJI Mini 2 (0.249g – C0)">DJI Mini 2 (249g – C0)</option>
-          <option value="DJI Mini 3 Pro (249g – C0)">DJI Mini 3 Pro (249g – C0)</option>
-          <option value="DJI Mini 4 Pro (249g – C0)">DJI Mini 4 Pro (249g – C0)</option>
-          <option value="DJI Air 3 (720g – C1)">DJI Air 3 (720g – C1)</option>
-          <option value="DJI Mavic 3 (895g – C1)">DJI Mavic 3 (895g – C1)</option>
-          <option value="custom-drone">✏️ Altro drone...</option>
-        </select>
-      </div>
-      <div class="field" id="drone-custom-wrap" style="display:none;">
-        <label>Specifica drone</label>
-        <input id="drone-custom" type="text" placeholder="Marca Modello (XXXg – CX)">
-      </div>
-      <div class="grid2">
-        <div class="field">
-          <label>Raggio operativo (m)</label>
-          <input id="raggio" type="number" value="200" inputmode="numeric">
+const td = {
+  border: "1px solid #c5d8ea",
+  padding: "6px 10px",
+  verticalAlign: "top",
+};
+
+export default function App() {
+  const [f, setF] = useState({ ...emptyForm });
+  const [tab, setTab] = useState("form");
+  const [copied, setCopied] = useState(false);
+
+  const set = (key) => (val) => setF(prev => ({ ...prev, [key]: val }));
+
+  const setPunto = (i, field, val) => {
+    const punti = [...f.puntiLaterali];
+    punti[i] = { ...punti[i], [field]: val };
+    setF(prev => ({ ...prev, puntiLaterali: punti }));
+  };
+
+  const addPunto = () => setF(prev => ({ ...prev, puntiLaterali: [...prev.puntiLaterali, { nome: "", lat: "", lon: "" }] }));
+  const removePunto = (i) => setF(prev => ({ ...prev, puntiLaterali: prev.puntiLaterali.filter((_, idx) => idx !== i) }));
+
+  const notizie = `Il pilota in comando sig. ${f.nomePilota} dichiara la disponibilità all'immediata interruzione dell'operazione in caso di necessità del gestore tramite comunicazione al numero ${f.telPilota}.\nI droni sono dotati di: RTH (return to home), geofencing.\nIl sorvolo durerà il tempo strettamente necessario all'ottenimento delle riprese e sarà sempre condotto in VLOS.\nNon verranno sorvolati assembramenti ed edifici particolari quali: caserme, ospedali, etc…\n${f.altreNotizie || ""}`.trim();
+
+  const fullText = `MODELLO ATM-05b
+
+A: ${f.destA}
+Cc: ${f.destCc}
+
+Il richiedente: ${f.richiedente} – ${f.attestato}
+Tel/Mob.: ${FIXED.tel360}
+E-mail/Pec: ${FIXED.email360}
+
+Tipo di attività (D): ${f.tipoAttivita}
+Tipo di aeromobile (E): ${f.aeromobile}
+Località di decollo (F1): ${f.decollo}, Lat N ${f.latDecollo} Lon E ${f.lonDecollo}
+Località di atterraggio (F2): ${f.atterraggio}, Lat N ${f.latAtterraggio} Lon E ${f.lonAtterraggio}
+Località attività (G): ${f.localita}
+Zona R/P/D (H): ${f.zona}
+
+Limiti laterali (I):
+${f.puntiLaterali.filter(p => p.nome).map(p => `  ${p.nome}, Lat N ${p.lat} Lon E ${p.lon}`).join("\n")}
+
+Limiti verticali (J): ${f.limVerticali}
+Ubicazione capoluogo (K): ${f.capoluogo}
+Distanza dall'ARP (L): ${f.aeroporto} – ${f.distanza}
+Date/Orari (M): ${f.dateOrari}
+
+Altre notizie (N):
+${notizie}`;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(fullText).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleReset = () => {
+    if (window.confirm("Vuoi azzerare tutti i campi del cliente?")) {
+      setF({ ...emptyForm });
+    }
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg, #e8f0f7 0%, #f5f9ff 100%)", fontFamily: "'Trebuchet MS', Georgia, serif" }}>
+      {/* Header */}
+      <div style={{ background: "#1a3c5e", color: "#fff", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "0 2px 12px #0004" }}>
+        <div>
+          <div style={{ fontSize: 11, opacity: 0.7, letterSpacing: "0.15em", textTransform: "uppercase" }}>360Drone — Permessi di volo</div>
+          <div style={{ fontSize: 20, fontWeight: 900, letterSpacing: "0.03em" }}>Compilatore ATM-05b</div>
         </div>
-        <div class="field">
-          <label>Quota max AGL (m)</label>
-          <input id="quota" type="number" value="45" inputmode="numeric">
+        <div style={{ fontSize: 11, textAlign: "right", opacity: 0.8 }}>
+          <div>📞 {FIXED.tel360}</div>
+          <div>✉️ {FIXED.email360}</div>
         </div>
       </div>
-      <div class="field">
-        <label>Distanza dall'aeroporto più vicino</label>
-        <input id="distAeroporto" type="text" value="Roma ROMA/URBE 16/36 – 4,32 NM (8,00 Km)">
+
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 0, background: "#e0ecf7", borderBottom: "2px solid #1a3c5e20" }}>
+        {[["form", "✏️  Compila"], ["preview", "👁  Anteprima"], ["testo", "📋  Testo da copiare"]].map(([key, label]) => (
+          <button key={key} onClick={() => setTab(key)} style={{
+            padding: "10px 22px", border: "none", cursor: "pointer", fontWeight: tab === key ? 800 : 500,
+            background: tab === key ? "#1a3c5e" : "transparent", color: tab === key ? "#fff" : "#1a3c5e",
+            fontSize: 13, borderRight: "1px solid #c5d8ea", transition: "all 0.15s",
+          }}>{label}</button>
+        ))}
+        <button onClick={handleReset} style={{ marginLeft: "auto", padding: "10px 18px", border: "none", cursor: "pointer", background: "transparent", color: "#c0392b", fontSize: 12, fontWeight: 700 }}>
+          🗑 Reset cliente
+        </button>
+      </div>
+
+      <div style={{ maxWidth: 820, margin: "0 auto", padding: "20px 16px 40px" }}>
+        {tab === "form" && (
+          <div>
+            {/* Fissi 360Drone */}
+            <div style={{ background: "#d4edda", border: "1.5px solid #28a745", borderRadius: 8, padding: "10px 16px", marginBottom: 20, fontSize: 12.5, color: "#155724" }}>
+              <b>✅ Dati fissi 360Drone (non modificabili):</b> Tel: {FIXED.tel360} — Email: {FIXED.email360}
+            </div>
+
+            <Section letter="A" title="Destinatari PEC">
+              <Label>A — Destinatario principale</Label>
+              <Input value={f.destA} onChange={set("destA")} placeholder="A:" />
+              <div style={{ height: 8 }} />
+              <Label>Cc — Destinatari in copia</Label>
+              <Textarea value={f.destCc} onChange={set("destCc")} rows={2} placeholder="Cc:" />
+            </Section>
+
+            <Section letter="B" title="Richiedente / Attestato" color="#2471a3">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <Label required>Nome e cognome pilota</Label>
+                  <Input value={f.richiedente} onChange={set("richiedente")} placeholder="Es. Mario Rossi" />
+                </div>
+                <div>
+                  <Label required>Numero attestato (es. A1/A3 n. LUX-RP-...)</Label>
+                  <Input value={f.attestato} onChange={set("attestato")} placeholder="Es. A1/A3 n. LUX-RP-19930106fwwe" />
+                </div>
+              </div>
+            </Section>
+
+            <Section letter="D" title="Tipo di attività" color="#1e8449">
+              <Label required>Descrizione attività</Label>
+              <Textarea value={f.tipoAttivita} onChange={set("tipoAttivita")} rows={2}
+                placeholder="Es. riprese video e foto aeree per motivi personali e non a scopo di lucro - volo VLOS" />
+            </Section>
+
+            <Section letter="E" title="Tipo di aeromobile" color="#7d3c98">
+              <Label required>Modello drone (peso, categoria)</Label>
+              <Input value={f.aeromobile} onChange={set("aeromobile")} placeholder="Es. DJI Mini 3 – (249 g – C0)" />
+            </Section>
+
+            <Section letter="F" title="Decollo e Atterraggio" color="#c0392b">
+              <div style={{ marginBottom: 12 }}>
+                <Label required>F1 — Località di decollo</Label>
+                <Input value={f.decollo} onChange={set("decollo")} placeholder="Es. Ponte Sant'Angelo" />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 6 }}>
+                  <Input value={f.latDecollo} onChange={set("latDecollo")} placeholder='Lat N es. 41°:54\':07"' />
+                  <Input value={f.lonDecollo} onChange={set("lonDecollo")} placeholder='Lon E es. 12°:27\':59"' />
+                </div>
+              </div>
+              <div>
+                <Label>F2 — Località di atterraggio (se diversa)</Label>
+                <Input value={f.atterraggio} onChange={set("atterraggio")} placeholder="Lascia uguale al decollo se coincide" />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 6 }}>
+                  <Input value={f.latAtterraggio} onChange={set("latAtterraggio")} placeholder="Lat N" />
+                  <Input value={f.lonAtterraggio} onChange={set("lonAtterraggio")} placeholder="Lon E" />
+                </div>
+              </div>
+            </Section>
+
+            <Section letter="G" title="Località dove si svolge l'attività" color="#1a5276">
+              <Label required>Comune / Città</Label>
+              <Input value={f.localita} onChange={set("localita")} placeholder="Es. Roma" />
+            </Section>
+
+            <Section letter="H" title="Zona R, P o D" color="#6e2f1a">
+              <Label required>Denominazione zona (come in AIP-Italia)</Label>
+              <Input value={f.zona} onChange={set("zona")} placeholder="Es. LI P244-ROMA (Edifici istituzionali)" />
+            </Section>
+
+            <Section letter="I" title="Limiti laterali — Punti di coordinate" color="#0e6655">
+              {f.puntiLaterali.map((p, i) => (
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "2fr 1.5fr 1.5fr auto", gap: 8, marginBottom: 8, alignItems: "end" }}>
+                  <div>
+                    {i === 0 && <Label>Località</Label>}
+                    <Input value={p.nome} onChange={v => setPunto(i, "nome", v)} placeholder="Es. Ponte Sant'Angelo" />
+                  </div>
+                  <div>
+                    {i === 0 && <Label>Lat N</Label>}
+                    <Input value={p.lat} onChange={v => setPunto(i, "lat", v)} placeholder='41°:54\':07"' />
+                  </div>
+                  <div>
+                    {i === 0 && <Label>Lon E</Label>}
+                    <Input value={p.lon} onChange={v => setPunto(i, "lon", v)} placeholder='12°:27\':59"' />
+                  </div>
+                  <button onClick={() => removePunto(i)} style={{ background: "#fee", border: "1px solid #fbb", borderRadius: 6, padding: "6px 10px", cursor: "pointer", color: "#c0392b", fontSize: 16 }}>✕</button>
+                </div>
+              ))}
+              <button onClick={addPunto} style={{ background: "#e8f5e9", border: "1.5px dashed #27ae60", borderRadius: 6, padding: "7px 16px", cursor: "pointer", color: "#1e8449", fontSize: 12.5, fontWeight: 700 }}>
+                + Aggiungi punto
+              </button>
+            </Section>
+
+            <Section letter="J" title="Limiti verticali" color="#2c3e50">
+              <Label>Limiti verticali (inferiore / superiore)</Label>
+              <Input value={f.limVerticali} onChange={set("limVerticali")} placeholder="Es. inferiore GND / superiore 45 m AGL (147 ft)" />
+            </Section>
+
+            <Section letter="K" title="Ubicazione capoluogo" color="#1a3c5e">
+              <Label required>Capoluogo di riferimento</Label>
+              <Input value={f.capoluogo} onChange={set("capoluogo")} placeholder="Es. Roma" />
+            </Section>
+
+            <Section letter="L" title="Distanza dall'ARP" color="#4a235a">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <Label required>Aeroporto</Label>
+                  <Input value={f.aeroporto} onChange={set("aeroporto")} placeholder="Es. ROMA URBE 16/34" />
+                </div>
+                <div>
+                  <Label required>Distanza</Label>
+                  <Input value={f.distanza} onChange={set("distanza")} placeholder="Es. 3,02 NM (5,6 Km)" />
+                </div>
+              </div>
+            </Section>
+
+            <Section letter="M" title="Date e orari" color="#922b21">
+              <Label required>Date e orari dell'attività</Label>
+              <Textarea value={f.dateOrari} onChange={set("dateOrari")} rows={3}
+                placeholder="Es. 9, 10, 11, 12 settembre 2025 dalle ore 5:00 alle ore 10:00 e dalle ore 18:00 alle ore 22:00" />
+            </Section>
+
+            <Section letter="N" title="Altre notizie utili" color="#1e5799">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 10 }}>
+                <div>
+                  <Label required>Nome pilota in comando</Label>
+                  <Input value={f.nomePilota} onChange={set("nomePilota")} placeholder="Es. Mario Rossi" />
+                </div>
+                <div>
+                  <Label required>Telefono pilota</Label>
+                  <Input value={f.telPilota} onChange={set("telPilota")} placeholder="Es. 339 5746866" />
+                </div>
+              </div>
+              <Label>Notizie aggiuntive (opzionale)</Label>
+              <Textarea value={f.altreNotizie} onChange={set("altreNotizie")} rows={3}
+                placeholder="Eventuali informazioni extra..." />
+              <div style={{ marginTop: 10, background: "#f0f6ff", borderRadius: 6, padding: "8px 12px", fontSize: 11.5, color: "#555" }}>
+                <b>Testo N generato automaticamente:</b><br />
+                <span style={{ whiteSpace: "pre-line" }}>{`Il pilota in comando sig. ${f.nomePilota || "[nome]"} dichiara la disponibilità all'immediata interruzione…\nTel: ${f.telPilota || "[tel]"}\nDroni dotati di: RTH, geofencing. Volo VLOS.\n${f.altreNotizie || ""}`}</span>
+              </div>
+            </Section>
+
+            <div style={{ textAlign: "center", marginTop: 10 }}>
+              <button onClick={() => setTab("preview")} style={{ background: "#1a3c5e", color: "#fff", border: "none", borderRadius: 8, padding: "12px 32px", fontSize: 14, fontWeight: 700, cursor: "pointer", letterSpacing: "0.04em" }}>
+                👁 Vedi anteprima →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {tab === "preview" && (
+          <div>
+            <Preview f={f} />
+            <div style={{ marginTop: 16, display: "flex", gap: 12, justifyContent: "center" }}>
+              <button onClick={() => setTab("form")} style={{ background: "#fff", color: "#1a3c5e", border: "2px solid #1a3c5e", borderRadius: 8, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>← Modifica</button>
+              <button onClick={() => setTab("testo")} style={{ background: "#1a3c5e", color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>📋 Copia testo →</button>
+            </div>
+          </div>
+        )}
+
+        {tab === "testo" && (
+          <div>
+            <div style={{ background: "#fff", borderRadius: 10, boxShadow: "0 1px 8px #1a3c5e18", overflow: "hidden" }}>
+              <div style={{ background: "#1a3c5e", color: "#fff", padding: "10px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontWeight: 700 }}>📄 Testo ATM-05b — pronto da copiare</span>
+                <button onClick={handleCopy} style={{ background: copied ? "#27ae60" : "#fff", color: copied ? "#fff" : "#1a3c5e", border: "none", borderRadius: 6, padding: "6px 16px", fontWeight: 700, cursor: "pointer", fontSize: 13, transition: "all 0.2s" }}>
+                  {copied ? "✅ Copiato!" : "📋 Copia"}
+                </button>
+              </div>
+              <pre style={{ padding: 20, margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 12.5, fontFamily: "Georgia, serif", color: "#1a2a3a", lineHeight: 1.8 }}>
+                {fullText}
+              </pre>
+            </div>
+            <div style={{ marginTop: 12, textAlign: "center" }}>
+              <button onClick={() => setTab("form")} style={{ background: "#fff", color: "#1a3c5e", border: "2px solid #1a3c5e", borderRadius: 8, padding: "10px 24px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>← Torna al modulo</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
-
-    <!-- DATI FISSI -->
-    <div class="card">
-      <div class="card-title"><span class="dot" style="background:var(--gold)"></span> Dati 360Drone (precompilati)</div>
-      <div class="fixed-row">
-        <span class="fixed-label">Tel</span>
-        <span class="fixed-value">+39 388 7989630</span>
-      </div>
-      <div class="fixed-row">
-        <span class="fixed-label">PEC</span>
-        <span class="fixed-value">360drone@pec.it</span>
-      </div>
-      <div class="fixed-row">
-        <span class="fixed-label">CC ENAC</span>
-        <span class="fixed-value">protocollo@pec.enac.gov.it</span>
-      </div>
-      <div class="fixed-row">
-        <span class="fixed-label">CC ENAC 2</span>
-        <span class="fixed-value">mobilita.innovativa@enac.gov.it</span>
-      </div>
-      <div class="fixed-row">
-        <span class="fixed-label">A (ente)</span>
-        <span class="fixed-value" id="dest-a-display">–</span>
-      </div>
-    </div>
-
-  </div><!-- /p-dati -->
-
-
-  <!-- ══════════════════════════════════════
-       PANEL 2 – ANTEPRIMA ATM-05B
-  ══════════════════════════════════════ -->
-  <div class="panel" id="p-anteprima">
-    <div class="sec-head">
-      <h2>Anteprima ATM-05B</h2>
-      <p>Verifica tutti i campi prima di generare il PDF.</p>
-    </div>
-    <div class="card" style="padding:0; overflow:hidden;">
-      <div class="modulo-preview" id="mod-preview"></div>
-    </div>
-    <div style="margin-top:14px;">
-      <button class="btn btn-primary" onclick="generaPDF()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        Genera PDF ATM-05B
-      </button>
-    </div>
-  </div>
-
-
-  <!-- ══════════════════════════════════════
-       PANEL 3 – ATM-09A
-  ══════════════════════════════════════ -->
-  <div class="panel" id="p-09a">
-    <div class="sec-head">
-      <h2>ATM-09A – Notifica</h2>
-      <p>Testo precompilato da copiare e inviare alla torre di controllo.</p>
-    </div>
-    <div class="atm09-text" id="atm09-preview"></div>
-    <button class="btn btn-primary" onclick="copyATM09()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="9" y="9" width="13" height="13" rx="2"/>
-        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-      </svg>
-      Copia testo ATM-09A
-    </button>
-  </div>
-
-
-  <!-- ══════════════════════════════════════
-       PANEL 4 – RIEPILOGO PEC
-  ══════════════════════════════════════ -->
-  <div class="panel" id="p-riepilogo">
-    <div class="sec-head">
-      <h2>Riepilogo PEC</h2>
-      <p>Tutti i dati pronti — copia l'oggetto e il corpo della mail.</p>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span class="dot" style="background:var(--gold)"></span> Oggetto PEC</div>
-      <div class="ogg-box" id="ogg-pec">–</div>
-      <button class="btn btn-secondary" style="padding:10px; margin-top:10px;" onclick="copyOgg()">Copia oggetto</button>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span class="dot"></span> Destinatari</div>
-      <div class="recap-item"><span class="recap-k">A:</span><span class="recap-v" id="r-desta">–</span></div>
-      <div class="recap-item"><span class="recap-k">CC 1:</span><span class="recap-v">protocollo@pec.enac.gov.it</span></div>
-      <div class="recap-item"><span class="recap-k">CC 2:</span><span class="recap-v">mobilita.innovativa@enac.gov.it</span></div>
-      <div class="recap-item"><span class="recap-k">CC 3:</span><span class="recap-v">360drone@pec.it</span></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title"><span class="dot"></span> Riepilogo dati pratica</div>
-      <div class="recap-item"><span class="recap-k">Richiedente</span><span class="recap-v" id="r-rich">–</span></div>
-      <div class="recap-item"><span class="recap-k">Attestato</span><span class="recap-v" id="r-att">–</span></div>
-      <div class="recap-item"><span class="recap-k">Attività</span><span class="recap-v" id="r-scopo">–</span></div>
-      <div class="recap-item"><span class="recap-k">Località</span><span class="recap-v" id="r-loc">–</span></div>
-      <div class="recap-item"><span class="recap-k">Zona</span><span class="recap-v" id="r-zona">–</span></div>
-      <div class="recap-item"><span class="recap-k">Coordinate</span><span class="recap-v" id="r-coord">–</span></div>
-      <div class="recap-item"><span class="recap-k">Orario UTC</span><span class="recap-v" id="r-utc">–</span></div>
-      <div class="recap-item"><span class="recap-k">Quota max</span><span class="recap-v" id="r-quota">–</span></div>
-      <div class="recap-item"><span class="recap-k">Raggio</span><span class="recap-v" id="r-raggio">–</span></div>
-      <div class="recap-item"><span class="recap-k">Drone</span><span class="recap-v" id="r-drone">–</span></div>
-    </div>
-
-    <button class="btn btn-primary" onclick="copyTuttoPEC()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="9" y="9" width="13" height="13" rx="2"/>
-        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-      </svg>
-      Copia riepilogo completo
-    </button>
-  </div>
-
-</main>
-
-<!-- ── ACTION BAR ── -->
-<div class="action-bar">
-  <div class="action-bar-inner">
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="generaPDF()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-        </svg>
-        PDF ATM-05B
-      </button>
-      <button class="btn btn-gold" onclick="goPanel('p-09a'); buildATM09();">
-        ATM-09A →
-      </button>
-    </div>
-    <button class="btn btn-primary" onclick="goPanel('p-riepilogo'); buildRiepilogo();">
-      Riepilogo PEC completo →
-    </button>
-  </div>
-</div>
-
-<!-- ── TOAST ── -->
-<div class="toast" id="toast"></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="app.js"></script>
-</body>
-</html>
+  );
+}
