@@ -83,6 +83,9 @@ textarea{resize:vertical}
       <div class="p-h2">RICHIESTA DI AUTORIZZAZIONE AD EFFETTUARE ATTIVITÀ CON APR<br>IN ZONE VIETATE, RISERVATE O PERICOLOSE (P / R / D)</div>
       <div style="font-size:8pt">Ai sensi del Reg. (UE) 2019/947 e delle norme ENAC sugli UAS</div>
     </div>
+    <div style="border:1px solid #333;padding:5px 10px;margin-bottom:10px;font-size:9pt;text-align:center;font-style:italic">
+      Bollo assolto in modo virtuale – Aut. Dir. Reg. Entrate Lazio n. 135047/98 del 30/11/1998
+    </div>
     <table class="pt">
       <tr><td class="pc">A — Destinatario (PEC)</td><td id="p-destA">—</td></tr>
       <tr><td class="pc">Cc</td><td id="p-destCc">—</td></tr>
@@ -157,30 +160,52 @@ textarea{resize:vertical}
 <!-- TAB COMPILA -->
 <div class="tab-content active" id="tab-form">
 
-  <!-- H: Zona -->
+  <!-- H: Zona MULTI -->
   <div class="sec" style="margin-top:14px">
     <div class="sec-head" style="background:#6e2f1a">
       <span class="sl" style="background:#fff;color:#6e2f1a">H</span>
-      <span class="st">Zona — seleziona per auto-compilare email PEC</span>
+      <span class="st">Zona — seleziona una o più per auto-compilare email PEC</span>
     </div>
     <div class="sec-body">
-      <div class="field"><label class="lbl">Tipo di zona <span class="req">*</span></label>
-        <select id="zona" onchange="selZona(this.value)">
-          <option value="">— Seleziona zona —</option>
-          <option value="P - Carcere (DAP)">🔴 P - Carcere (DAP)</option>
-          <option value="P - Quirinale / Presidenziale">🔴 P - Quirinale / Presidenziale</option>
-          <option value="P - Ministero/Istituzione Roma (LI P244)">🔴 P - Ministero/Istituzione Roma (LI P244)</option>
-          <option value="R - Prefettura (scegli provincia)">🟠 R - Prefettura (scegli provincia)</option>
-          <option value="R - Militare (COA Difesa)">🟠 R - Militare (COA Difesa)</option>
-          <option value="R - ENAV / Aeroporto">🟠 R - ENAV / Aeroporto</option>
-          <option value="D - Altra zona">🟡 D - Altra zona</option>
-        </select>
-      </div>
-      <div class="field" id="prov-field" style="display:none">
-        <label class="lbl">Provincia</label>
-        <select id="provincia" onchange="selProv(this.value)"><option value="">— Seleziona —</option></select>
+      <div class="field">
+        <label class="lbl">Tipo di zona <span class="req">*</span> — puoi selezionarne più di una</label>
+        <div id="zona-checks" style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
+            <input type="checkbox" value="P - Carcere (DAP)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#c0392b">
+            🔴 P - Carcere (DAP)
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
+            <input type="checkbox" value="P - Quirinale / Presidenziale" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#c0392b">
+            🔴 P - Quirinale / Presidenziale
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
+            <input type="checkbox" value="P - Ministero/Istituzione Roma (LI P244)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#c0392b">
+            🔴 P - Ministero/Istituzione Roma (LI P244)
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
+            <input type="checkbox" value="R - Prefettura (scegli provincia)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#e67e22">
+            🟠 R - Prefettura (scegli provincia)
+          </label>
+          <div id="prov-field" style="display:none;padding-left:28px">
+            <label class="lbl">Provincia</label>
+            <select id="provincia" onchange="aggiornaZone()" style="max-width:200px"><option value="">— Seleziona —</option></select>
+          </div>
+          <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
+            <input type="checkbox" value="R - Militare (COA Difesa)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#e67e22">
+            🟠 R - Militare (COA Difesa)
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
+            <input type="checkbox" value="R - ENAV / Aeroporto" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#e67e22">
+            🟠 R - ENAV / Aeroporto
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
+            <input type="checkbox" value="D - Altra zona" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#f39c12">
+            🟡 D - Altra zona
+          </label>
+        </div>
       </div>
       <div id="zona-avviso"></div>
+      <input type="hidden" id="zona"/>
     </div>
   </div>
 
@@ -485,7 +510,16 @@ function loadStorage() {
     const d = JSON.parse(s);
     FIELDS.forEach(k => { const e = document.getElementById(k); if(e && d[k] != null) e.value = d[k]; });
     if (d.punti && d.punti.length) punti = d.punti;
-    if (d.zona) selZona(d.zona, true);
+    // Ripristina checkbox zone
+    if (d.zona) {
+      const valori = d.zona.split(', ');
+      document.querySelectorAll('#zona-checks input[type=checkbox]').forEach(cb => {
+        if (valori.includes(cb.value)) cb.checked = true;
+      });
+      aggiornaZone();
+    }
+    // Ripristina provincia se salvata
+    if (d.provincia) document.getElementById('provincia').value = d.provincia;
   } catch(e) {}
 }
 document.addEventListener('input',  () => { saveAll(); updatePreviewN(); });
@@ -502,26 +536,57 @@ function switchTab(name) {
   if (name === 'alert') renderAlerts();
 }
 
-/* ── ZONA → EMAIL ── */
-function selZona(val, silent) {
-  if (!silent) document.getElementById('zona').value = val;
-  const z = ZONE_DB[val];
-  const pf = document.getElementById('prov-field');
+/* ── ZONA MULTI-CHECK → EMAIL ── */
+function aggiornaZone() {
+  const checks = [...document.querySelectorAll('#zona-checks input[type=checkbox]:checked')];
+  const valori = checks.map(c => c.value);
+
+  // Mostra/nascondi selezione provincia
+  const needProv = valori.includes('R - Prefettura (scegli provincia)');
+  document.getElementById('prov-field').style.display = needProv ? 'block' : 'none';
+
+  // Evidenzia checkbox selezionati
+  document.querySelectorAll('#zona-checks label').forEach(lbl => {
+    const cb = lbl.querySelector('input');
+    if (cb) lbl.style.borderColor = cb.checked ? '#1a3c5e' : '#c5d8ea';
+    if (cb) lbl.style.background  = cb.checked ? '#e8f0f7' : '#f7fbff';
+  });
+
+  // Raccoglie email A (unique, separate da "; ")
+  const emailsA = [], avvisi = [];
+  valori.forEach(val => {
+    const z = ZONE_DB[val];
+    if (!z) return;
+    let a = z.A;
+    if (z.needsProv) {
+      const prov = document.getElementById('provincia').value;
+      a = prov ? z.A.replace('{P}', prov.toLowerCase()) : '';
+    }
+    if (a && !emailsA.includes(a)) emailsA.push(a);
+    if (z.msg) avvisi.push(z.msg);
+  });
+
+  document.getElementById('destA').value = emailsA.join('; ');
+  // Cc: sempre fisso + ENAC
+  document.getElementById('destCc').value = 'protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it';
+
+  // Campo H testo combinato (per il PDF)
+  document.getElementById('zona').value = valori.join(', ');
+
+  // Avvisi
   const av = document.getElementById('zona-avviso');
-  if (!z) { av.innerHTML = ''; pf.style.display = 'none'; return; }
-  pf.style.display = z.needsProv ? 'block' : 'none';
-  if (!z.needsProv) { document.getElementById('destA').value = z.A; document.getElementById('destCc').value = z.Cc; }
-  else              { document.getElementById('destA').value = ''; document.getElementById('destCc').value = z.Cc; }
-  const col = z.tipo === 'P'
-    ? 'background:#fff3cd;border:1px solid #ffc107;color:#856404'
-    : 'background:#e8f4f8;border:1px solid #5bc0de;color:#2c6e7a';
-  av.innerHTML = `<div style="${col};border-radius:6px;padding:8px 12px;font-size:12.5px;margin-top:6px">${z.msg}</div>`;
-  runValidation();
-}
-function selProv(val) {
-  const z = ZONE_DB[document.getElementById('zona').value];
-  if (z && z.needsProv) document.getElementById('destA').value = z.A.replace('{P}', val.toLowerCase());
+  if (avvisi.length) {
+    const hasP = valori.some(v => ZONE_DB[v]?.tipo === 'P');
+    const col  = hasP
+      ? 'background:#fff3cd;border:1px solid #ffc107;color:#856404'
+      : 'background:#e8f4f8;border:1px solid #5bc0de;color:#2c6e7a';
+    av.innerHTML = avvisi.map(m => `<div style="${col};border-radius:6px;padding:8px 12px;font-size:12.5px;margin-top:6px">${m}</div>`).join('');
+  } else {
+    av.innerHTML = '';
+  }
+
   saveAll();
+  runValidation();
 }
 
 /* ── DRONE PRESET ── */
@@ -776,8 +841,8 @@ function generaPDF() {
   setTimeout(() => window.print(), 100);
 }
 
-// Trigger validazione
-['attestato','tipoLic','dronePreset','dateOrari','zona'].forEach(id => {
+// Trigger validazione su cambio campi chiave
+['attestato','tipoLic','dronePreset','dateOrari'].forEach(id => {
   const el = document.getElementById(id); if(el) el.addEventListener('change', runValidation);
 });
 runValidation();
