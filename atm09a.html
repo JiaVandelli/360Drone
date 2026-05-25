@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>360Drone – ATM-09A</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#edf2f7;min-height:100vh;font-size:14px}
+input,textarea,select,button{font-family:inherit;font-size:14px}
+#header{background:#1a4a2e;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+#header h1{font-size:17px;font-weight:800}
+#header .sub{font-size:10px;opacity:.65;text-transform:uppercase;letter-spacing:.12em}
+#header .info{font-size:11px;text-align:right;opacity:.85;line-height:1.7}
+#err-bar{background:#c0392b;color:#fff;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:none}
+#tabs{display:flex;background:#d0e8d6;border-bottom:2px solid #1a4a2e22}
+.tab-btn{padding:11px 0;border:none;cursor:pointer;font-weight:600;background:transparent;color:#1a4a2e;font-size:13px;border-right:1px solid #a8cdb0;position:relative;flex:1}
+.tab-btn.active{background:#1a4a2e;color:#fff}
+.badge{position:absolute;top:4px;right:6px;background:#c0392b;color:#fff;border-radius:50%;width:15px;height:15px;font-size:9px;display:none;align-items:center;justify-content:center;font-weight:700}
+#reset-btn{padding:8px 14px;border:none;cursor:pointer;background:transparent;color:#c0392b;font-size:12px;font-weight:700}
+.tab-content{display:none;max-width:820px;margin:0 auto;padding:14px 12px 60px}
+.tab-content.active{display:block}
+.sec{background:#fff;border-radius:10px;box-shadow:0 1px 6px #1a4a2e15;margin-bottom:16px;overflow:hidden}
+.sec-head{padding:8px 14px;display:flex;gap:10px;align-items:center}
+.sl{border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;flex-shrink:0}
+.st{color:#fff;font-weight:700;font-size:13px}
+.sec-body{padding:14px 14px 12px}
+.field{margin-bottom:10px}
+.lbl{font-size:10px;font-weight:700;color:#1a4a2e;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px}
+.req{color:#c0392b}
+input[type=text],textarea,select{width:100%;padding:8px 10px;border:1.5px solid #b8d4be;border-radius:6px;background:#f6fbf7;color:#1a2a1e;outline:none;transition:border .15s}
+input[type=text]:focus,textarea:focus,select:focus{border-color:#1a4a2e}
+textarea{resize:vertical}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px}
+.btn{padding:9px 16px;border:none;border-radius:8px;font-weight:700;cursor:pointer;color:#fff;font-size:13px}
+.btn-green{background:#27ae60}.btn-dark{background:#1a4a2e}.btn-orange{background:#e67e22}.btn-teal{background:#0e6655}
+.alert{padding:10px 14px;border-radius:8px;margin-bottom:10px;font-size:13px;line-height:1.6}
+.a-err{background:#fdecea;border:1.5px solid #c0392b;color:#922b21}
+.a-warn{background:#fff3cd;border:1.5px solid #ffc107;color:#856404}
+.a-ok{background:#d4edda;border:1.5px solid #28a745;color:#155724}
+.a-info{background:#e8f4f8;border:1.5px solid #5bc0de;color:#2c6e7a}
+/* ZONE COLORS */
+.zona-celeste{background:#cce8f4;border:2px solid #2196f3;color:#0a4a6e}
+.zona-gialla{background:#fff9c4;border:2px solid #fdd835;color:#5d4037}
+.zona-arancione{background:#ffe0b2;border:2px solid #ff9800;color:#5d3c00}
+.zona-rossa{background:#ffcdd2;border:2px solid #f44336;color:#7f0000}
+.zona-ctr{background:#e8d5f5;border:2px solid #9c27b0;color:#4a0e6e}
+/* CONVERTITORE */
+.conv-box{background:#f0f8f2;border:1.5px solid #90c49a;border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.conv-box label{font-size:11px;font-weight:700;color:#1a4a2e;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px}
+.conv-box textarea{background:#fff;border:1.5px solid #a8d4b0;border-radius:6px;font-family:monospace;font-size:13px;color:#1a2a1e;width:100%;padding:8px 10px;outline:none}
+.conv-result{margin-top:8px;font-family:monospace;font-size:12.5px;color:#0e6655;background:#e8f5e9;border-radius:6px;padding:7px 12px;line-height:2;display:none}
+.conv-btn{margin-top:8px;padding:7px 16px;border:none;border-radius:6px;background:#1a4a2e;color:#fff;font-weight:700;font-size:12px;cursor:pointer}
+/* PRINT */
+#print-area{display:none}
+@media print{
+  body *{display:none!important}
+  #print-area,#print-area *{display:block!important}
+  #print-area{font-family:'Times New Roman',serif;font-size:10.5pt;color:#000}
+  .p-page{width:100%;padding:14mm 12mm;page-break-after:always}
+  .p-page:last-child{page-break-after:avoid}
+  .p-box{border:2px solid #000;padding:8px 12px;text-align:center;margin-bottom:14px}
+  .p-h1{font-size:13pt;font-weight:bold;text-align:center;margin-bottom:3px}
+  .p-h2{font-size:10pt;text-align:center;margin-bottom:8px}
+  .p-avviso{font-size:8.5pt;font-style:italic;text-align:center;margin-bottom:4px;color:#333}
+  table.pt{width:100%;border-collapse:collapse;margin-bottom:12px}
+  table.pt td{border:1px solid #333;padding:5px 8px;vertical-align:top;font-size:10pt}
+  .pc{background:#f0f0f0;font-weight:bold;width:28%}
+  .psig{display:flex;justify-content:space-between;margin-top:28px}
+  .psig-line{border-top:1px solid #000;width:200px;margin-top:34px;font-size:8pt;text-align:center}
+}
+@media(max-width:580px){.g2{grid-template-columns:1fr}.g3{grid-template-columns:1fr 1fr 1fr auto;gap:5px}}
+</style>
+</head>
+<body>
+
+<!-- PRINT TEMPLATE -->
+<div id="print-area">
+  <div class="p-page">
+    <div class="p-box">
+      <div style="font-size:8pt;margin-bottom:4px">MINISTERO DELLE INFRASTRUTTURE E DEI TRASPORTI – ENAC</div>
+      <div class="p-h1">MODELLO ATM - 09A</div>
+      <div class="p-h2">RICHIESTA DI AUTORIZZAZIONE AD EFFETTUARE ATTIVITÀ CON APR<br>IN PROSSIMITÀ DI AEROPORTI (SPAZI AEREI CONTROLLATI ATZ / CTR)</div>
+      <div style="font-size:8pt">Ai sensi del Reg. (UE) 2019/947 e delle norme ENAC sugli UAS</div>
+      <div class="p-avviso" style="margin-top:6px">Soggetta al pagamento dei diritti aeronautici ENAC — conservare ricevuta di pagamento</div>
+    </div>
+    <table class="pt">
+      <tr><td class="pc">A — Destinatario (PEC ENAC)</td><td id="p-destA">—</td></tr>
+      <tr><td class="pc">Cc — ATS competente</td><td id="p-destCc">—</td></tr>
+      <tr><td class="pc">B — Richiedente</td><td>
+        <span id="p-rich">—</span><br>
+        Attestato: <span id="p-att">—</span><br>
+        Tel./Mob.: 0187 1755700<br>E-mail/PEC: 360drone@pec.it
+      </td></tr>
+      <tr><td class="pc">C — CHIEDE</td><td>l'autorizzazione ad effettuare attività con APR in prossimità di aeroporto/spazio aereo controllato, ai sensi del Reg. (UE) 2019/947 e disposizioni ENAC vigenti in materia di UAS.</td></tr>
+      <tr><td class="pc">D — Tipo di attività <sup>(3)</sup></td><td id="p-attiv">—</td></tr>
+      <tr><td class="pc">E — Tipo di aeromobile <sup>(4)</sup></td><td id="p-aero">—</td></tr>
+      <tr><td class="pc">E1 — Scenario operativo</td><td id="p-scenario">—</td></tr>
+      <tr><td class="pc">E2 — Aut. ENAC / CRO n.</td><td id="p-cro">—</td></tr>
+      <tr><td class="pc">F1 — Loc. decollo <sup>(5)</sup></td><td id="p-dec">—</td></tr>
+      <tr><td class="pc">F2 — Loc. atterraggio <sup>(5)</sup></td><td id="p-att3">—</td></tr>
+      <tr><td class="pc">G — Loc. attività</td><td id="p-loc">—</td></tr>
+      <tr><td class="pc">H — Spazio aereo / Zona geografica</td><td id="p-zona">—</td></tr>
+      <tr><td class="pc">I — Limiti laterali <sup>(5)</sup></td><td>
+        <table style="width:100%;border-collapse:collapse">
+          <tr>
+            <th style="border:1px solid #999;padding:3px 6px;background:#f5f5f5;font-size:9pt">Punto</th>
+            <th style="border:1px solid #999;padding:3px 6px;background:#f5f5f5;font-size:9pt">Lat N</th>
+            <th style="border:1px solid #999;padding:3px 6px;background:#f5f5f5;font-size:9pt">Lon E</th>
+          </tr>
+          <tbody id="p-punti"></tbody>
+        </table>
+      </td></tr>
+      <tr><td class="pc">J — Limiti verticali <sup>(7)</sup></td><td id="p-lim">—</td></tr>
+      <tr><td class="pc">J1 — Quota massima richiesta</td><td id="p-quota">—</td></tr>
+      <tr><td class="pc">M — Date/Orari <sup>(8)</sup></td><td id="p-date">—</td></tr>
+      <tr><td class="pc">Frequenza radio / TBT</td><td id="p-freq">—</td></tr>
+      <tr><td class="pc">Assicurazione – massimale</td><td id="p-assic">—</td></tr>
+      <tr><td class="pc">Diritti ENAC pagati</td><td id="p-diritti">—</td></tr>
+      <tr><td class="pc">N — Altre notizie <sup>(9)(10)</sup></td><td style="white-space:pre-line" id="p-note">—</td></tr>
+    </table>
+    <p style="font-size:10pt;margin-top:16px">In attesa di un gentile riscontro, si porgono cordiali saluti.</p>
+    <div class="psig">
+      <div>Luogo e data: <span id="p-luogodata">—</span></div>
+      <div><div>Firma operatore APR</div><div class="psig-line">________________________</div></div>
+    </div>
+  </div>
+  <div class="p-page">
+    <div style="font-size:10pt;line-height:1.9">
+      <p style="font-weight:bold;font-size:11pt;margin-bottom:10px">Note:</p>
+      <ol style="padding-left:20px">
+        <li>Inserire il codice alfa numerico della fattura (casella centrale) e anno versamento (casella di destra).</li>
+        <li>Vedere Capitolo 6 e Capitolo 11, a seconda dei casi.</li>
+        <li>Specificare il tipo di attività e la categoria operativa (Open, Specific, Certified).</li>
+        <li>Specificare il modello e le caratteristiche (peso, equipaggiamenti, dotazioni ecc.).</li>
+        <li>Coordinate geografiche sessagesimali (gradi, minuti primi, minuti secondi) espresse in formato WGS 84 con risoluzione a 1 secondo, del centro della zona o dei vertici della spezzata che la delimita.</li>
+        <li>Denominazione dello spazio aereo come riportato in AIP-Italia (es. ATZ Roma Urbe, CTR Milano Linate).</li>
+        <li>Limiti verticali inferiori e superiori espressi in piedi al di sopra del mare/suolo (FT AMSL/AGL).</li>
+        <li>Data: per singoli giorni usare la virgola (es. 1, 2, 5, 10); per periodi il trattino (es. 1-3, 5-11). Orario sempre in UTC.</li>
+        <li>Specificare frequenza radio di contatto con ATS, disponibilità telefonica H24.</li>
+        <li>Valutazione ATS Fornitore SNA responsabile di riferimento (ENAV o AM, a seconda dei casi).</li>
+      </ol>
+    </div>
+    <p style="margin-top:24px;font-size:8pt;color:#666;text-align:center;border-top:1px solid #ccc;padding-top:10px">
+      Documento generato da 360Drone – Compilatore ATM-09A — <span id="p-ts"></span>
+    </p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="header">
+  <div><div class="sub">360Drone – Permessi di volo</div><h1>Compilatore ATM-09A</h1></div>
+  <div class="info">📞 0187 1755700<br>✉️ 360drone@pec.it</div>
+</div>
+<div id="err-bar" onclick="switchTab('alert')">⛔ Errori critici — tocca per vedere</div>
+<div id="tabs">
+  <button class="tab-btn active" onclick="switchTab('form')">✏️ Compila</button>
+  <button class="tab-btn" onclick="switchTab('alert')">🚨 Allarmi<span class="badge" id="err-badge"></span></button>
+  <button id="reset-btn" onclick="resetForm()">🗑 Reset</button>
+</div>
+
+<!-- TAB COMPILA -->
+<div class="tab-content active" id="tab-form">
+
+  <!-- H: Zona geografica D-Flight -->
+  <div class="sec" style="margin-top:14px">
+    <div class="sec-head" style="background:#1a4a2e">
+      <span class="sl" style="background:#fff;color:#1a4a2e">H</span>
+      <span class="st">Zona geografica UAS (colore D-Flight) — auto-compila email ENAC</span>
+    </div>
+    <div class="sec-body">
+      <div class="field"><label class="lbl">Colore zona su D-Flight <span class="req">*</span></label>
+        <div id="zona-checks" style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:2px solid #2196f3;border-radius:8px;cursor:pointer;background:#cce8f4;font-size:13px;font-weight:600;color:#0a4a6e">
+            <input type="checkbox" value="Zona Celeste (60m)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#2196f3">
+            🔵 Zona CELESTE — volo autorizzato fino a 60m AGL
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:2px solid #fdd835;border-radius:8px;cursor:pointer;background:#fff9c4;font-size:13px;font-weight:600;color:#5d4037">
+            <input type="checkbox" value="Zona Gialla (45m)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#fdd835">
+            🟡 Zona GIALLA — limite 45m AGL
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:2px solid #ff9800;border-radius:8px;cursor:pointer;background:#ffe0b2;font-size:13px;font-weight:600;color:#5d3c00">
+            <input type="checkbox" value="Zona Arancione (25m)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#ff9800">
+            🟠 Zona ARANCIONE — limite 25m AGL
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:2px solid #f44336;border-radius:8px;cursor:pointer;background:#ffcdd2;font-size:13px;font-weight:600;color:#7f0000">
+            <input type="checkbox" value="Zona Rossa (0m)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#f44336">
+            🔴 Zona ROSSA — volo non consentito senza autorizzazione speciale
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:2px solid #9c27b0;border-radius:8px;cursor:pointer;background:#e8d5f5;font-size:13px;font-weight:600;color:#4a0e6e">
+            <input type="checkbox" value="CTR Militare" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#9c27b0">
+            🟣 CTR Militare — anticipo 60 giorni, coordinarsi con AM
+          </label>
+        </div>
+      </div>
+      <div class="field" id="enac-dir-field">
+        <label class="lbl">Direzione Territoriale ENAC competente <span class="req">*</span></label>
+        <select id="enacDir" onchange="aggiornaZone()">
+          <option value="">— Seleziona —</option>
+          <option value="centro">Centro — Roma (protocollo.centro@pec.enac.gov.it)</option>
+          <option value="nordovest">Nord Ovest — Milano (protocollo.nordovest@pec.enac.gov.it)</option>
+          <option value="nordest">Nord Est — Venezia (protocollo.nordest@pec.enac.gov.it)</option>
+          <option value="centronord">Centro Nord — Bologna (protocollo.centronord@pec.enac.gov.it)</option>
+          <option value="sud">Sud — Napoli (protocollo.sud@pec.enac.gov.it)</option>
+          <option value="sudest">Sud Est — Bari (protocollo.sudest@pec.enac.gov.it)</option>
+          <option value="sicilia">Sicilia — Palermo (protocollo.sicilia@pec.enac.gov.it)</option>
+          <option value="sardegna">Sardegna — Cagliari (protocollo.sardegna@pec.enac.gov.it)</option>
+        </select>
+      </div>
+      <input type="hidden" id="zona"/>
+      <div id="zona-avviso"></div>
+    </div>
+  </div>
+
+  <!-- A: Email -->
+  <div class="sec">
+    <div class="sec-head" style="background:#1a4a2e">
+      <span class="sl" style="background:#fff;color:#1a4a2e">A</span>
+      <span class="st">Destinatari PEC (auto-compilati)</span>
+    </div>
+    <div class="sec-body">
+      <div class="field"><label class="lbl">A — Direzione Territoriale ENAC (PEC)</label>
+        <input type="text" id="destA" placeholder="Seleziona zona e direzione ENAC qui sopra"/>
+      </div>
+      <div class="field"><label class="lbl">Cc — ATS competente</label>
+        <textarea id="destCc" rows="2">operazioni.atm@enav.it; mobilita.innovativa@enac.gov.it</textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- B: Richiedente -->
+  <div class="sec">
+    <div class="sec-head" style="background:#2471a3">
+      <span class="sl" style="background:#fff;color:#2471a3">B</span>
+      <span class="st">Richiedente / Attestato</span>
+    </div>
+    <div class="sec-body">
+      <div class="g2">
+        <div class="field"><label class="lbl">Nome e cognome pilota <span class="req">*</span></label>
+          <input type="text" id="richiedente" placeholder="Es. Mario Rossi" oninput="autoSync('richiedente','nomePilota')"/>
+        </div>
+        <div class="field"><label class="lbl">Nome pilota in comando (sez. N)</label>
+          <input type="text" id="nomePilota" placeholder="Es. Mario Rossi"/>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="field"><label class="lbl">Numero attestato UAS <span class="req">*</span></label>
+          <input type="text" id="attestato" placeholder="Es. LUX-RP-19930106xxxx" oninput="runValidation()"/>
+        </div>
+        <div class="field"><label class="lbl">Tipo patentino</label>
+          <select id="tipoLic" onchange="runValidation()">
+            <option value="">— Tipo —</option>
+            <option value="A1">A1 – vicino a persone (&lt;900g)</option>
+            <option value="A2">A2 – distanza sicura (&lt;4kg)</option>
+            <option value="A3">A3 – lontano da persone (&gt;4kg)</option>
+          </select>
+        </div>
+      </div>
+      <div style="max-width:280px">
+        <div class="field"><label class="lbl">Tel pilota (sez. N) <span class="req">*</span></label>
+          <input type="text" id="telPilota" placeholder="Es. 339 5746866"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- D: Attività + categoria operativa -->
+  <div class="sec">
+    <div class="sec-head" style="background:#1e8449">
+      <span class="sl" style="background:#fff;color:#1e8449">D</span>
+      <span class="st">Tipo di attività e categoria operativa</span>
+    </div>
+    <div class="sec-body">
+      <div class="field"><label class="lbl">Categoria operativa <span class="req">*</span></label>
+        <select id="catOperativa">
+          <option value="">— Seleziona —</option>
+          <option value="Open – Sottocategoria A1 (VLOS, meno di 900g)">Open – A1 (VLOS, &lt;900g)</option>
+          <option value="Open – Sottocategoria A2 (VLOS, meno di 4kg)">Open – A2 (VLOS, &lt;4kg)</option>
+          <option value="Open – Sottocategoria A3 (VLOS, lontano da persone)">Open – A3 (VLOS, lontano da persone)</option>
+          <option value="Open – con deroga art. 15 Reg. UE 947/2019">Open – con deroga art. 15</option>
+          <option value="Specific – STS-01">Specific – STS-01</option>
+          <option value="Specific – STS-02">Specific – STS-02</option>
+          <option value="Specific – PDRA-G01">Specific – PDRA-G01</option>
+          <option value="Specific – autorizzazione individuale">Specific – autorizzazione individuale</option>
+        </select>
+      </div>
+      <div class="field"><label class="lbl">Descrizione attività <span class="req">*</span></label>
+        <textarea id="tipoAttivita" rows="2" placeholder="Es. riprese video e foto aeree per documentazione architettonica - volo VLOS"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- E: Drone + CRO + scenario -->
+  <div class="sec">
+    <div class="sec-head" style="background:#7d3c98">
+      <span class="sl" style="background:#fff;color:#7d3c98">E</span>
+      <span class="st">Aeromobile / Scenario / Autorizzazione</span>
+    </div>
+    <div class="sec-body">
+      <div class="field"><label class="lbl">Modello (pre-compila)</label>
+        <select id="dronePreset" onchange="selDrone(this.value)">
+          <option value="">— Seleziona modello —</option>
+          <option value="DJI Mini 2 – 249g – Categoria C0||A1">DJI Mini 2 (249g – C0)</option>
+          <option value="DJI Mini 3 – 249g – Categoria C0||A1">DJI Mini 3 (249g – C0)</option>
+          <option value="DJI Mini 4 Pro – 249g – Categoria C0||A1">DJI Mini 4 Pro (249g – C0)</option>
+          <option value="DJI Air 3 – 720g – Categoria C1||A1">DJI Air 3 (720g – C1)</option>
+          <option value="DJI Mavic 3 – 895g – Categoria C1||A1">DJI Mavic 3 (895g – C1)</option>
+          <option value="DJI Mavic 3 Pro – 958g – Categoria C2||A2">DJI Mavic 3 Pro (958g – C2)</option>
+          <option value="DJI Phantom 4 Pro – 1375g – Categoria C2||A2">DJI Phantom 4 Pro (1375g – C2)</option>
+          <option value="DJI Inspire 2 – 3440g – Categoria C2||A2">DJI Inspire 2 (3440g – C2)</option>
+          <option value="Drone >4kg – Categoria C3||A3">Drone &gt;4kg (C3)</option>
+        </select>
+      </div>
+      <div class="field"><label class="lbl">Descrizione completa aeromobile <span class="req">*</span></label>
+        <input type="text" id="aeromobile" placeholder="Es. DJI Mini 3 – 249g – Categoria C0 – ID operatore: xxxxxx"/>
+      </div>
+      <div class="g2">
+        <div class="field"><label class="lbl">Autorizzazione ENAC / CRO n. <span class="req">*</span></label>
+          <input type="text" id="cro" placeholder="Es. CRO-2024-XXXXXX" oninput="runValidation()"/>
+        </div>
+        <div class="field"><label class="lbl">Scenario operativo</label>
+          <input type="text" id="scenario" placeholder="Es. STS-01 / PDRA-G01 / Open A1"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- F: Coordinate decollo + convertitore -->
+  <div class="sec">
+    <div class="sec-head" style="background:#c0392b">
+      <span class="sl" style="background:#fff;color:#c0392b">F</span>
+      <span class="st">Decollo e Atterraggio</span>
+    </div>
+    <div class="sec-body">
+      <div class="conv-box">
+        <label>📋 Incolla coordinate decollo da D-Flight</label>
+        <textarea id="conv-dec-input" rows="2"
+          placeholder="Es: 41.902782, 12.496366"
+          oninput="convDecollo(this.value)"></textarea>
+        <div id="conv-dec-result" class="conv-result"></div>
+      </div>
+      <div class="field"><label class="lbl">F1 — Località di decollo <span class="req">*</span></label>
+        <input type="text" id="decollo" placeholder="Es. Via Roma 12, Fiumicino" style="margin-bottom:6px"/>
+        <div class="g2" style="margin-top:4px">
+          <input type="text" id="latDecollo" placeholder="Lat N (sessagesimale)"/>
+          <input type="text" id="lonDecollo" placeholder="Lon E (sessagesimale)"/>
+        </div>
+      </div>
+      <div class="field"><label class="lbl">F2 — Atterraggio (vuoto = stesso punto)</label>
+        <input type="text" id="atterraggio" placeholder="Lascia vuoto se coincide con il decollo" style="margin-bottom:6px"/>
+        <div class="g2" style="margin-top:4px">
+          <input type="text" id="latAtterraggio" placeholder="Lat N"/>
+          <input type="text" id="lonAtterraggio" placeholder="Lon E"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- G: Località -->
+  <div class="sec">
+    <div class="sec-head" style="background:#1a5276">
+      <span class="sl" style="background:#fff;color:#1a5276">G</span>
+      <span class="st">Località dove si svolge l'attività</span>
+    </div>
+    <div class="sec-body">
+      <div class="field"><label class="lbl">Comune / Città <span class="req">*</span></label>
+        <input type="text" id="localita" placeholder="Es. Roma"/>
+      </div>
+      <div class="field"><label class="lbl">Aeroporto / Spazio aereo di riferimento</label>
+        <input type="text" id="aeroporto" placeholder="Es. ATZ Roma Urbe – LIRU / CTR Milano Linate – LIML"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- I: Vertici area + convertitore multi -->
+  <div class="sec">
+    <div class="sec-head" style="background:#0e6655">
+      <span class="sl" style="background:#fff;color:#0e6655">I</span>
+      <span class="st">Limiti laterali — Vertici area</span>
+    </div>
+    <div class="sec-body">
+      <div class="conv-box">
+        <label>📋 Incolla vertici area da D-Flight (uno per riga)</label>
+        <textarea id="conv-area-input" rows="5"
+          placeholder="Es:&#10;41.802782, 12.196366&#10;41.803500, 12.197100&#10;41.801200, 12.195800"></textarea>
+        <button class="conv-btn" onclick="convArea()">✅ Converti e compila vertici</button>
+        <div id="conv-area-result" class="conv-result"></div>
+      </div>
+      <div id="punti-container"></div>
+      <button class="btn btn-teal" style="font-size:12px;padding:7px 14px;margin-top:4px" onclick="addPunto()">+ Aggiungi punto manuale</button>
+    </div>
+  </div>
+
+  <!-- J: Limiti verticali + quota massima -->
+  <div class="sec">
+    <div class="sec-head" style="background:#2c3e50">
+      <span class="sl" style="background:#fff;color:#2c3e50">J</span>
+      <span class="st">Limiti verticali e quota massima richiesta</span>
+    </div>
+    <div class="sec-body">
+      <div class="g2">
+        <div class="field"><label class="lbl">Limiti verticali</label>
+          <input type="text" id="limVerticali" value="inferiore GND / superiore 45 m AGL (147 ft)"/>
+        </div>
+        <div class="field"><label class="lbl">Quota massima richiesta <span class="req">*</span></label>
+          <select id="quotaMax">
+            <option value="">— Seleziona —</option>
+            <option value="30 m AGL (98 ft)">30 m AGL (98 ft)</option>
+            <option value="45 m AGL (147 ft)">45 m AGL (147 ft)</option>
+            <option value="60 m AGL (197 ft)">60 m AGL (197 ft)</option>
+            <option value="90 m AGL (295 ft)">90 m AGL (295 ft)</option>
+            <option value="120 m AGL (394 ft)">120 m AGL (394 ft)</option>
+            <option value="Altro (specificare in note)">Altro (specificare in note)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- M: Date -->
+  <div class="sec">
+    <div class="sec-head" style="background:#922b21">
+      <span class="sl" style="background:#fff;color:#922b21">M</span>
+      <span class="st">Date e orari ⚠️ sempre UTC!</span>
+    </div>
+    <div class="sec-body">
+      <div class="field"><label class="lbl">Date e orari <span class="req">*</span></label>
+        <textarea id="dateOrari" rows="3" oninput="runValidation()"
+          placeholder="Es. 9, 10, 11 luglio 2025 dalle ore 05:00 UTC alle ore 08:00 UTC"></textarea>
+      </div>
+      <div style="font-size:11px;color:#c0392b">⚠️ Orario SEMPRE in UTC &nbsp;|&nbsp; Ora legale italiana = UTC+2 &nbsp;|&nbsp; Es: 7:00 locale → 05:00 UTC</div>
+    </div>
+  </div>
+
+  <!-- Campi extra 09A -->
+  <div class="sec">
+    <div class="sec-head" style="background:#1a4a2e">
+      <span class="sl" style="background:#fff;color:#1a4a2e">+</span>
+      <span class="st">Dati obbligatori specifici ATM-09A</span>
+    </div>
+    <div class="sec-body">
+      <div class="g2">
+        <div class="field"><label class="lbl">Frequenza radio / contatto TBT <span class="req">*</span></label>
+          <input type="text" id="freqRadio" placeholder="Es. 122.800 MHz / tel. 06 1234567" oninput="runValidation()"/>
+        </div>
+        <div class="field"><label class="lbl">Massimale assicurazione RC</label>
+          <input type="text" id="assicurazione" placeholder="Es. € 750.000"/>
+        </div>
+      </div>
+      <div class="field"><label class="lbl">Estremi pagamento diritti ENAC <span class="req">*</span></label>
+        <input type="text" id="pagamentoDiritti" placeholder="Es. Fattura ENAC n. 2025/XXXX del gg/mm/aaaa – € 94,00" oninput="runValidation()"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- N: Altre notizie -->
+  <div class="sec">
+    <div class="sec-head" style="background:#1e5799">
+      <span class="sl" style="background:#fff;color:#1e5799">N</span>
+      <span class="st">Altre notizie (testo auto-generato)</span>
+    </div>
+    <div class="sec-body">
+      <div class="field"><label class="lbl">Note aggiuntive (opzionale)</label>
+        <textarea id="altreNotizie" rows="2" placeholder="Informazioni extra..."></textarea>
+      </div>
+      <div id="preview-n" style="background:#f0f6ff;border:1px solid #aac;border-radius:6px;padding:8px 12px;font-size:12px;color:#334;line-height:1.7"></div>
+    </div>
+  </div>
+
+  <!-- Doc -->
+  <div class="sec">
+    <div class="sec-head" style="background:#34495e">
+      <span class="sl" style="background:#fff;color:#34495e">📄</span>
+      <span class="st">Data e luogo documento</span>
+    </div>
+    <div class="sec-body">
+      <div class="g2">
+        <div class="field"><label class="lbl">Luogo</label><input type="text" id="luogo" value="Roma"/></div>
+        <div class="field"><label class="lbl">Data richiesta</label><input type="text" id="dataRichiesta"/></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:10px 0 20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <button class="btn btn-green" style="font-size:15px;padding:14px 32px" onclick="generaPDF()">📄 Genera PDF ATM-09A</button>
+    <button class="btn btn-orange" onclick="switchTab('alert')">🚨 Verifica allarmi</button>
+  </div>
+</div>
+
+<!-- TAB ALLARMI -->
+<div class="tab-content" id="tab-alert">
+  <div style="padding:14px 0">
+    <h3 style="color:#1a4a2e;font-size:15px;margin-bottom:14px;font-weight:800">🚨 Verifica pratica ATM-09A</h3>
+    <div id="allarmi-container"></div>
+  </div>
+</div>
+
+<script>
+/* ── ZONE DB 09A ── */
+const ZONE_DB = {
+  "Zona Celeste (60m)":   { tipo:"celeste",   avviso:"🔵 Zona CELESTE: volo autorizzabile fino a 60m AGL. Anticipo min. 15 giorni." },
+  "Zona Gialla (45m)":    { tipo:"gialla",    avviso:"🟡 Zona GIALLA: limite 45m AGL. Anticipo min. 15 giorni." },
+  "Zona Arancione (25m)": { tipo:"arancione", avviso:"🟠 Zona ARANCIONE: limite 25m AGL. Anticipo min. 20 giorni consigliati." },
+  "Zona Rossa (0m)":      { tipo:"rossa",     avviso:"🔴 Zona ROSSA: volo non consentito senza autorizzazione speciale ENAC. Anticipo min. 30 giorni." },
+  "CTR Militare":         { tipo:"ctr",        avviso:"🟣 CTR Militare: anticipo MINIMO 60 giorni. Coordinarsi con Aeronautica Militare (AM)." }
+};
+
+const ENAC_MAIL = {
+  "centro":     "protocollo.centro@pec.enac.gov.it",
+  "nordovest":  "protocollo.nordovest@pec.enac.gov.it",
+  "nordest":    "protocollo.nordest@pec.enac.gov.it",
+  "centronord": "protocollo.centronord@pec.enac.gov.it",
+  "sud":        "protocollo.sud@pec.enac.gov.it",
+  "sudest":     "protocollo.sudest@pec.enac.gov.it",
+  "sicilia":    "protocollo.sicilia@pec.enac.gov.it",
+  "sardegna":   "protocollo.sardegna@pec.enac.gov.it"
+};
+
+const PROVINCE = ["AG","AL","AN","AO","AP","AQ","AR","AT","AV","BA","BG","BI","BL","BN","BO","BR","BS","BT","BZ","CA","CB","CE","CH","CL","CN","CO","CR","CS","CT","CZ","EN","FC","FE","FG","FI","FM","FR","GE","GO","GR","IM","IS","KR","LC","LE","LI","LO","LT","LU","MB","MC","ME","MI","MN","MO","MS","MT","NA","NO","NU","OR","PA","PC","PD","PE","PG","PI","PN","PO","PR","PT","PU","PV","PZ","RA","RC","RE","RG","RI","RM","RN","RO","SA","SI","SO","SP","SR","SS","SU","SV","TA","TE","TN","TO","TP","TR","TS","TV","UD","VA","VB","VC","VE","VI","VR","VT","VV"];
+
+let punti = [{nome:'',lat:'',lon:''},{nome:'',lat:'',lon:''}];
+
+/* ── INIT ── */
+window.addEventListener('load', () => {
+  document.getElementById('dataRichiesta').value = new Date().toLocaleDateString('it-IT');
+  loadStorage();
+  renderPunti();
+  updatePreviewN();
+  runValidation();
+});
+
+/* ── STORAGE ── */
+const FIELDS = ['destA','destCc','richiedente','nomePilota','attestato','tipoLic','telPilota','catOperativa','tipoAttivita','aeromobile','cro','scenario','decollo','latDecollo','lonDecollo','atterraggio','latAtterraggio','lonAtterraggio','localita','aeroporto','limVerticali','quotaMax','dateOrari','freqRadio','assicurazione','pagamentoDiritti','altreNotizie','luogo','dataRichiesta','zona','enacDir','dronePreset'];
+
+function saveAll() {
+  try {
+    const d = {};
+    FIELDS.forEach(k => { const e = document.getElementById(k); if(e) d[k] = e.value; });
+    d.punti = punti;
+    localStorage.setItem('atm09a', JSON.stringify(d));
+  } catch(e) {}
+}
+function loadStorage() {
+  try {
+    const s = localStorage.getItem('atm09a');
+    if (!s) return;
+    const d = JSON.parse(s);
+    FIELDS.forEach(k => { const e = document.getElementById(k); if(e && d[k] != null) e.value = d[k]; });
+    if (d.punti && d.punti.length) punti = d.punti;
+    if (d.zona) {
+      const valori = d.zona.split(', ');
+      document.querySelectorAll('#zona-checks input[type=checkbox]').forEach(cb => {
+        if (valori.includes(cb.value)) cb.checked = true;
+      });
+      aggiornaZone();
+    }
+  } catch(e) {}
+}
+document.addEventListener('input',  () => { saveAll(); updatePreviewN(); });
+document.addEventListener('change', () => { saveAll(); updatePreviewN(); });
+
+/* ── TABS ── */
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.getAttribute('onclick') === `switchTab('${name}')`) b.classList.add('active');
+  });
+  if (name === 'alert') renderAlerts();
+}
+
+/* ── ZONA → EMAIL ── */
+function aggiornaZone() {
+  const checks = [...document.querySelectorAll('#zona-checks input[type=checkbox]:checked')];
+  const valori = checks.map(c => c.value);
+  const dir = document.getElementById('enacDir').value;
+
+  // Email A: ENAC territoriale
+  const emailA = dir ? ENAC_MAIL[dir] || '' : '';
+  document.getElementById('destA').value = emailA;
+
+  // CC: ATS + ENAC centrale
+  const isMil = valori.includes('CTR Militare');
+  document.getElementById('destCc').value = isMil
+    ? 'operazioni.atm@enav.it; mobilita.innovativa@enac.gov.it; posta.dgpam@postacert.difesa.it'
+    : 'operazioni.atm@enav.it; mobilita.innovativa@enac.gov.it';
+
+  // Campo H combinato
+  document.getElementById('zona').value = valori.join(', ');
+
+  // Stile checkbox
+  document.querySelectorAll('#zona-checks label').forEach(lbl => {
+    const cb = lbl.querySelector('input');
+    if (!cb) return;
+    lbl.style.opacity = cb.checked ? '1' : '0.65';
+    lbl.style.fontWeight = cb.checked ? '700' : '600';
+  });
+
+  // Avvisi
+  const av = document.getElementById('zona-avviso');
+  if (valori.length) {
+    av.innerHTML = valori.map(v => {
+      const z = ZONE_DB[v];
+      if (!z) return '';
+      const col = {celeste:'#e3f2fd;border:1px solid #2196f3;color:#0a4a6e', gialla:'#fffde7;border:1px solid #fdd835;color:#5d4037', arancione:'#fff3e0;border:1px solid #ff9800;color:#5d3c00', rossa:'#ffebee;border:1px solid #f44336;color:#7f0000', ctr:'#f3e5f5;border:1px solid #9c27b0;color:#4a0e6e'}[z.tipo] || '';
+      return `<div style="background:${col};border-radius:6px;padding:8px 12px;font-size:12.5px;margin-top:6px">${z.avviso}</div>`;
+    }).join('');
+  } else {
+    av.innerHTML = '';
+  }
+
+  saveAll(); runValidation();
+}
+
+/* ── DRONE ── */
+function selDrone(val) {
+  if (!val) return;
+  document.getElementById('aeromobile').value = val.split('||')[0];
+  runValidation();
+}
+
+function autoSync(src, dst) {
+  const sv = document.getElementById(src).value;
+  if (!document.getElementById(dst).value) document.getElementById(dst).value = sv;
+}
+
+/* ── COORDINATE ── */
+function decToSex(dec, isLat) {
+  const abs = Math.abs(dec);
+  const d   = Math.floor(abs);
+  const mAll = (abs - d) * 60;
+  const m   = Math.floor(mAll);
+  const s   = Math.round((mAll - m) * 60);
+  const dir = isLat ? (dec >= 0 ? 'N' : 'S') : (dec >= 0 ? 'E' : 'W');
+  return `${d}°${String(m).padStart(2,'0')}'${String(s).padStart(2,'0')}"${dir}`;
+}
+
+function parseCoordLine(line) {
+  line = line.trim().replace(/[;|]/g, ',');
+  const re = /(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/;
+  const m = line.match(re);
+  if (!m) return null;
+  const lat = parseFloat(m[1]), lon = parseFloat(m[2]);
+  if (isNaN(lat) || isNaN(lon) || lat < 35 || lat > 48 || lon < 6 || lon > 19) return null;
+  return { lat, lon };
+}
+
+function convDecollo(val) {
+  const res = document.getElementById('conv-dec-result');
+  if (!val.trim()) { res.style.display = 'none'; return; }
+  const p = parseCoordLine(val);
+  if (!p) {
+    res.style.display='block'; res.style.background='#fdecea'; res.style.color='#922b21';
+    res.textContent = '❌ Formato non riconosciuto. Usa: 41.902782, 12.496366';
+    return;
+  }
+  const latS = decToSex(p.lat, true), lonS = decToSex(p.lon, false);
+  document.getElementById('latDecollo').value     = latS;
+  document.getElementById('lonDecollo').value     = lonS;
+  document.getElementById('latAtterraggio').value = latS;
+  document.getElementById('lonAtterraggio').value = lonS;
+  res.style.display='block'; res.style.background='#e8f5e9'; res.style.color='#0e6655';
+  res.innerHTML = `✅ Decollo:<br>Lat N ${latS}<br>Lon E ${lonS}`;
+  saveAll();
+}
+
+function convArea() {
+  const val = document.getElementById('conv-area-input').value.trim();
+  const res = document.getElementById('conv-area-result');
+  if (!val) return;
+  const lines = val.split('\n').map(l => l.trim()).filter(Boolean);
+  const convertiti = [], errori = [];
+  lines.forEach((line, i) => {
+    const p = parseCoordLine(line);
+    if (p) convertiti.push({ nome:`Vertice ${convertiti.length+1}`, lat:decToSex(p.lat,true), lon:decToSex(p.lon,false) });
+    else errori.push(`Riga ${i+1}: ignorata`);
+  });
+  if (!convertiti.length) {
+    res.style.display='block'; res.style.background='#fdecea'; res.style.color='#922b21';
+    res.innerHTML = '❌ Nessuna coordinata valida.'; return;
+  }
+  punti = convertiti; renderPunti(); saveAll();
+  res.style.display='block'; res.style.background='#e8f5e9'; res.style.color='#0e6655';
+  res.innerHTML = `✅ ${convertiti.length} vertici compilati:<br>` + convertiti.map(p=>`${p.nome}: ${p.lat} / ${p.lon}`).join('<br>') +
+    (errori.length ? `<br><span style="color:#856404">⚠️ ${errori.join(', ')}</span>` : '');
+}
+
+/* ── PUNTI ── */
+function renderPunti() {
+  const c = document.getElementById('punti-container'); c.innerHTML = '';
+  if (punti.length) {
+    const hdr = document.createElement('div'); hdr.className='g3'; hdr.style.marginBottom='2px';
+    hdr.innerHTML = '<span class="lbl">Punto/Località</span><span class="lbl">Lat N</span><span class="lbl">Lon E</span><span></span>';
+    c.appendChild(hdr);
+  }
+  punti.forEach((p, i) => {
+    const row = document.createElement('div'); row.className='g3';
+    row.innerHTML = `<input type="text" value="${p.nome}" placeholder="Es. Vertice ${i+1}" oninput="punti[${i}].nome=this.value;saveAll()"/>
+      <input type="text" value="${p.lat}" placeholder="Lat N" oninput="punti[${i}].lat=this.value;saveAll()"/>
+      <input type="text" value="${p.lon}" placeholder="Lon E" oninput="punti[${i}].lon=this.value;saveAll()"/>
+      <button onclick="removePunto(${i})" style="background:#fdecea;border:1px solid #fbb;border-radius:6px;padding:6px 10px;cursor:pointer;color:#c0392b;font-size:15px">✕</button>`;
+    c.appendChild(row);
+  });
+}
+function addPunto()     { punti.push({nome:'',lat:'',lon:''}); renderPunti(); }
+function removePunto(i) { punti.splice(i,1); renderPunti(); saveAll(); }
+
+/* ── PREVIEW N ── */
+function updatePreviewN() {
+  const nome  = document.getElementById('nomePilota')?.value || '[nome]';
+  const tel   = document.getElementById('telPilota')?.value  || '[tel]';
+  const freq  = document.getElementById('freqRadio')?.value  || '[frequenza]';
+  const aero  = document.getElementById('aeroporto')?.value  || '[aeroporto]';
+  const extra = document.getElementById('altreNotizie')?.value || '';
+  document.getElementById('preview-n').innerHTML =
+    `<b>Testo N generato:</b><br>Il pilota in comando sig. <b>${nome}</b> dichiara la disponibilità all'immediata interruzione dell'operazione. L'operazione sarà condotta in coordinamento con l'ATS di <b>${aero}</b>, contatto radio sulla frequenza <b>${freq}</b>, telefono H24 <b>${tel}</b>. I droni sono dotati di: RTH, geofencing. Volo VLOS.${extra ? '<br>' + extra : ''}`;
+}
+
+/* ── VALIDAZIONE ── */
+function runValidation() {
+  const errs=[], warns=[];
+  const V = id => { const e=document.getElementById(id); return e?e.value.trim():''; };
+  const MESI={gennaio:0,febbraio:1,marzo:2,aprile:3,maggio:4,giugno:5,luglio:6,agosto:7,settembre:8,ottobre:9,novembre:10,dicembre:11};
+
+  const zona = V('zona');
+  const isMil = zona.includes('CTR Militare');
+  const isRossa = zona.includes('Rossa');
+  const minGiorni = isMil ? 60 : isRossa ? 30 : 15;
+  const warnGiorni = isMil ? 75 : isRossa ? 40 : 20;
+
+  // Anticipo
+  const date = V('dateOrari');
+  if (date) {
+    const re=/(\d{1,2})\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\s*(\d{4})?/i;
+    const m=date.match(re);
+    if(m){
+      const anno=m[3]?parseInt(m[3]):new Date().getFullYear();
+      const data=new Date(anno,MESI[m[2].toLowerCase()],parseInt(m[1]));
+      const diff=Math.round((data-new Date())/86400000);
+      if      (diff<0)          errs.push('⛔ Le date inserite sono già passate!');
+      else if (diff<minGiorni)  errs.push(`⛔ Anticipo insufficiente: ${diff} giorni. Per questa zona servono ALMENO ${minGiorni} giorni prima del volo.`);
+      else if (diff<warnGiorni) warns.push(`⚠️ Anticipo breve: ${diff} giorni. Consigliati almeno ${warnGiorni} giorni per sicurezza.`);
+    }
+  }
+
+  // CRO mancante
+  if (!V('cro'))
+    errs.push('⛔ Numero autorizzazione ENAC / CRO mancante: obbligatorio per ATM-09A.');
+
+  // Frequenza radio mancante
+  if (!V('freqRadio'))
+    errs.push('⛔ Frequenza radio / contatto TBT mancante: obbligatorio per ATM-09A.');
+
+  // Diritti ENAC
+  if (!V('pagamentoDiritti'))
+    errs.push('⛔ Estremi pagamento diritti ENAC mancanti (circa €94). Obbligatorio allegare ricevuta.');
+
+  // Licenza vs drone
+  const dp=V('dronePreset'), licReq=(dp.split('||')[1]||'').trim(), lic=V('tipoLic');
+  if(licReq && lic && !({A1:['A1','A2','A3'],A2:['A2','A3'],A3:['A3']}[licReq]||[]).includes(lic))
+    errs.push(`⛔ LICENZA INCOMPATIBILE: questo drone richiede almeno ${licReq}, il pilota ha ${lic}.`);
+
+  // Attestato
+  if(V('richiedente') && !V('attestato'))
+    errs.push('⛔ Numero attestato UAS mancante: obbligatorio.');
+
+  // Destinatario ENAC
+  if (!V('destA'))
+    warns.push('⚠️ Email Direzione ENAC non compilata. Seleziona la zona e la direzione territoriale.');
+
+  // Zona rossa
+  if(isRossa)
+    warns.push('⚠️ Zona ROSSA: autorizzazione molto difficile. Verificare con ENAC prima di inviare.');
+
+  // CTR militare
+  if(isMil)
+    warns.push('⚠️ CTR Militare: il CC deve includere anche l\'Aeronautica Militare (già aggiunto automaticamente).');
+
+  // Quota coerente con zona
+  const quota = V('quotaMax');
+  if (zona.includes('Gialla') && quota && parseInt(quota) > 45)
+    warns.push('⚠️ Zona GIALLA: stai richiedendo una quota superiore al limite di 45m. Giustificare nella sezione D.');
+  if (zona.includes('Arancione') && quota && parseInt(quota) > 25)
+    warns.push('⚠️ Zona ARANCIONE: stai richiedendo una quota superiore al limite di 25m. Giustificare nella sezione D.');
+
+  window._alerts = {errs, warns};
+  const nErr = errs.length;
+  const badge=document.getElementById('err-badge'), bar=document.getElementById('err-bar');
+  if(nErr>0){ badge.textContent=nErr; badge.style.display='flex'; bar.style.display='block'; bar.textContent=`⛔ ${nErr} errore${nErr>1?'i':''} critico — tocca per vedere`; }
+  else { badge.style.display='none'; bar.style.display='none'; }
+  renderAlerts();
+}
+
+function renderAlerts() {
+  const {errs=[],warns=[]}=window._alerts||{};
+  const c=document.getElementById('allarmi-container'); if(!c) return;
+  if(!errs.length&&!warns.length) { c.innerHTML='<div class="alert a-ok">✅ Nessun problema. La pratica ATM-09A è pronta per il PDF!</div>'; return; }
+  c.innerHTML=[...errs.map(m=>`<div class="alert a-err">${m}</div>`),...warns.map(m=>`<div class="alert a-warn">${m}</div>`)].join('');
+}
+
+/* ── RESET ── */
+function resetForm() {
+  if(!confirm('Cancellare tutti i dati?')) return;
+  localStorage.removeItem('atm09a'); location.reload();
+}
+
+/* ── PDF ── */
+function generaPDF() {
+  const V=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
+  const nome=V('nomePilota')||V('richiedente'), tel=V('telPilota');
+  const freq=V('freqRadio'), aero=V('aeroporto'), extra=V('altreNotizie');
+  const notizie=`Il pilota in comando sig. ${nome} dichiara la disponibilità all'immediata interruzione dell'operazione.\nL'operazione sarà condotta in coordinamento con l'ATS di ${aero}, contatto radio sulla frequenza ${freq}, telefono H24 ${tel}.\nI droni sono dotati di: RTH (return to home), geofencing.\nVolo sempre condotto in VLOS. Non verranno sorvolati assembramenti ed edifici particolari.${extra?'\n'+extra:''}`;
+
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  set('p-destA',   V('destA'));  set('p-destCc',  V('destCc'));
+  set('p-rich',    V('richiedente')); set('p-att', V('attestato'));
+  set('p-attiv',   V('catOperativa') + (V('tipoAttivita') ? ' — ' + V('tipoAttivita') : ''));
+  set('p-aero',    V('aeromobile')); set('p-scenario', V('scenario')); set('p-cro', V('cro'));
+  set('p-dec',     V('decollo')+(V('latDecollo')?' — Lat N '+V('latDecollo')+' Lon E '+V('lonDecollo'):''));
+  set('p-att3',   (V('atterraggio')||V('decollo'))+(V('latAtterraggio')?' — Lat N '+V('latAtterraggio')+' Lon E '+V('lonAtterraggio'):V('latDecollo')?' — Lat N '+V('latDecollo')+' Lon E '+V('lonDecollo'):''));
+  set('p-loc',     V('localita')); set('p-zona',  V('zona'));
+  set('p-lim',     V('limVerticali')); set('p-quota', V('quotaMax'));
+  set('p-date',    V('dateOrari')); set('p-freq',  V('freqRadio'));
+  set('p-assic',   V('assicurazione')); set('p-diritti', V('pagamentoDiritti'));
+  set('p-note',    notizie);
+  set('p-luogodata',(V('luogo')||'Roma')+', '+V('dataRichiesta'));
+  document.getElementById('p-ts').textContent=new Date().toLocaleString('it-IT');
+
+  const tbody=document.getElementById('p-punti');
+  const ptList=punti.filter(p=>p.nome||p.lat);
+  tbody.innerHTML=ptList.length?ptList.map(p=>`<tr>
+    <td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.nome}</td>
+    <td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.lat}</td>
+    <td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.lon}</td>
+  </tr>`).join(''):'<tr><td colspan="3" style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">—</td></tr>';
+
+  if(/Android|iPhone|iPad/i.test(navigator.userAgent))
+    alert('📄 Tocca OK → seleziona "Salva come PDF" come stampante.');
+  setTimeout(()=>window.print(),100);
+}
+
+['attestato','tipoLic','dronePreset','dateOrari','quotaMax','freqRadio','pagamentoDiritti','cro'].forEach(id=>{
+  const el=document.getElementById(id); if(el) el.addEventListener('change',runValidation);
+});
+runValidation();
+</script>
+</body>
+</html>
