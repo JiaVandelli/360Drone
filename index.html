@@ -14,7 +14,7 @@ input,textarea,select,button{font-family:inherit;font-size:14px}
 #header .sub{font-size:10px;opacity:.65;text-transform:uppercase;letter-spacing:.12em}
 #header .info{font-size:11px;text-align:right;opacity:.85;line-height:1.7}
 /* TABS */
-#err-bar{background:#c0392b;color:#fff;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:none}
+#err-bar{background:#c0392b;color:#fff;padding:8px 16px;font-size:12px;font-weight:700;display:none}
 #tabs{display:flex;background:#d6e4f0;border-bottom:2px solid #1a3c5e22}
 .tab-btn{padding:11px 0;border:none;cursor:pointer;font-weight:600;background:transparent;color:#1a3c5e;font-size:13px;border-right:1px solid #b9cfe0;position:relative;flex:1}
 .tab-btn.active{background:#1a3c5e;color:#fff}
@@ -150,10 +150,14 @@ textarea{resize:vertical}
   <div><div class="sub">360Drone – Permessi di volo</div><h1>Compilatore ATM-05b</h1></div>
   <div class="info">📞 0187 1755700<br>✉️ 360drone@pec.it</div>
 </div>
-<div id="err-bar" onclick="switchTab('alert')">⛔ Errori critici — tocca per vedere</div>
+<div style="background:#1a3c5e;padding:6px 16px 10px;border-top:1px solid #ffffff22">
+  <input type="text" id="nomePratica" placeholder="📁 Nome pratica (es. Mario Rossi – Roma LI P244 – luglio 2025)"
+    style="background:#ffffff18;border:1.5px solid #ffffff44;border-radius:6px;color:#fff;padding:6px 12px;font-size:13px;width:100%;outline:none"
+    oninput="saveAll()"/>
+</div>
+<div id="err-bar">⛔ <span id="err-bar-txt">Errori critici</span></div>
 <div id="tabs">
   <button class="tab-btn active" onclick="switchTab('form')">✏️ Compila</button>
-  <button class="tab-btn" onclick="switchTab('alert')">🚨 Allarmi<span class="badge" id="err-badge"></span></button>
   <button id="reset-btn" onclick="resetForm()">🗑 Reset</button>
 </div>
 
@@ -162,11 +166,12 @@ textarea{resize:vertical}
 
   <!-- H: Zona MULTI -->
   <div class="sec" style="margin-top:14px">
-    <div class="sec-head" style="background:#6e2f1a">
+    <div class="sec-head" style="background:#6e2f1a;cursor:pointer" onclick="toggleSec('zona-body')">
       <span class="sl" style="background:#fff;color:#6e2f1a">H</span>
-      <span class="st">Zona — seleziona una o più per auto-compilare email PEC</span>
+      <span class="st" style="flex:1">Zona — seleziona per auto-compilare email PEC</span>
+      <span id="zona-body-arrow" style="color:#fff;font-size:16px;margin-left:auto">▾</span>
     </div>
-    <div class="sec-body">
+    <div id="zona-body" class="sec-body">
       <div class="field">
         <label class="lbl">Tipo di zona <span class="req">*</span> — puoi selezionarne più di una</label>
         <div id="zona-checks" style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
@@ -431,6 +436,11 @@ textarea{resize:vertical}
       <div class="field"><label class="lbl">Note aggiuntive (opzionale)</label>
         <textarea id="altreNotizie" rows="2" placeholder="Info extra da aggiungere al testo standard..."></textarea>
       </div>
+      <!-- NOTAM checkbox obbligatoria -->
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff3cd;border:1.5px solid #ffc107;border-radius:8px;cursor:pointer;margin-bottom:10px">
+        <input type="checkbox" id="notamVerificato" onchange="runValidation()" style="width:18px;height:18px;cursor:pointer;accent-color:#1a3c5e;flex-shrink:0">
+        <span style="font-size:13px;color:#856404;font-weight:600">✅ Ho verificato i NOTAM attivi su ENAV per le date e la zona indicate</span>
+      </label>
       <div id="preview-n" style="background:#f0f6ff;border:1px solid #aac;border-radius:6px;padding:8px 12px;font-size:12px;color:#334;line-height:1.7"></div>
     </div>
   </div>
@@ -449,20 +459,17 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <div style="text-align:center;padding:10px 0 20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-    <button class="btn btn-green" style="font-size:15px;padding:14px 32px" onclick="generaPDF()">📄 Genera PDF ATM-05b</button>
-    <button class="btn btn-orange" onclick="switchTab('alert')">🚨 Verifica allarmi</button>
+  <!-- Fix 1: box allarmi inline sopra ai pulsanti -->
+  <div id="allarmi-container" style="margin-bottom:12px"></div>
+
+  <!-- Fix 5: pulsante unico che verifica e genera -->
+  <div style="text-align:center;padding:4px 0 20px">
+    <button class="btn btn-green" style="font-size:15px;padding:14px 36px;width:100%;max-width:400px" onclick="verificaEGenera()">
+      📄 Verifica e genera PDF ATM-05b
+    </button>
   </div>
 
 </div><!-- /tab-form -->
-
-<!-- TAB ALLARMI -->
-<div class="tab-content" id="tab-alert">
-  <div style="padding:14px 0">
-    <h3 style="color:#1a3c5e;font-size:15px;margin-bottom:14px;font-weight:800">🚨 Verifica pratica</h3>
-    <div id="allarmi-container"></div>
-  </div>
-</div>
 
 <!-- JS -->
 <script>
@@ -493,7 +500,7 @@ window.addEventListener('load', () => {
 });
 
 /* ── STORAGE ── */
-const FIELDS = ['destA','destCc','richiedente','nomePilota','attestato','tipoLic','telPilota','tipoAttivita','aeromobile','decollo','latDecollo','lonDecollo','atterraggio','latAtterraggio','lonAtterraggio','localita','capoluogo','aeroporto','distanza','limVerticali','dateOrari','altreNotizie','luogo','dataRichiesta','zona','dronePreset','provincia'];
+const FIELDS = ['nomePratica','destA','destCc','richiedente','nomePilota','attestato','tipoLic','telPilota','tipoAttivita','aeromobile','decollo','latDecollo','lonDecollo','atterraggio','latAtterraggio','lonAtterraggio','localita','capoluogo','aeroporto','distanza','limVerticali','dateOrari','altreNotizie','luogo','dataRichiesta','zona','dronePreset','provincia'];
 
 function saveAll() {
   try {
@@ -525,15 +532,12 @@ function loadStorage() {
 document.addEventListener('input',  () => { saveAll(); updatePreviewN(); });
 document.addEventListener('change', () => { saveAll(); updatePreviewN(); });
 
-/* ── TABS ── */
+/* ── TABS (solo 1 tab ora) ── */
 function switchTab(name) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    if (b.getAttribute('onclick') === `switchTab('${name}')`) b.classList.add('active');
-  });
-  if (name === 'alert') renderAlerts();
+  const tab = document.getElementById('tab-' + name);
+  if (tab) tab.classList.add('active');
 }
 
 /* ── ZONA MULTI-CHECK → EMAIL ── */
@@ -641,15 +645,21 @@ function convDecollo(val) {
   }
   const latS = decToSex(p.lat, true);
   const lonS = decToSex(p.lon, false);
-  // Compila campi
+  // Compila e blocca campi
   document.getElementById('latDecollo').value    = latS;
   document.getElementById('lonDecollo').value    = lonS;
   document.getElementById('latAtterraggio').value = latS;
   document.getElementById('lonAtterraggio').value = lonS;
-  // Mostra risultato
+  ['latDecollo','lonDecollo','latAtterraggio','lonAtterraggio'].forEach(id => {
+    const el = document.getElementById(id);
+    el.readOnly = true;
+    el.style.background = '#f0f7f0';
+    el.style.color = '#0e6655';
+  });
+  // Mostra risultato + pulsante sblocca
   res.style.display = 'block';
   res.style.background = '#e8f5e9'; res.style.color = '#0e6655';
-  res.innerHTML = `✅ Decollo:<br>Lat N ${latS}<br>Lon E ${lonS}`;
+  res.innerHTML = `✅ Decollo:<br>Lat N ${latS}<br>Lon E ${lonS}<br><button onclick="sbloccaCoord()" style="margin-top:6px;padding:4px 12px;border:1px solid #0e6655;border-radius:6px;background:#fff;color:#0e6655;font-size:11px;cursor:pointer">🔓 Modifica manualmente</button>`;
   saveAll();
 }
 
@@ -737,7 +747,14 @@ function runValidation() {
     const re = /(\d{1,2})\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\s*(\d{4})?/i;
     const m = date.match(re);
     if (m) {
-      const anno = m[3] ? parseInt(m[3]) : new Date().getFullYear();
+      const oggi = new Date();
+      const annoCorrente = oggi.getFullYear();
+      let anno = m[3] ? parseInt(m[3]) : annoCorrente;
+      // Se la data risultante è già passata e non c'era anno esplicito, prova l'anno prossimo
+      if (!m[3]) {
+        const dataTentativo = new Date(anno, MESI[m[2].toLowerCase()], parseInt(m[1]));
+        if (dataTentativo < oggi) anno = annoCorrente + 1;
+      }
       const data = new Date(anno, MESI[m[2].toLowerCase()], parseInt(m[1]));
       const diff = Math.round((data - new Date()) / 86400000);
       if      (diff < 0)  errs.push('⛔ Le date inserite sono già passate!');
@@ -776,15 +793,20 @@ function runValidation() {
   if (zona.startsWith('P'))
     warns.push('ℹ️ Zona P: ricorda di allegare marca da bollo €16 alla PEC.');
 
-  // Badge + barra
+  // NOTAM non verificato
+  if (!document.getElementById('notamVerificato')?.checked)
+    warns.push('⚠️ Conferma di aver verificato i NOTAM attivi (casella in fondo alla sezione N).');
+
+  // Badge barra errori
   window._alerts = { errs, warns };
   const nErr = errs.length;
-  const badge = document.getElementById('err-badge'), bar = document.getElementById('err-bar');
+  const bar = document.getElementById('err-bar');
   if (nErr > 0) {
-    badge.textContent = nErr; badge.style.display = 'flex';
-    bar.style.display = 'block'; bar.textContent = `⛔ ${nErr} errore${nErr>1?'i':''} critico — tocca per vedere`;
+    bar.style.display = 'block';
+    bar.style.cursor = 'default';
+    document.getElementById('err-bar-txt').textContent = `${nErr} errore${nErr>1?'i':''} critico — vedi sotto`;
   } else {
-    badge.style.display = 'none'; bar.style.display = 'none';
+    bar.style.display = 'none';
   }
   renderAlerts();
 }
@@ -792,10 +814,11 @@ function runValidation() {
 function renderAlerts() {
   const { errs=[], warns=[] } = window._alerts || {};
   const c = document.getElementById('allarmi-container'); if (!c) return;
-  if (!errs.length && !warns.length)
-    c.innerHTML = '<div class="alert a-ok">✅ Nessun problema. La pratica è pronta per il PDF!</div>';
-  else
+  if (!errs.length && !warns.length) {
+    c.innerHTML = '';  // nessun problema = nessun box
+  } else {
     c.innerHTML = [...errs.map(m=>`<div class="alert a-err">${m}</div>`), ...warns.map(m=>`<div class="alert a-warn">${m}</div>`)].join('');
+  }
 }
 
 /* ── RESET ── */
@@ -842,10 +865,45 @@ function generaPDF() {
 }
 
 // Trigger validazione su cambio campi chiave
-['attestato','tipoLic','dronePreset','dateOrari'].forEach(id => {
+['attestato','tipoLic','dronePreset','dateOrari','notamVerificato'].forEach(id => {
   const el = document.getElementById(id); if(el) el.addEventListener('change', runValidation);
 });
 runValidation();
+
+/* ── FIX 5: Verifica + Genera unificati ── */
+function verificaEGenera() {
+  runValidation();
+  const { errs=[] } = window._alerts || {};
+  if (errs.length > 0) {
+    // Scroll agli allarmi
+    document.getElementById('allarmi-container').scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+  generaPDF();
+}
+
+/* ── FIX 4: Sblocca coordinate ── */
+function sbloccaCoord() {
+  ['latDecollo','lonDecollo','latAtterraggio','lonAtterraggio'].forEach(id => {
+    const el = document.getElementById(id);
+    el.readOnly = false;
+    el.style.background = '';
+    el.style.color = '';
+  });
+  document.getElementById('conv-dec-input').value = '';
+  document.getElementById('conv-dec-result').style.display = 'none';
+}
+
+/* ── FIX 3: Toggle sezione collassabile ── */
+function toggleSec(bodyId) {
+  const body = document.getElementById(bodyId);
+  const arrow = document.getElementById(bodyId + '-arrow');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (arrow) arrow.textContent = isOpen ? '▸' : '▾';
+}
+
 </script>
 </body>
 </html>
