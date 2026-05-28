@@ -166,6 +166,17 @@ textarea{resize:vertical}
   <button class="pb-btn" onclick="document.getElementById('import-file').click()" title="Importa JSON">📥</button>
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="importaPratica(event)"/>
   <button class="pb-btn" onclick="eliminaPratica()" title="Elimina pratica" style="border-color:#ff6b6b;color:#ff9999">🗑</button>
+  <button class="pb-btn" onclick="mostraReport()" title="Riepilogo pratiche" style="border-color:#5bc0de;color:#aee">📊</button>
+</div>
+<!-- REPORT MODAL -->
+<div id="report-modal" style="display:none;position:fixed;inset:0;background:#000a;z-index:200;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:20px 22px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 4px 24px #0005">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="font-size:15px;color:#1a3c5e;font-weight:800">📊 Riepilogo pratiche</h3>
+      <button onclick="document.getElementById('report-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
+    </div>
+    <div id="report-content"></div>
+  </div>
 </div>
 
 <div id="err-bar">⛔ <span id="err-bar-txt">Errori critici</span></div>
@@ -204,23 +215,44 @@ textarea{resize:vertical}
         <label class="lbl">Tipo di zona <span class="req">*</span> — puoi selezionarne più di una</label>
         <div id="zona-checks" style="display:flex;flex-direction:column;gap:7px;margin-top:4px">
           <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
-            <input type="checkbox" value="P - Carcere (DAP)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#c0392b">🔴 P - Carcere (DAP)</label>
+            <input type="checkbox" value="P - Carcere (DAP)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#c0392b">
+            <span style="flex:1">🔴 P - Carcere (DAP)</span>
+            <span style="font-size:10px;color:#888;font-family:monospace">segreteriasicurezza.dap@giustiziacert.it</span>
+          </label>
           <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
-            <input type="checkbox" value="P - Quirinale / Presidenziale" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#c0392b">🔴 P - Quirinale / Presidenziale</label>
+            <input type="checkbox" value="P - Quirinale / Presidenziale" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#c0392b">
+            <span style="flex:1">🔴 P - Quirinale / Presidenziale</span>
+            <span style="font-size:10px;color:#888;font-family:monospace">segreteria.quirinale@pec.quirinale.it</span>
+          </label>
           <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
-            <input type="checkbox" value="P - Ministero/Istituzione Roma (LI P244)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#c0392b">🔴 P - Ministero/Istituzione Roma (LI P244)</label>
+            <input type="checkbox" value="P - Ministero/Istituzione Roma (LI P244)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#c0392b">
+            <span style="flex:1">🔴 P - Ministero/Istituzione Roma (LI P244)</span>
+            <span style="font-size:10px;color:#888;font-family:monospace">protocollo.prefrm@pec.interno.it</span>
+          </label>
           <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
-            <input type="checkbox" value="R - Prefettura (scegli provincia)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#e67e22">🟠 R - Prefettura (scegli provincia)</label>
+            <input type="checkbox" value="R - Prefettura (scegli provincia)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#e67e22">
+            <span style="flex:1">🟠 R - Prefettura (scegli provincia)</span>
+            <span style="font-size:10px;color:#888;font-family:monospace">protocollo.pref[XX]@pec.interno.it</span>
+          </label>
           <div id="prov-field" style="display:none;padding-left:28px">
             <label class="lbl">Provincia</label>
             <select id="provincia" onchange="aggiornaZone()" style="max-width:200px"><option value="">— Seleziona —</option></select>
           </div>
           <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
-            <input type="checkbox" value="R - Militare (COA Difesa)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#e67e22">🟠 R - Militare (COA Difesa)</label>
+            <input type="checkbox" value="R - Militare (COA Difesa)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#e67e22">
+            <span style="flex:1">🟠 R - Militare (COA Difesa)</span>
+            <span style="font-size:10px;color:#888;font-family:monospace">aerosquadra.coa@postacert.difesa.it</span>
+          </label>
           <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
-            <input type="checkbox" value="R - ENAV / Aeroporto" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#e67e22">🟠 R - ENAV / Aeroporto</label>
+            <input type="checkbox" value="R - ENAV / Aeroporto" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#e67e22">
+            <span style="flex:1">🟠 R - ENAV / Aeroporto</span>
+            <span style="font-size:10px;color:#888;font-family:monospace">operazioni.atm@enav.it</span>
+          </label>
           <label style="display:flex;align-items:center;gap:10px;padding:8px 12px;border:1.5px solid #c5d8ea;border-radius:8px;cursor:pointer;background:#f7fbff;font-size:13px">
-            <input type="checkbox" value="D - Altra zona" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#f39c12">🟡 D - Altra zona</label>
+            <input type="checkbox" value="D - Altra zona" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#f39c12">
+            <span style="flex:1">🟡 D - Altra zona</span>
+            <span style="font-size:10px;color:#888;font-family:monospace">inserire manualmente</span>
+          </label>
         </div>
       </div>
       <div id="zona-avviso"></div>
@@ -289,7 +321,7 @@ textarea{resize:vertical}
         </select>
       </div>
       <div class="field"><label class="lbl">Descrizione completa <span class="req">*</span></label>
-        <input type="text" id="aeromobile" placeholder="Es. DJI Mini 3 – 249g – Categoria C0 – ID operatore: xxxxxx"/>
+        <textarea id="aeromobile" rows="2" placeholder="Es. DJI Mini 3 – 249g – Categoria C0 – ID operatore: xxxxxx&#10;Equipaggiato con: telecamera 4K, sensori anticollisione"></textarea>
       </div>
     </div>
   </div>
@@ -474,7 +506,17 @@ function getPratiche() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { return {}; }
 }
 function setPratiche(obj) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); } catch(e) {}
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  } catch(e) {
+    if (e.name === 'QuotaExceededError' || e.code === 22) {
+      alert('⚠️ Memoria browser piena!\nEsporta alcune pratiche vecchie in JSON e poi eliminale per liberare spazio.');
+    } else if (e.name === 'SecurityError') {
+      alert('⚠️ Il browser ha bloccato il salvataggio locale.\nProva ad aprire la pagina da un server (GitHub Pages) invece che da file locale.');
+    } else {
+      console.error('Errore localStorage:', e);
+    }
+  }
 }
 
 function leggiForm() {
@@ -526,20 +568,22 @@ function debouncedSave() {
   modificato = true;
   aggiornaStatusBar();
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => salvaPratica(true), 600);
+  saveTimer = setTimeout(() => salvaPratica(true), 350);
 }
 
 function nuovaPratica() {
   if (modificato && praticaCorrenteId) {
-    if (!confirm('Hai modifiche non salvate. Salvo prima di continuare?')) { /* skip */ } else { salvaPratica(true); }
+    const scelta = confirm('Hai modifiche non salvate sulla pratica corrente.\n\nOK = Salva e continua\nAnnulla = Scarta e continua');
+    if (scelta) salvaPratica(true);
   }
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  const oggi = new Date().toLocaleDateString('it-IT');
   const pratiche = getPratiche();
-  pratiche[id] = { id, nome:'Nuova pratica', stato:'bozza', creata:new Date().toISOString(), modificata:new Date().toISOString(), dati:{} };
+  pratiche[id] = { id, nome:'Nuova pratica', stato:'bozza', creata:new Date().toISOString(), modificata:new Date().toISOString(), dati:{dataRichiesta:oggi, luogo:'Roma'} };
   setPratiche(pratiche);
   praticaCorrenteId = id;
   azzeraCampi(true);
-  document.getElementById('dataRichiesta').value = new Date().toLocaleDateString('it-IT');
+  document.getElementById('dataRichiesta').value = oggi;
   aggiornaListaPratiche();
   aggiornaStatusBar();
   document.getElementById('nomePratica').focus();
@@ -547,12 +591,18 @@ function nuovaPratica() {
 
 function caricaPratica(id) {
   if (!id) return;
+  if (modificato && praticaCorrenteId) {
+    const scelta = confirm('Hai modifiche non salvate sulla pratica corrente.\n\nOK = Salva e cambia pratica\nAnnulla = Scarta e cambia pratica');
+    if (scelta) salvaPratica(true);
+  }
   const pratiche = getPratiche();
   const p = pratiche[id];
   if (!p) return;
   praticaCorrenteId = id;
   azzeraCampi(true);
   scriviForm(p.dati);
+  // Se la pratica non ha dataRichiesta salvata, usa oggi
+  if (!p.dati?.dataRichiesta) document.getElementById('dataRichiesta').value = new Date().toLocaleDateString('it-IT');
   document.getElementById('stato-select').value = p.stato || 'bozza';
   modificato = false;
   aggiornaStatusBar();
@@ -941,6 +991,52 @@ async function verificaEGenera(){
   }
   el.classList.remove('generating');
   loading.classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════
+   REPORT PRATICHE PER STATO
+═══════════════════════════════════════════ */
+function mostraReport() {
+  const pratiche = getPratiche();
+  const lista = Object.values(pratiche);
+  if (!lista.length) { alert('Nessuna pratica salvata.'); return; }
+  const conteggi = {bozza:[], pronta:[], inviata:[], autorizzata:[]};
+  lista.forEach(p => { if(conteggi[p.stato]) conteggi[p.stato].push(p); else conteggi.bozza.push(p); });
+  const righeStato = Object.entries({bozza:'🟡 Bozze', pronta:'🟢 Pronte', inviata:'🔴 Inviate', autorizzata:'🔵 Autorizzate'}).map(([stato,label]) => {
+    const items = conteggi[stato];
+    if (!items.length) return '';
+    const righe = items.map(p => {
+      const d = p.modificata ? new Date(p.modificata).toLocaleDateString('it-IT') : '—';
+      return `<div style="padding:5px 8px;border-left:3px solid #c5d8ea;margin:4px 0;font-size:12px;cursor:pointer;border-radius:0 4px 4px 0" onclick="caricaPraticaDaReport('${p.id}')">${p.nome} <span style="color:#aaa;font-size:11px">· ${d}</span></div>`;
+    }).join('');
+    return `<div style="margin-bottom:14px"><div style="font-weight:700;font-size:13px;margin-bottom:5px">${label} (${items.length})</div>${righe}</div>`;
+  }).join('');
+  // Stima spazio usato
+  let bytes = 0;
+  try { bytes = (localStorage.getItem(STORAGE_KEY)||'').length * 2; } catch(e){}
+  const kb = (bytes/1024).toFixed(1);
+  document.getElementById('report-content').innerHTML =
+    `<div style="background:#e8f0f7;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;display:flex;justify-content:space-between">
+      <span><b>${lista.length}</b> pratiche totali</span>
+      <span style="color:#888;font-size:12px">💾 ${kb} KB usati</span>
+    </div>` + righeStato +
+    `<div style="margin-top:12px;padding-top:10px;border-top:1px solid #eee;display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="esportaTutte()" style="padding:6px 14px;border:1.5px solid #1a3c5e;border-radius:6px;background:#fff;color:#1a3c5e;font-weight:700;font-size:12px;cursor:pointer">📤 Esporta tutto</button>
+    </div>`;
+  document.getElementById('report-modal').style.display = 'flex';
+}
+function caricaPraticaDaReport(id) {
+  document.getElementById('report-modal').style.display = 'none';
+  document.getElementById('lista-pratiche').value = id;
+  caricaPratica(id);
+}
+function esportaTutte() {
+  const pratiche = getPratiche();
+  const blob = new Blob([JSON.stringify(pratiche, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ATM05b_backup_${new Date().toLocaleDateString('it-IT').replace(/\//g,'-')}.json`;
+  a.click();
 }
 
 /* ═══════════════════════════════════════════
