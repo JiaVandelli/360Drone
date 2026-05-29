@@ -6,11 +6,11 @@
 <title>360Drone – ATM-09A</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#edf2f7;min-height:100vh;font-size:14px}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f8fcf9;min-height:100vh;font-size:14px}
 input,textarea,select,button{font-family:inherit;font-size:14px}
-#header{background:#1a4a2e;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
-#header h1{font-size:17px;font-weight:800}
-#header .sub{font-size:10px;opacity:.65;text-transform:uppercase;letter-spacing:.12em}
+#header{background:#1a4a2e;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
+#header h1{font-size:18px;font-weight:800}
+#header .sub{font-size:11px;opacity:.75;text-transform:uppercase;letter-spacing:.12em}
 #header .info{font-size:11px;text-align:right;opacity:.85;line-height:1.7}
 #err-bar{background:#c0392b;color:#fff;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:none}
 #tabs{display:flex;background:#d0e8d6;border-bottom:2px solid #1a4a2e22}
@@ -23,7 +23,7 @@ input,textarea,select,button{font-family:inherit;font-size:14px}
 .sec{background:#fff;border-radius:10px;box-shadow:0 1px 6px #1a4a2e15;margin-bottom:16px;overflow:hidden}
 .sec-head{padding:8px 14px;display:flex;gap:10px;align-items:center}
 .sl{border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;flex-shrink:0}
-.st{color:#fff;font-weight:700;font-size:13px}
+.st{color:#fff;font-weight:700;font-size:13px;flex-grow:1}
 .sec-body{padding:14px 14px 12px}
 .field{margin-bottom:10px}
 .lbl{font-size:10px;font-weight:700;color:#1a4a2e;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px}
@@ -174,30 +174,30 @@ textarea{resize:vertical}
         <div id="zona-checks" style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
           <label style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:2px solid #2196f3;border-radius:8px;cursor:pointer;background:#cce8f4;font-size:13px;font-weight:600;color:#0a4a6e">
             <input type="checkbox" value="Zona Celeste (60m)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#2196f3">
-            🔵 Zona CELESTE — volo autorizzato fino a 60m AGL
+            🔵 Zona CELESTE — volo autorizzato fino a 60m AGL (Anticipo 15gg)
           </label>
           <label style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:2px solid #fdd835;border-radius:8px;cursor:pointer;background:#fff9c4;font-size:13px;font-weight:600;color:#5d4037">
             <input type="checkbox" value="Zona Gialla (45m)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#fdd835">
-            🟡 Zona GIALLA — limite 45m AGL
+            🟡 Zona GIALLA — limite 45m AGL (Anticipo 15gg)
           </label>
           <label style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:2px solid #ff9800;border-radius:8px;cursor:pointer;background:#ffe0b2;font-size:13px;font-weight:600;color:#5d3c00">
             <input type="checkbox" value="Zona Arancione (25m)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#ff9800">
-            🟠 Zona ARANCIONE — limite 25m AGL
+            🟠 Zona ARANCIONE — limite 25m AGL (Anticipo 20gg consigliato)
           </label>
           <label style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:2px solid #f44336;border-radius:8px;cursor:pointer;background:#ffcdd2;font-size:13px;font-weight:600;color:#7f0000">
             <input type="checkbox" value="Zona Rossa (0m)" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#f44336">
-            🔴 Zona ROSSA — volo non consentito senza autorizzazione speciale
+            🔴 Zona ROSSA — volo non consentito senza autorizzazione speciale (Anticipo 30gg)
           </label>
           <label style="display:flex;align-items:center;gap:10px;padding:9px 14px;border:2px solid #9c27b0;border-radius:8px;cursor:pointer;background:#e8d5f5;font-size:13px;font-weight:600;color:#4a0e6e">
             <input type="checkbox" value="CTR Militare" onchange="aggiornaZone()" style="width:17px;height:17px;cursor:pointer;accent-color:#9c27b0">
-            🟣 CTR Militare — anticipo 60 giorni, coordinarsi con AM
+            🟣 CTR Militare — Anticipo MINIMO 60 giorni, coordinarsi con AM
           </label>
         </div>
       </div>
       <div class="field" id="enac-dir-field">
         <label class="lbl">Direzione Territoriale ENAC competente <span class="req">*</span></label>
         <select id="enacDir" onchange="aggiornaZone()">
-          <option value="">— Seleziona —</option>
+          <option value="">— Seleziona —</option> <!-- Valore vuoto per obbligatorietà -->
           <option value="centro">Centro — Roma (protocollo.centro@pec.enac.gov.it)</option>
           <option value="nordovest">Nord Ovest — Milano (protocollo.nordovest@pec.enac.gov.it)</option>
           <option value="nordest">Nord Est — Venezia (protocollo.nordest@pec.enac.gov.it)</option>
@@ -418,8 +418,9 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- M: Date -->
+  <!-- M: Date e Orari (UTC) -->
   <div class="sec">
+    <!-- Modifica: Aggiunto flag WARNING per UTC -->
     <div class="sec-head" style="background:#922b21">
       <span class="sl" style="background:#fff;color:#922b21">M</span>
       <span class="st">Date e orari ⚠️ sempre UTC!</span>
@@ -789,8 +790,9 @@ function runValidation() {
   const nErr = errs.length;
   const badge=document.getElementById('err-badge'), bar=document.getElementById('err-bar');
   if(nErr>0){ badge.textContent=nErr; badge.style.display='flex'; bar.style.display='block'; bar.textContent=`⛔ ${nErr} errore${nErr>1?'i':''} critico — tocca per vedere`; }
-  else { badge.style.display='none'; bar.style.display='none'; }
-  renderAlerts();
+  else { badge.style.display='none'; bar.style.display='none'; } // Nascosti se non ci sono errori
+
+  renderAlerts(); // Aggiorna il contenuto degli allarmi indipendentemente dal messaggio nella barra
 }
 
 function renderAlerts() {
@@ -800,16 +802,21 @@ function renderAlerts() {
   c.innerHTML=[...errs.map(m=>`<div class="alert a-err">${m}</div>`),...warns.map(m=>`<div class="alert a-warn">${m}</div>`)].join('');
 }
 
-/* ── RESET ── */
+/* ── RESET BUTTON FUNCTION ── */
+/* Rimuove i dati dal local storage e ricarica la pagina */
 function resetForm() {
   if(!confirm('Cancellare tutti i dati?')) return;
   localStorage.removeItem('atm09a'); location.reload();
 }
 
 /* ── PDF ── */
+/* Funzione per generare il PDF tramite window.print() e salvare le modifiche */
 function generaPDF() {
   const V=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
+
+  // Compilazione dinamica delle note prima di generare il PDF
   const nome=V('nomePilota')||V('richiedente'), tel=V('telPilota');
+  // Modifica: Mette in preview le note generate dinamicamente (inclusi aeroporto e frequenza)
   const freq=V('freqRadio'), aero=V('aeroporto'), extra=V('altreNotizie');
   const notizie=`Il pilota in comando sig. ${nome} dichiara la disponibilità all'immediata interruzione dell'operazione.\nL'operazione sarà condotta in coordinamento con l'ATS di ${aero}, contatto radio sulla frequenza ${freq}, telefono H24 ${tel}.\nI droni sono dotati di: RTH (return to home), geofencing.\nVolo sempre condotto in VLOS. Non verranno sorvolati assembramenti ed edifici particolari.${extra?'\n'+extra:''}`;
 
@@ -825,11 +832,12 @@ function generaPDF() {
   set('p-date',    V('dateOrari')); set('p-freq',  V('freqRadio'));
   set('p-assic',   V('assicurazione')); set('p-diritti', V('pagamentoDiritti'));
   set('p-note',    notizie);
-  set('p-luogodata',(V('luogo')||'Roma')+', '+V('dataRichiesta'));
+  set('p-luogodata', `${V('luogo') || 'Roma'}, ${V('dataRichiesta') || new Date().toLocaleDateString('it-IT')}`); // Usa la data corrente se vuota
   document.getElementById('p-ts').textContent=new Date().toLocaleString('it-IT');
 
+  // Preparazione tabella vertici per il PDF
   const tbody=document.getElementById('p-punti');
-  const ptList=punti.filter(p=>p.nome||p.lat);
+  const ptList=punti.filter(p=>p.nome||p.lat); // Filtra i punti vuoti o con solo lat/lon
   tbody.innerHTML=ptList.length?ptList.map(p=>`<tr>
     <td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.nome}</td>
     <td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.lat}</td>
@@ -837,11 +845,12 @@ function generaPDF() {
   </tr>`).join(''):'<tr><td colspan="3" style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">—</td></tr>';
 
   if(/Android|iPhone|iPad/i.test(navigator.userAgent))
+    // Messaggio specifico per mobile riguardo alla stampa PDF
     alert('📄 Tocca OK → seleziona "Salva come PDF" come stampante.');
   setTimeout(()=>window.print(),100);
 }
 
-['attestato','tipoLic','dronePreset','dateOrari','quotaMax','freqRadio','pagamentoDiritti','cro'].forEach(id=>{
+['attestato','tipoLic','dronePreset','dateOrari','quotaMax','freqRadio','pagamentoDiritti','cro','enacDir'].forEach(id=>{ // Modifica: aggiunto enacDir
   const el=document.getElementById(id); if(el) el.addEventListener('change',runValidation);
 });
 runValidation();
