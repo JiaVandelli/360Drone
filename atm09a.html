@@ -12,13 +12,23 @@ input,textarea,select,button{font-family:inherit;font-size:14px}
 #header h1{font-size:18px;font-weight:800}
 #header .sub{font-size:11px;opacity:.75;text-transform:uppercase;letter-spacing:.12em}
 #header .info{font-size:11px;text-align:right;opacity:.85;line-height:1.7}
+/* BARRA PRATICHE */
+#pratica-bar{background:#f0f8f0;padding:8px 12px;display:flex;gap:6px;align-items:center;border-bottom:1px solid #d0e8d6;flex-wrap:wrap}
+#lista-pratiche{flex:1;min-width:120px;padding:6px 8px;border:1.5px solid #c5d8be;border-radius:6px;background:#f6fbf7;color:#1a2a1e;font-size:13px;outline:none}
+#lista-pratiche:focus{border-color:#1a4a2e}
+.pb-btn{padding:6px 11px;border:1.5px solid #b8d4be;border-radius:6px;background:#f6fbf7;color:#1a4a2e;font-weight:700;cursor:pointer;font-size:12px;white-space:nowrap;transition:background .12s}
+.pb-btn:hover{background:#e0ede0}
+#elimina-pratica-btn{border-color:#e8a0a0;color:#c0392b}
+#elimina-pratica-btn:hover{background:#fdecea}
+/* ERR BAR */
 #err-bar{background:#c0392b;color:#fff;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;display:none}
+/* TABS */
 #tabs{display:flex;background:#d0e8d6;border-bottom:2px solid #1a4a2e22}
 .tab-btn{padding:11px 0;border:none;cursor:pointer;font-weight:600;background:transparent;color:#1a4a2e;font-size:13px;border-right:1px solid #a8cdb0;position:relative;flex:1}
 .tab-btn.active{background:#1a4a2e;color:#fff}
 .badge{position:absolute;top:4px;right:6px;background:#c0392b;color:#fff;border-radius:50%;width:15px;height:15px;font-size:9px;display:none;align-items:center;justify-content:center;font-weight:700}
 #reset-btn{padding:8px 14px;border:none;cursor:pointer;background:transparent;color:#c0392b;font-size:12px;font-weight:700}
-.tab-content{display:none;max-width:820px;margin:0 auto;padding:14px 12px 60px}
+.tab-content{display:none;max-width:820px;margin:0 auto;padding:14px 12px 72px}
 .tab-content.active{display:block}
 .sec{background:#fff;border-radius:10px;box-shadow:0 1px 6px #1a4a2e15;margin-bottom:16px;overflow:hidden}
 .sec-head{padding:8px 14px;display:flex;gap:10px;align-items:center}
@@ -40,18 +50,17 @@ textarea{resize:vertical}
 .a-warn{background:#fff3cd;border:1.5px solid #ffc107;color:#856404}
 .a-ok{background:#d4edda;border:1.5px solid #28a745;color:#155724}
 .a-info{background:#e8f4f8;border:1.5px solid #5bc0de;color:#2c6e7a}
-/* ZONE COLORS */
-.zona-celeste{background:#cce8f4;border:2px solid #2196f3;color:#0a4a6e}
-.zona-gialla{background:#fff9c4;border:2px solid #fdd835;color:#5d4037}
-.zona-arancione{background:#ffe0b2;border:2px solid #ff9800;color:#5d3c00}
-.zona-rossa{background:#ffcdd2;border:2px solid #f44336;color:#7f0000}
-.zona-ctr{background:#e8d5f5;border:2px solid #9c27b0;color:#4a0e6e}
 /* CONVERTITORE */
 .conv-box{background:#f0f8f2;border:1.5px solid #90c49a;border-radius:8px;padding:12px 14px;margin-bottom:12px}
 .conv-box label{font-size:11px;font-weight:700;color:#1a4a2e;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px}
 .conv-box textarea{background:#fff;border:1.5px solid #a8d4b0;border-radius:6px;font-family:monospace;font-size:13px;color:#1a2a1e;width:100%;padding:8px 10px;outline:none}
 .conv-result{margin-top:8px;font-family:monospace;font-size:12.5px;color:#0e6655;background:#e8f5e9;border-radius:6px;padding:7px 12px;line-height:2;display:none}
 .conv-btn{margin-top:8px;padding:7px 16px;border:none;border-radius:6px;background:#1a4a2e;color:#fff;font-weight:700;font-size:12px;cursor:pointer}
+/* STATUS BAR */
+#status-bar{position:fixed;bottom:0;left:0;right:0;background:#1a4a2e;color:#fff;padding:7px 16px;font-size:11px;display:flex;gap:8px;align-items:center;z-index:100;box-shadow:0 -2px 8px #0003}
+#status-name{font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#status-saved{opacity:.7;white-space:nowrap;font-size:10px}
+#status-dirty{color:#ffd54f;font-size:10px;display:none}
 /* PRINT */
 #print-area{display:none}
 @media print{
@@ -153,6 +162,19 @@ textarea{resize:vertical}
   <div><div class="sub">360Drone – Permessi di volo</div><h1>Compilatore ATM-09A</h1></div>
   <div class="info">📞 0187 1755700<br>✉️ 360drone@pec.it</div>
 </div>
+
+<!-- BARRA PRATICHE -->
+<div id="pratica-bar">
+  <select id="lista-pratiche" onchange="loadPractice(this.value)" title="Pratiche salvate">
+    <option value="">— Seleziona pratica —</option>
+  </select>
+  <button class="pb-btn" onclick="newPractice()" title="Nuova pratica">+ Nuova</button>
+  <button class="pb-btn" onclick="exportPractice()" title="Esporta JSON">📤</button>
+  <input type="file" id="import-file" accept=".json" style="display:none" onchange="importPractice(event)"/>
+  <button class="pb-btn" onclick="document.getElementById('import-file').click()" title="Importa JSON">📥</button>
+  <button class="pb-btn" id="elimina-pratica-btn" onclick="deletePractice()" title="Elimina pratica corrente">🗑</button>
+</div>
+
 <div id="err-bar" onclick="switchTab('alert')">⛔ Errori critici — tocca per vedere</div>
 <div id="tabs">
   <button class="tab-btn active" onclick="switchTab('form')">✏️ Compila</button>
@@ -163,8 +185,23 @@ textarea{resize:vertical}
 <!-- TAB COMPILA -->
 <div class="tab-content active" id="tab-form">
 
+  <!-- NOME PRATICA -->
+  <div class="sec" style="margin-top:14px;border:2px solid #1a4a2e">
+    <div class="sec-head" style="background:#1a4a2e">
+      <span class="sl" style="background:#fff;color:#1a4a2e;font-size:14px">📁</span>
+      <span class="st">Nome pratica</span>
+    </div>
+    <div class="sec-body">
+      <div class="field">
+        <label class="lbl">Nome identificativo <span class="req">*</span></label>
+        <input type="text" id="nomePratica" placeholder="Es. Roma Centro Storico – A1 – luglio 2025" oninput="onPracticeNameChange()"/>
+        <div style="font-size:11px;color:#888;margin-top:3px">Usato per identificare la pratica nell'archivio e nominare il PDF</div>
+      </div>
+    </div>
+  </div>
+
   <!-- H: Zona geografica D-Flight -->
-  <div class="sec" style="margin-top:14px">
+  <div class="sec">
     <div class="sec-head" style="background:#1a4a2e">
       <span class="sl" style="background:#fff;color:#1a4a2e">H</span>
       <span class="st">Zona geografica UAS (colore D-Flight) — auto-compila email ENAC</span>
@@ -197,7 +234,7 @@ textarea{resize:vertical}
       <div class="field" id="enac-dir-field">
         <label class="lbl">Direzione Territoriale ENAC competente <span class="req">*</span></label>
         <select id="enacDir" onchange="aggiornaZone()">
-          <option value="">— Seleziona —</option> <!-- Valore vuoto per obbligatorietà -->
+          <option value="">— Seleziona —</option>
           <option value="centro">Centro — Roma (protocollo.centro@pec.enac.gov.it)</option>
           <option value="nordovest">Nord Ovest — Milano (protocollo.nordovest@pec.enac.gov.it)</option>
           <option value="nordest">Nord Est — Venezia (protocollo.nordest@pec.enac.gov.it)</option>
@@ -265,7 +302,7 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- D: Attività + categoria operativa -->
+  <!-- D: Attività -->
   <div class="sec">
     <div class="sec-head" style="background:#1e8449">
       <span class="sl" style="background:#fff;color:#1e8449">D</span>
@@ -291,7 +328,7 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- E: Drone + CRO + scenario -->
+  <!-- E: Drone -->
   <div class="sec">
     <div class="sec-head" style="background:#7d3c98">
       <span class="sl" style="background:#fff;color:#7d3c98">E</span>
@@ -313,7 +350,7 @@ textarea{resize:vertical}
         </select>
       </div>
       <div class="field"><label class="lbl">Descrizione completa aeromobile <span class="req">*</span></label>
-        <input type="text" id="aeromobile" placeholder="Es. DJI Mini 3 – 249g – Categoria C0 – ID operatore: xxxxxx"/>
+        <textarea id="aeromobile" rows="2" placeholder="Es. DJI Mini 3 – 249g – Categoria C0 – ID operatore: xxxxxx"></textarea>
       </div>
       <div class="g2">
         <div class="field"><label class="lbl">Autorizzazione ENAC / CRO n. <span class="req">*</span></label>
@@ -326,7 +363,7 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- F: Coordinate decollo + convertitore -->
+  <!-- F: Coordinate decollo -->
   <div class="sec">
     <div class="sec-head" style="background:#c0392b">
       <span class="sl" style="background:#fff;color:#c0392b">F</span>
@@ -373,7 +410,7 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- I: Vertici area + convertitore multi -->
+  <!-- I: Vertici area -->
   <div class="sec">
     <div class="sec-head" style="background:#0e6655">
       <span class="sl" style="background:#fff;color:#0e6655">I</span>
@@ -392,7 +429,7 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- J: Limiti verticali + quota massima -->
+  <!-- J: Limiti verticali -->
   <div class="sec">
     <div class="sec-head" style="background:#2c3e50">
       <span class="sl" style="background:#fff;color:#2c3e50">J</span>
@@ -420,7 +457,6 @@ textarea{resize:vertical}
 
   <!-- M: Date e Orari (UTC) -->
   <div class="sec">
-    <!-- Modifica: Aggiunto flag WARNING per UTC -->
     <div class="sec-head" style="background:#922b21">
       <span class="sl" style="background:#fff;color:#922b21">M</span>
       <span class="st">Date e orari ⚠️ sempre UTC!</span>
@@ -497,14 +533,23 @@ textarea{resize:vertical}
   </div>
 </div>
 
+<!-- STATUS BAR -->
+<div id="status-bar">
+  <span id="status-name">—</span>
+  <span id="status-dirty">● non salvato</span>
+  <span id="status-saved"></span>
+</div>
+
 <script>
-/* ── ZONE DB 09A ── */
+/* ══════════════════════════════════════════════
+   ZONE DB & CONSTANTS
+══════════════════════════════════════════════ */
 const ZONE_DB = {
   "Zona Celeste (60m)":   { tipo:"celeste",   avviso:"🔵 Zona CELESTE: volo autorizzabile fino a 60m AGL. Anticipo min. 15 giorni." },
   "Zona Gialla (45m)":    { tipo:"gialla",    avviso:"🟡 Zona GIALLA: limite 45m AGL. Anticipo min. 15 giorni." },
   "Zona Arancione (25m)": { tipo:"arancione", avviso:"🟠 Zona ARANCIONE: limite 25m AGL. Anticipo min. 20 giorni consigliati." },
   "Zona Rossa (0m)":      { tipo:"rossa",     avviso:"🔴 Zona ROSSA: volo non consentito senza autorizzazione speciale ENAC. Anticipo min. 30 giorni." },
-  "CTR Militare":         { tipo:"ctr",        avviso:"🟣 CTR Militare: anticipo MINIMO 60 giorni. Coordinarsi con Aeronautica Militare (AM)." }
+  "CTR Militare":         { tipo:"ctr",       avviso:"🟣 CTR Militare: anticipo MINIMO 60 giorni. Coordinarsi con Aeronautica Militare (AM)." }
 };
 
 const ENAC_MAIL = {
@@ -518,50 +563,295 @@ const ENAC_MAIL = {
   "sardegna":   "protocollo.sardegna@pec.enac.gov.it"
 };
 
-const PROVINCE = ["AG","AL","AN","AO","AP","AQ","AR","AT","AV","BA","BG","BI","BL","BN","BO","BR","BS","BT","BZ","CA","CB","CE","CH","CL","CN","CO","CR","CS","CT","CZ","EN","FC","FE","FG","FI","FM","FR","GE","GO","GR","IM","IS","KR","LC","LE","LI","LO","LT","LU","MB","MC","ME","MI","MN","MO","MS","MT","NA","NO","NU","OR","PA","PC","PD","PE","PG","PI","PN","PO","PR","PT","PU","PV","PZ","RA","RC","RE","RG","RI","RM","RN","RO","SA","SI","SO","SP","SR","SS","SU","SV","TA","TE","TN","TO","TP","TR","TS","TV","UD","VA","VB","VC","VE","VI","VR","VT","VV"];
+/* ══════════════════════════════════════════════
+   STORAGE MULTI-PRATICA
+══════════════════════════════════════════════ */
+const STORAGE_KEY  = 'atm09a_practices';
+const DEBOUNCE_MS  = 350;
 
+let currentPracticeId = null;
+let isDirty  = false;
+let saveTimer = null;
 let punti = [{nome:'',lat:'',lon:''},{nome:'',lat:'',lon:''}];
 
-/* ── INIT ── */
-window.addEventListener('load', () => {
-  document.getElementById('dataRichiesta').value = new Date().toLocaleDateString('it-IT');
-  loadStorage();
+const FIELDS = [
+  'nomePratica','destA','destCc','richiedente','nomePilota','attestato','tipoLic','telPilota',
+  'catOperativa','tipoAttivita','aeromobile','cro','scenario',
+  'decollo','latDecollo','lonDecollo','atterraggio','latAtterraggio','lonAtterraggio',
+  'localita','aeroporto','limVerticali','quotaMax','dateOrari',
+  'freqRadio','assicurazione','pagamentoDiritti','altreNotizie',
+  'luogo','dataRichiesta','zona','enacDir','dronePreset'
+];
+
+function getPractices() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch(e) { console.error('getPractices:', e); return {}; }
+}
+
+function setPractices(obj) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }
+  catch(e) {
+    if (e.name === 'QuotaExceededError') alert('⚠️ Memoria locale piena. Esporta e cancella alcune pratiche.');
+    else console.error('setPractices:', e);
+  }
+}
+
+/* ── Debounce ── */
+function debouncedSave() {
+  isDirty = true;
+  updateStatusBar();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveCurrentPractice, DEBOUNCE_MS);
+}
+
+function saveCurrentPractice() {
+  if (!currentPracticeId) return;
+  const practices = getPractices();
+  const data      = readFormForStorage();
+  const practice  = practices[currentPracticeId] || {};
+
+  practice.id             = currentPracticeId;
+  practice.name           = document.getElementById('nomePratica')?.value.trim() || 'Pratica senza nome';
+  practice.state          = practice.state || 'bozza';
+  practice.savedTimestamp = new Date().toISOString();
+  practice.data           = data;
+
+  practices[currentPracticeId] = practice;
+  setPractices(practices);
+
+  isDirty = false;
+  updatePracticeList();
+  updateStatusBar();
+}
+
+function readFormForStorage() {
+  const d = {};
+  FIELDS.forEach(k => { const e = document.getElementById(k); if (e) d[k] = e.value; });
+  d.punti = punti;
+  d.zonaChecks = [...document.querySelectorAll('#zona-checks input[type=checkbox]')]
+    .map(cb => ({ value: cb.value, checked: cb.checked }));
+  return d;
+}
+
+function writeFormFromStorage(data) {
+  if (!data) return;
+  FIELDS.forEach(k => {
+    const e = document.getElementById(k);
+    if (e && data[k] != null) e.value = data[k];
+  });
+  punti = (data.punti && data.punti.length) ? [...data.punti] : [{nome:'',lat:'',lon:''},{nome:'',lat:'',lon:''}];
+
+  document.querySelectorAll('#zona-checks input[type=checkbox]').forEach(cb => {
+    const sc = data.zonaChecks?.find(z => z.value === cb.value);
+    cb.checked = sc ? sc.checked : false;
+  });
+
+  aggiornaZone();
   renderPunti();
   updatePreviewN();
   runValidation();
+}
+
+/* ── Lista dropdown ── */
+function updatePracticeList() {
+  const practices = getPractices();
+  const sel = document.getElementById('lista-pratiche');
+  sel.innerHTML = '<option value="">— Seleziona pratica —</option>';
+
+  Object.values(practices)
+    .sort((a, b) => (b.savedTimestamp || '').localeCompare(a.savedTimestamp || ''))
+    .forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      const ts = p.savedTimestamp
+        ? new Date(p.savedTimestamp).toLocaleDateString('it-IT')
+        : '';
+      opt.textContent = p.name + (ts ? ' — ' + ts : '');
+      sel.appendChild(opt);
+    });
+
+  if (currentPracticeId) sel.value = currentPracticeId;
+}
+
+/* ── Carica pratica ── */
+function loadPractice(id) {
+  if (!id) return;
+  if (isDirty) saveCurrentPractice();
+  const practices = getPractices();
+  const practice  = practices[id];
+  if (!practice) return;
+  currentPracticeId = id;
+  writeFormFromStorage(practice.data);
+  updateStatusBar();
+}
+
+/* ── Nuova pratica ── */
+function newPractice() {
+  if (isDirty) saveCurrentPractice();
+
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  currentPracticeId = id;
+
+  // Reset form
+  FIELDS.forEach(k => { const e = document.getElementById(k); if (e) e.value = ''; });
+  document.getElementById('luogo').value        = 'Roma';
+  document.getElementById('dataRichiesta').value = new Date().toLocaleDateString('it-IT');
+  document.getElementById('destCc').value        = 'operazioni.atm@enav.it; mobilita.innovativa@enac.gov.it';
+  document.getElementById('limVerticali').value  = 'inferiore GND / superiore 45 m AGL (147 ft)';
+  document.querySelectorAll('#zona-checks input[type=checkbox]').forEach(cb => cb.checked = false);
+  punti = [{nome:'',lat:'',lon:''},{nome:'',lat:'',lon:''}];
+
+  aggiornaZone();
+  renderPunti();
+  updatePreviewN();
+  runValidation();
+  updatePracticeList();
+  updateStatusBar();
+  document.getElementById('nomePratica')?.focus();
+}
+
+/* ── Elimina pratica ── */
+function deletePractice() {
+  if (!currentPracticeId) return;
+  const practices = getPractices();
+  const name = practices[currentPracticeId]?.name || 'questa pratica';
+  if (!confirm(`Eliminare "${name}"?\nL'operazione non può essere annullata.`)) return;
+
+  delete practices[currentPracticeId];
+  setPractices(practices);
+
+  const remaining = Object.values(practices)
+    .sort((a, b) => (b.savedTimestamp || '').localeCompare(a.savedTimestamp || ''));
+  if (remaining.length) {
+    currentPracticeId = remaining[0].id;
+    writeFormFromStorage(remaining[0].data);
+  } else {
+    newPractice();
+    return;
+  }
+  updatePracticeList();
+  updateStatusBar();
+}
+
+/* ── Export / Import ── */
+function exportPractice() {
+  if (!currentPracticeId) { alert('Nessuna pratica da esportare.'); return; }
+  saveCurrentPractice();
+  const practice = getPractices()[currentPracticeId];
+  if (!practice) return;
+  const blob = new Blob([JSON.stringify(practice, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ATM09A_' + (practice.name || 'pratica').replace(/[^a-zA-Z0-9\-_]/g, '_') + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importPractice(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const practice = JSON.parse(e.target.result);
+      if (!practice.data) throw new Error('Formato non valido');
+      practice.id   = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      practice.name = (practice.name || 'Pratica importata') + ' (copia)';
+      const practices = getPractices();
+      practices[practice.id] = practice;
+      setPractices(practices);
+      currentPracticeId = practice.id;
+      writeFormFromStorage(practice.data);
+      updatePracticeList();
+      updateStatusBar();
+      alert('✅ Pratica "' + practice.name + '" importata.');
+    } catch(err) {
+      alert('❌ File non valido o corrotto.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+/* ── Status bar ── */
+function updateStatusBar() {
+  const practice = currentPracticeId ? getPractices()[currentPracticeId] : null;
+  const nameEl   = document.getElementById('status-name');
+  const savedEl  = document.getElementById('status-saved');
+  const dirtyEl  = document.getElementById('status-dirty');
+
+  if (nameEl) nameEl.textContent = practice?.name || 'Nessuna pratica';
+  if (dirtyEl) dirtyEl.style.display = isDirty ? 'inline' : 'none';
+  if (savedEl) {
+    if (!isDirty && practice?.savedTimestamp) {
+      const t = new Date(practice.savedTimestamp)
+        .toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+      savedEl.textContent = '— salvata ' + t;
+    } else if (isDirty) {
+      savedEl.textContent = '';
+    } else {
+      savedEl.textContent = '';
+    }
+  }
+}
+
+function onPracticeNameChange() {
+  debouncedSave();
+  updateStatusBar();
+}
+
+/* ── Migrazione da vecchio storage ── */
+function migrateOldStorage() {
+  try {
+    const old = localStorage.getItem('atm09a');
+    if (!old) return null;
+    const oldData = JSON.parse(old);
+    if (!oldData) return null;
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const practice = {
+      id,
+      name: 'Pratica migrata (v1)',
+      state: 'bozza',
+      savedTimestamp: new Date().toISOString(),
+      data: oldData
+    };
+    const practices = getPractices();
+    practices[id] = practice;
+    setPractices(practices);
+    localStorage.removeItem('atm09a');
+    return id;
+  } catch(e) { return null; }
+}
+
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
+window.addEventListener('load', () => {
+  document.getElementById('dataRichiesta').value = new Date().toLocaleDateString('it-IT');
+
+  const migratedId = migrateOldStorage();
+  const practices  = getPractices();
+  const sorted     = Object.values(practices)
+    .sort((a, b) => (b.savedTimestamp || '').localeCompare(a.savedTimestamp || ''));
+
+  if (migratedId && practices[migratedId]) {
+    currentPracticeId = migratedId;
+    writeFormFromStorage(practices[migratedId].data);
+  } else if (sorted.length) {
+    currentPracticeId = sorted[0].id;
+    writeFormFromStorage(sorted[0].data);
+  } else {
+    newPractice();
+    return;
+  }
+
+  updatePracticeList();
+  updateStatusBar();
 });
 
-/* ── STORAGE ── */
-const FIELDS = ['destA','destCc','richiedente','nomePilota','attestato','tipoLic','telPilota','catOperativa','tipoAttivita','aeromobile','cro','scenario','decollo','latDecollo','lonDecollo','atterraggio','latAtterraggio','lonAtterraggio','localita','aeroporto','limVerticali','quotaMax','dateOrari','freqRadio','assicurazione','pagamentoDiritti','altreNotizie','luogo','dataRichiesta','zona','enacDir','dronePreset'];
-
-function saveAll() {
-  try {
-    const d = {};
-    FIELDS.forEach(k => { const e = document.getElementById(k); if(e) d[k] = e.value; });
-    d.punti = punti;
-    localStorage.setItem('atm09a', JSON.stringify(d));
-  } catch(e) {}
-}
-function loadStorage() {
-  try {
-    const s = localStorage.getItem('atm09a');
-    if (!s) return;
-    const d = JSON.parse(s);
-    FIELDS.forEach(k => { const e = document.getElementById(k); if(e && d[k] != null) e.value = d[k]; });
-    if (d.punti && d.punti.length) punti = d.punti;
-    if (d.zona) {
-      const valori = d.zona.split(', ');
-      document.querySelectorAll('#zona-checks input[type=checkbox]').forEach(cb => {
-        if (valori.includes(cb.value)) cb.checked = true;
-      });
-      aggiornaZone();
-    }
-  } catch(e) {}
-}
-document.addEventListener('input',  () => { saveAll(); updatePreviewN(); });
-document.addEventListener('change', () => { saveAll(); updatePreviewN(); });
-
-/* ── TABS ── */
+/* ══════════════════════════════════════════════
+   TABS
+══════════════════════════════════════════════ */
 function switchTab(name) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -572,50 +862,53 @@ function switchTab(name) {
   if (name === 'alert') renderAlerts();
 }
 
-/* ── ZONA → EMAIL ── */
+/* ══════════════════════════════════════════════
+   ZONA → EMAIL
+══════════════════════════════════════════════ */
 function aggiornaZone() {
   const checks = [...document.querySelectorAll('#zona-checks input[type=checkbox]:checked')];
   const valori = checks.map(c => c.value);
-  const dir = document.getElementById('enacDir').value;
+  const dir    = document.getElementById('enacDir').value;
 
-  // Email A: ENAC territoriale
-  const emailA = dir ? ENAC_MAIL[dir] || '' : '';
-  document.getElementById('destA').value = emailA;
+  document.getElementById('destA').value = dir ? ENAC_MAIL[dir] || '' : '';
 
-  // CC: ATS + ENAC centrale
   const isMil = valori.includes('CTR Militare');
   document.getElementById('destCc').value = isMil
     ? 'operazioni.atm@enav.it; mobilita.innovativa@enac.gov.it; posta.dgpam@postacert.difesa.it'
     : 'operazioni.atm@enav.it; mobilita.innovativa@enac.gov.it';
 
-  // Campo H combinato
   document.getElementById('zona').value = valori.join(', ');
 
-  // Stile checkbox
   document.querySelectorAll('#zona-checks label').forEach(lbl => {
     const cb = lbl.querySelector('input');
     if (!cb) return;
-    lbl.style.opacity = cb.checked ? '1' : '0.65';
+    lbl.style.opacity    = cb.checked ? '1' : '0.65';
     lbl.style.fontWeight = cb.checked ? '700' : '600';
   });
 
-  // Avvisi
   const av = document.getElementById('zona-avviso');
   if (valori.length) {
     av.innerHTML = valori.map(v => {
-      const z = ZONE_DB[v];
-      if (!z) return '';
-      const col = {celeste:'#e3f2fd;border:1px solid #2196f3;color:#0a4a6e', gialla:'#fffde7;border:1px solid #fdd835;color:#5d4037', arancione:'#fff3e0;border:1px solid #ff9800;color:#5d3c00', rossa:'#ffebee;border:1px solid #f44336;color:#7f0000', ctr:'#f3e5f5;border:1px solid #9c27b0;color:#4a0e6e'}[z.tipo] || '';
+      const z = ZONE_DB[v]; if (!z) return '';
+      const col = {
+        celeste:   '#e3f2fd;border:1px solid #2196f3;color:#0a4a6e',
+        gialla:    '#fffde7;border:1px solid #fdd835;color:#5d4037',
+        arancione: '#fff3e0;border:1px solid #ff9800;color:#5d3c00',
+        rossa:     '#ffebee;border:1px solid #f44336;color:#7f0000',
+        ctr:       '#f3e5f5;border:1px solid #9c27b0;color:#4a0e6e'
+      }[z.tipo] || '';
       return `<div style="background:${col};border-radius:6px;padding:8px 12px;font-size:12.5px;margin-top:6px">${z.avviso}</div>`;
     }).join('');
   } else {
     av.innerHTML = '';
   }
 
-  saveAll(); runValidation();
+  debouncedSave(); runValidation();
 }
 
-/* ── DRONE ── */
+/* ══════════════════════════════════════════════
+   DRONE
+══════════════════════════════════════════════ */
 function selDrone(val) {
   if (!val) return;
   document.getElementById('aeromobile').value = val.split('||')[0];
@@ -627,7 +920,9 @@ function autoSync(src, dst) {
   if (!document.getElementById(dst).value) document.getElementById(dst).value = sv;
 }
 
-/* ── COORDINATE ── */
+/* ══════════════════════════════════════════════
+   COORDINATE
+══════════════════════════════════════════════ */
 function decToSex(dec, isLat) {
   const abs = Math.abs(dec);
   const d   = Math.floor(abs);
@@ -640,8 +935,7 @@ function decToSex(dec, isLat) {
 
 function parseCoordLine(line) {
   line = line.trim().replace(/[;|]/g, ',');
-  const re = /(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/;
-  const m = line.match(re);
+  const m = line.match(/(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/);
   if (!m) return null;
   const lat = parseFloat(m[1]), lon = parseFloat(m[2]);
   if (isNaN(lat) || isNaN(lon) || lat < 35 || lat > 48 || lon < 6 || lon > 19) return null;
@@ -654,8 +948,7 @@ function convDecollo(val) {
   const p = parseCoordLine(val);
   if (!p) {
     res.style.display='block'; res.style.background='#fdecea'; res.style.color='#922b21';
-    res.textContent = '❌ Formato non riconosciuto. Usa: 41.902782, 12.496366';
-    return;
+    res.textContent = '❌ Formato non riconosciuto. Usa: 41.902782, 12.496366'; return;
   }
   const latS = decToSex(p.lat, true), lonS = decToSex(p.lon, false);
   document.getElementById('latDecollo').value     = latS;
@@ -664,7 +957,7 @@ function convDecollo(val) {
   document.getElementById('lonAtterraggio').value = lonS;
   res.style.display='block'; res.style.background='#e8f5e9'; res.style.color='#0e6655';
   res.innerHTML = `✅ Decollo:<br>Lat N ${latS}<br>Lon E ${lonS}`;
-  saveAll();
+  debouncedSave();
 }
 
 function convArea() {
@@ -682,13 +975,16 @@ function convArea() {
     res.style.display='block'; res.style.background='#fdecea'; res.style.color='#922b21';
     res.innerHTML = '❌ Nessuna coordinata valida.'; return;
   }
-  punti = convertiti; renderPunti(); saveAll();
+  punti = convertiti; renderPunti(); debouncedSave();
   res.style.display='block'; res.style.background='#e8f5e9'; res.style.color='#0e6655';
-  res.innerHTML = `✅ ${convertiti.length} vertici compilati:<br>` + convertiti.map(p=>`${p.nome}: ${p.lat} / ${p.lon}`).join('<br>') +
-    (errori.length ? `<br><span style="color:#856404">⚠️ ${errori.join(', ')}</span>` : '');
+  res.innerHTML = `✅ ${convertiti.length} vertici compilati:<br>`
+    + convertiti.map(p => `${p.nome}: ${p.lat} / ${p.lon}`).join('<br>')
+    + (errori.length ? `<br><span style="color:#856404">⚠️ ${errori.join(', ')}</span>` : '');
 }
 
-/* ── PUNTI ── */
+/* ══════════════════════════════════════════════
+   PUNTI
+══════════════════════════════════════════════ */
 function renderPunti() {
   const c = document.getElementById('punti-container'); c.innerHTML = '';
   if (punti.length) {
@@ -698,161 +994,172 @@ function renderPunti() {
   }
   punti.forEach((p, i) => {
     const row = document.createElement('div'); row.className='g3';
-    row.innerHTML = `<input type="text" value="${p.nome}" placeholder="Es. Vertice ${i+1}" oninput="punti[${i}].nome=this.value;saveAll()"/>
-      <input type="text" value="${p.lat}" placeholder="Lat N" oninput="punti[${i}].lat=this.value;saveAll()"/>
-      <input type="text" value="${p.lon}" placeholder="Lon E" oninput="punti[${i}].lon=this.value;saveAll()"/>
+    row.innerHTML = `
+      <input type="text" value="${p.nome}" placeholder="Es. Vertice ${i+1}" oninput="punti[${i}].nome=this.value;debouncedSave()"/>
+      <input type="text" value="${p.lat}"  placeholder="Lat N" oninput="punti[${i}].lat=this.value;debouncedSave()"/>
+      <input type="text" value="${p.lon}"  placeholder="Lon E" oninput="punti[${i}].lon=this.value;debouncedSave()"/>
       <button onclick="removePunto(${i})" style="background:#fdecea;border:1px solid #fbb;border-radius:6px;padding:6px 10px;cursor:pointer;color:#c0392b;font-size:15px">✕</button>`;
     c.appendChild(row);
   });
 }
 function addPunto()     { punti.push({nome:'',lat:'',lon:''}); renderPunti(); }
-function removePunto(i) { punti.splice(i,1); renderPunti(); saveAll(); }
+function removePunto(i) { punti.splice(i,1); renderPunti(); debouncedSave(); }
 
-/* ── PREVIEW N ── */
+/* ══════════════════════════════════════════════
+   PREVIEW N
+══════════════════════════════════════════════ */
 function updatePreviewN() {
-  const nome  = document.getElementById('nomePilota')?.value || '[nome]';
-  const tel   = document.getElementById('telPilota')?.value  || '[tel]';
-  const freq  = document.getElementById('freqRadio')?.value  || '[frequenza]';
-  const aero  = document.getElementById('aeroporto')?.value  || '[aeroporto]';
+  const nome  = document.getElementById('nomePilota')?.value  || '[nome]';
+  const tel   = document.getElementById('telPilota')?.value   || '[tel]';
+  const freq  = document.getElementById('freqRadio')?.value   || '[frequenza]';
+  const aero  = document.getElementById('aeroporto')?.value   || '[aeroporto]';
   const extra = document.getElementById('altreNotizie')?.value || '';
   document.getElementById('preview-n').innerHTML =
     `<b>Testo N generato:</b><br>Il pilota in comando sig. <b>${nome}</b> dichiara la disponibilità all'immediata interruzione dell'operazione. L'operazione sarà condotta in coordinamento con l'ATS di <b>${aero}</b>, contatto radio sulla frequenza <b>${freq}</b>, telefono H24 <b>${tel}</b>. I droni sono dotati di: RTH, geofencing. Volo VLOS.${extra ? '<br>' + extra : ''}`;
 }
 
-/* ── VALIDAZIONE ── */
+/* ══════════════════════════════════════════════
+   VALIDAZIONE
+══════════════════════════════════════════════ */
 function runValidation() {
   const errs=[], warns=[];
   const V = id => { const e=document.getElementById(id); return e?e.value.trim():''; };
-  const MESI={gennaio:0,febbraio:1,marzo:2,aprile:3,maggio:4,giugno:5,luglio:6,agosto:7,settembre:8,ottobre:9,novembre:10,dicembre:11};
+  const MESI = {gennaio:0,febbraio:1,marzo:2,aprile:3,maggio:4,giugno:5,luglio:6,agosto:7,settembre:8,ottobre:9,novembre:10,dicembre:11};
 
-  const zona = V('zona');
-  const isMil = zona.includes('CTR Militare');
+  const zona    = V('zona');
+  const isMil   = zona.includes('CTR Militare');
   const isRossa = zona.includes('Rossa');
-  const minGiorni = isMil ? 60 : isRossa ? 30 : 15;
+  const minGiorni  = isMil ? 60 : isRossa ? 30 : 15;
   const warnGiorni = isMil ? 75 : isRossa ? 40 : 20;
 
-  // Anticipo
   const date = V('dateOrari');
   if (date) {
-    const re=/(\d{1,2})\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\s*(\d{4})?/i;
-    const m=date.match(re);
-    if(m){
-      const anno=m[3]?parseInt(m[3]):new Date().getFullYear();
-      const data=new Date(anno,MESI[m[2].toLowerCase()],parseInt(m[1]));
-      const diff=Math.round((data-new Date())/86400000);
-      if      (diff<0)          errs.push('⛔ Le date inserite sono già passate!');
-      else if (diff<minGiorni)  errs.push(`⛔ Anticipo insufficiente: ${diff} giorni. Per questa zona servono ALMENO ${minGiorni} giorni prima del volo.`);
-      else if (diff<warnGiorni) warns.push(`⚠️ Anticipo breve: ${diff} giorni. Consigliati almeno ${warnGiorni} giorni per sicurezza.`);
+    const re = /(\d{1,2})\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\s*(\d{4})?/i;
+    const m  = date.match(re);
+    if (m) {
+      const anno = m[3] ? parseInt(m[3]) : new Date().getFullYear();
+      const data = new Date(anno, MESI[m[2].toLowerCase()], parseInt(m[1]));
+      const diff = Math.round((data - new Date()) / 86400000);
+      if      (diff < 0)          errs.push('⛔ Le date inserite sono già passate!');
+      else if (diff < minGiorni)  errs.push(`⛔ Anticipo insufficiente: ${diff} giorni. Per questa zona servono ALMENO ${minGiorni} giorni prima del volo.`);
+      else if (diff < warnGiorni) warns.push(`⚠️ Anticipo breve: ${diff} giorni. Consigliati almeno ${warnGiorni} giorni per sicurezza.`);
     }
   }
 
-  // CRO mancante
-  if (!V('cro'))
-    errs.push('⛔ Numero autorizzazione ENAC / CRO mancante: obbligatorio per ATM-09A.');
+  if (!V('cro'))             errs.push('⛔ Numero autorizzazione ENAC / CRO mancante: obbligatorio per ATM-09A.');
+  if (!V('freqRadio'))       errs.push('⛔ Frequenza radio / contatto TBT mancante: obbligatorio per ATM-09A.');
+  if (!V('pagamentoDiritti'))errs.push('⛔ Estremi pagamento diritti ENAC mancanti (circa €94). Obbligatorio allegare ricevuta.');
 
-  // Frequenza radio mancante
-  if (!V('freqRadio'))
-    errs.push('⛔ Frequenza radio / contatto TBT mancante: obbligatorio per ATM-09A.');
-
-  // Diritti ENAC
-  if (!V('pagamentoDiritti'))
-    errs.push('⛔ Estremi pagamento diritti ENAC mancanti (circa €94). Obbligatorio allegare ricevuta.');
-
-  // Licenza vs drone
   const dp=V('dronePreset'), licReq=(dp.split('||')[1]||'').trim(), lic=V('tipoLic');
-  if(licReq && lic && !({A1:['A1','A2','A3'],A2:['A2','A3'],A3:['A3']}[licReq]||[]).includes(lic))
+  if (licReq && lic && !({A1:['A1','A2','A3'],A2:['A2','A3'],A3:['A3']}[licReq]||[]).includes(lic))
     errs.push(`⛔ LICENZA INCOMPATIBILE: questo drone richiede almeno ${licReq}, il pilota ha ${lic}.`);
 
-  // Attestato
-  if(V('richiedente') && !V('attestato'))
-    errs.push('⛔ Numero attestato UAS mancante: obbligatorio.');
+  if (V('richiedente') && !V('attestato')) errs.push('⛔ Numero attestato UAS mancante: obbligatorio.');
+  if (!V('destA'))    warns.push('⚠️ Email Direzione ENAC non compilata. Seleziona la zona e la direzione territoriale.');
+  if (isRossa)        warns.push('⚠️ Zona ROSSA: autorizzazione molto difficile. Verificare con ENAC prima di inviare.');
+  if (isMil)          warns.push('⚠️ CTR Militare: il CC include già l\'Aeronautica Militare (aggiunto automaticamente).');
 
-  // Destinatario ENAC
-  if (!V('destA'))
-    warns.push('⚠️ Email Direzione ENAC non compilata. Seleziona la zona e la direzione territoriale.');
-
-  // Zona rossa
-  if(isRossa)
-    warns.push('⚠️ Zona ROSSA: autorizzazione molto difficile. Verificare con ENAC prima di inviare.');
-
-  // CTR militare
-  if(isMil)
-    warns.push('⚠️ CTR Militare: il CC deve includere anche l\'Aeronautica Militare (già aggiunto automaticamente).');
-
-  // Quota coerente con zona
   const quota = V('quotaMax');
-  if (zona.includes('Gialla') && quota && parseInt(quota) > 45)
-    warns.push('⚠️ Zona GIALLA: stai richiedendo una quota superiore al limite di 45m. Giustificare nella sezione D.');
-  if (zona.includes('Arancione') && quota && parseInt(quota) > 25)
-    warns.push('⚠️ Zona ARANCIONE: stai richiedendo una quota superiore al limite di 25m. Giustificare nella sezione D.');
+  if (zona.includes('Gialla')   && quota && parseInt(quota) > 45) warns.push('⚠️ Zona GIALLA: quota superiore al limite di 45m. Giustificare nella sezione D.');
+  if (zona.includes('Arancione')&& quota && parseInt(quota) > 25) warns.push('⚠️ Zona ARANCIONE: quota superiore al limite di 25m. Giustificare nella sezione D.');
 
   window._alerts = {errs, warns};
-  const nErr = errs.length;
-  const badge=document.getElementById('err-badge'), bar=document.getElementById('err-bar');
-  if(nErr>0){ badge.textContent=nErr; badge.style.display='flex'; bar.style.display='block'; bar.textContent=`⛔ ${nErr} errore${nErr>1?'i':''} critico — tocca per vedere`; }
-  else { badge.style.display='none'; bar.style.display='none'; } // Nascosti se non ci sono errori
-
-  renderAlerts(); // Aggiorna il contenuto degli allarmi indipendentemente dal messaggio nella barra
+  const nErr  = errs.length;
+  const badge = document.getElementById('err-badge');
+  const bar   = document.getElementById('err-bar');
+  if (nErr > 0) {
+    badge.textContent  = nErr; badge.style.display  = 'flex';
+    bar.style.display  = 'block';
+    bar.textContent    = `⛔ ${nErr} errore${nErr>1?'i':''} critico — tocca per vedere`;
+  } else {
+    badge.style.display = 'none'; bar.style.display = 'none';
+  }
+  renderAlerts();
 }
 
 function renderAlerts() {
-  const {errs=[],warns=[]}=window._alerts||{};
-  const c=document.getElementById('allarmi-container'); if(!c) return;
-  if(!errs.length&&!warns.length) { c.innerHTML='<div class="alert a-ok">✅ Nessun problema. La pratica ATM-09A è pronta per il PDF!</div>'; return; }
-  c.innerHTML=[...errs.map(m=>`<div class="alert a-err">${m}</div>`),...warns.map(m=>`<div class="alert a-warn">${m}</div>`)].join('');
+  const {errs=[],warns=[]} = window._alerts || {};
+  const c = document.getElementById('allarmi-container'); if (!c) return;
+  if (!errs.length && !warns.length) {
+    c.innerHTML = '<div class="alert a-ok">✅ Nessun problema. La pratica ATM-09A è pronta per il PDF!</div>';
+    return;
+  }
+  c.innerHTML = [
+    ...errs.map(m  => `<div class="alert a-err">${m}</div>`),
+    ...warns.map(m => `<div class="alert a-warn">${m}</div>`)
+  ].join('');
 }
 
-/* ── RESET BUTTON FUNCTION ── */
-/* Rimuove i dati dal local storage e ricarica la pagina */
+/* ══════════════════════════════════════════════
+   RESET
+══════════════════════════════════════════════ */
 function resetForm() {
-  if(!confirm('Cancellare tutti i dati?')) return;
-  localStorage.removeItem('atm09a'); location.reload();
+  if (!confirm('Eliminare TUTTE le pratiche salvate e ricominciare da zero?\n\nOK = cancella tutto | Annulla = torna indietro')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem('atm09a');
+  location.reload();
 }
 
-/* ── PDF ── */
-/* Funzione per generare il PDF tramite window.print() e salvare le modifiche */
+/* ══════════════════════════════════════════════
+   PDF
+══════════════════════════════════════════════ */
 function generaPDF() {
-  const V=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
+  const V = id => { const e=document.getElementById(id); return e?e.value.trim():''; };
+  const nome  = V('nomePilota') || V('richiedente');
+  const tel   = V('telPilota');
+  const freq  = V('freqRadio');
+  const aero  = document.getElementById('aeroporto').value;
+  const extra = V('altreNotizie');
+  const notizie = `Il pilota in comando sig. ${nome} dichiara la disponibilità all'immediata interruzione dell'operazione.\nL'operazione sarà condotta in coordinamento con l'ATS di ${aero}, contatto radio sulla frequenza ${freq}, telefono H24 ${tel}.\nI droni sono dotati di: RTH (return to home), geofencing.\nVolo sempre condotto in VLOS. Non verranno sorvolati assembramenti ed edifici particolari.${extra ? '\n' + extra : ''}`;
 
-  // Compilazione dinamica delle note prima di generare il PDF
-  const nome=V('nomePilota')||V('richiedente'), tel=V('telPilota');
-  // Modifica: Mette in preview le note generate dinamicamente (inclusi aeroporto e frequenza)
-  const freq=V('freqRadio'), aero=V('aeroporto'), extra=V('altreNotizie');
-  const notizie=`Il pilota in comando sig. ${nome} dichiara la disponibilità all'immediata interruzione dell'operazione.\nL'operazione sarà condotta in coordinamento con l'ATS di ${aero}, contatto radio sulla frequenza ${freq}, telefono H24 ${tel}.\nI droni sono dotati di: RTH (return to home), geofencing.\nVolo sempre condotto in VLOS. Non verranno sorvolati assembramenti ed edifici particolari.${extra?'\n'+extra:''}`;
-
-  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  set('p-destA',   V('destA'));  set('p-destCc',  V('destCc'));
-  set('p-rich',    V('richiedente')); set('p-att', V('attestato'));
+  const set = (id, v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
+  set('p-destA',   V('destA'));
+  set('p-destCc',  V('destCc'));
+  set('p-rich',    V('richiedente'));
+  set('p-att',     V('attestato'));
   set('p-attiv',   V('catOperativa') + (V('tipoAttivita') ? ' — ' + V('tipoAttivita') : ''));
-  set('p-aero',    V('aeromobile')); set('p-scenario', V('scenario')); set('p-cro', V('cro'));
-  set('p-dec',     V('decollo')+(V('latDecollo')?' — Lat N '+V('latDecollo')+' Lon E '+V('lonDecollo'):''));
-  set('p-att3',   (V('atterraggio')||V('decollo'))+(V('latAtterraggio')?' — Lat N '+V('latAtterraggio')+' Lon E '+V('lonAtterraggio'):V('latDecollo')?' — Lat N '+V('latDecollo')+' Lon E '+V('lonDecollo'):''));
-  set('p-loc',     V('localita')); set('p-zona',  V('zona'));
-  set('p-lim',     V('limVerticali')); set('p-quota', V('quotaMax'));
-  set('p-date',    V('dateOrari')); set('p-freq',  V('freqRadio'));
-  set('p-assic',   V('assicurazione')); set('p-diritti', V('pagamentoDiritti'));
+  set('p-aero',    V('aeromobile'));
+  set('p-scenario',V('scenario'));
+  set('p-cro',     V('cro'));
+  set('p-dec',     V('decollo') + (V('latDecollo') ? ' — Lat N ' + V('latDecollo') + ' Lon E ' + V('lonDecollo') : ''));
+  set('p-att3',    (V('atterraggio')||V('decollo')) + (V('latAtterraggio') ? ' — Lat N '+V('latAtterraggio')+' Lon E '+V('lonAtterraggio') : V('latDecollo') ? ' — Lat N '+V('latDecollo')+' Lon E '+V('lonDecollo') : ''));
+  set('p-loc',     V('localita'));
+  set('p-zona',    V('zona'));
+  set('p-lim',     V('limVerticali'));
+  set('p-quota',   V('quotaMax'));
+  set('p-date',    V('dateOrari'));
+  set('p-freq',    V('freqRadio'));
+  set('p-assic',   V('assicurazione'));
+  set('p-diritti', V('pagamentoDiritti'));
   set('p-note',    notizie);
-  set('p-luogodata', `${V('luogo') || 'Roma'}, ${V('dataRichiesta') || new Date().toLocaleDateString('it-IT')}`); // Usa la data corrente se vuota
-  document.getElementById('p-ts').textContent=new Date().toLocaleString('it-IT');
+  set('p-luogodata', `${V('luogo') || 'Roma'}, ${V('dataRichiesta') || new Date().toLocaleDateString('it-IT')}`);
+  document.getElementById('p-ts').textContent = new Date().toLocaleString('it-IT');
 
-  // Preparazione tabella vertici per il PDF
-  const tbody=document.getElementById('p-punti');
-  const ptList=punti.filter(p=>p.nome||p.lat); // Filtra i punti vuoti o con solo lat/lon
-  tbody.innerHTML=ptList.length?ptList.map(p=>`<tr>
-    <td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.nome}</td>
-    <td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.lat}</td>
-    <td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.lon}</td>
-  </tr>`).join(''):'<tr><td colspan="3" style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">—</td></tr>';
+  const tbody  = document.getElementById('p-punti');
+  const ptList = punti.filter(p => p.nome || p.lat);
+  tbody.innerHTML = ptList.length
+    ? ptList.map(p => `<tr>
+        <td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.nome}</td>
+        <td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.lat}</td>
+        <td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.lon}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="3" style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">—</td></tr>';
 
-  if(/Android|iPhone|iPad/i.test(navigator.userAgent))
-    // Messaggio specifico per mobile riguardo alla stampa PDF
+  if (/Android|iPhone|iPad/i.test(navigator.userAgent))
     alert('📄 Tocca OK → seleziona "Salva come PDF" come stampante.');
-  setTimeout(()=>window.print(),100);
+  setTimeout(() => window.print(), 100);
 }
 
-['attestato','tipoLic','dronePreset','dateOrari','quotaMax','freqRadio','pagamentoDiritti','cro','enacDir'].forEach(id=>{ // Modifica: aggiunto enacDir
-  const el=document.getElementById(id); if(el) el.addEventListener('change',runValidation);
+/* ══════════════════════════════════════════════
+   EVENT LISTENERS
+══════════════════════════════════════════════ */
+document.addEventListener('input',  () => { debouncedSave(); updatePreviewN(); });
+document.addEventListener('change', () => { debouncedSave(); updatePreviewN(); });
+
+['attestato','tipoLic','dronePreset','dateOrari','quotaMax','freqRadio','pagamentoDiritti','cro','enacDir'].forEach(id => {
+  const el = document.getElementById(id); if (el) el.addEventListener('change', runValidation);
 });
+
 runValidation();
 </script>
 </body>
