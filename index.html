@@ -88,7 +88,6 @@ textarea{resize:vertical}
 </head>
 <body>
 
-<!-- ══ PDF TEMPLATE ══════════════════════════════ -->
 <div id="print-area">
   <div class="p-page" style="font-family:'Times New Roman',serif;font-size:10.5pt;color:#000;padding:14mm 12mm">
     <div style="border:2px solid #000;padding:8px 12px;text-align:center;margin-bottom:14px">
@@ -147,28 +146,24 @@ textarea{resize:vertical}
   </div>
 </div>
 
-<!-- ══ PDF LOADING OVERLAY ══ -->
 <div id="pdf-loading"><div style="font-size:40px;margin-bottom:12px">⏳</div><div>Generazione PDF in corso…</div></div>
 
-<!-- ══ APP ══════════════════════════════════════ -->
 <div id="header">
   <div><div class="sub">360Drone – Permessi di volo</div><h1>Gestionale ATM-05b</h1></div>
   <div class="info">📞 0187 1755700<br>✉️ 360drone@pec.it</div>
 </div>
 
-<!-- ── BARRA PRATICHE ── -->
 <div id="pratica-bar">
   <select id="lista-pratiche" onchange="caricaPratica(this.value)">
     <option value="">— Seleziona pratica —</option>
   </select>
-  <button class="pb-btn" onclick="nuovaPratica()" title="Nuova pratica">+ Nuova</button>
+  <button class="pb-btn" onclick="nuevaPratica()" title="Nuova pratica">+ Nuova</button>
   <button class="pb-btn" onclick="esportaPratica()" title="Esporta JSON">📤</button>
   <button class="pb-btn" onclick="document.getElementById('import-file').click()" title="Importa JSON">📥</button>
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="importaPratica(event)"/>
   <button class="pb-btn" onclick="eliminaPratica()" title="Elimina pratica" style="border-color:#ff6b6b;color:#ff9999">🗑</button>
   <button class="pb-btn" onclick="mostraReport()" title="Riepilogo pratiche" style="border-color:#5bc0de;color:#aee">📊</button>
 </div>
-<!-- REPORT MODAL -->
 <div id="report-modal" style="display:none;position:fixed;inset:0;background:#000a;z-index:200;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:12px;padding:20px 22px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 4px 24px #0005">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -185,10 +180,8 @@ textarea{resize:vertical}
   <button id="reset-btn" onclick="azzeraCampi()" title="Azzera tutti i campi">↺ Azzera</button>
 </div>
 
-<!-- ══ TAB FORM ══════════════════════════════ -->
 <div class="tab-content active" id="tab-form">
 
-  <!-- NOME PRATICA -->
   <div class="sec" style="margin-top:12px;border:2px solid #1a3c5e">
     <div class="sec-head" style="background:#1a3c5e">
       <span class="sl" style="background:#fff;color:#1a3c5e">📁</span>
@@ -203,7 +196,6 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- H: Zona MULTI collassabile -->
   <div class="sec">
     <div class="sec-head" style="background:#6e2f1a;cursor:pointer" onclick="toggleSec('zona-body')">
       <span class="sl" style="background:#fff;color:#6e2f1a">H</span>
@@ -260,7 +252,6 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- A -->
   <div class="sec">
     <div class="sec-head" style="background:#1a3c5e"><span class="sl" style="background:#fff;color:#1a3c5e">A</span><span class="st">Destinatari PEC (auto-compilati)</span></div>
     <div class="sec-body">
@@ -269,7 +260,6 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- B -->
   <div class="sec">
     <div class="sec-head" style="background:#2471a3"><span class="sl" style="background:#fff;color:#2471a3">B</span><span class="st">Richiedente / Attestato</span></div>
     <div class="sec-body">
@@ -292,7 +282,6 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- D -->
   <div class="sec">
     <div class="sec-head" style="background:#1e8449"><span class="sl" style="background:#fff;color:#1e8449">D</span><span class="st">Tipo di attività</span></div>
     <div class="sec-body">
@@ -302,7 +291,6 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- E -->
   <div class="sec">
     <div class="sec-head" style="background:#7d3c98"><span class="sl" style="background:#fff;color:#7d3c98">E</span><span class="st">Aeromobile</span></div>
     <div class="sec-body">
@@ -326,7 +314,6 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- F -->
   <div class="sec">
     <div class="sec-head" style="background:#c0392b"><span class="sl" style="background:#fff;color:#c0392b">F</span><span class="st">Decollo e Atterraggio</span></div>
     <div class="sec-body">
@@ -352,18 +339,16 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- G·K -->
   <div class="sec">
     <div class="sec-head" style="background:#1a5276"><span class="sl" style="background:#fff;color:#1a5276">G·K</span><span class="st">Località e Capoluogo</span></div>
     <div class="sec-body">
       <div class="g2">
-        <div class="field"><label class="lbl">G — Comune/Città <span class="req">*</span></label><input type="text" id="localita" placeholder="Es. Roma" oninput="autoSync('localita','capoluogo')"/></div>
+        <div class="field"><label class="lbl">G — Comune/Citt <span class="req">*</span></label><input type="text" id="localita" placeholder="Es. Roma" oninput="autoSync('localita','capoluogo')"/></div>
         <div class="field"><label class="lbl">K — Capoluogo</label><input type="text" id="capoluogo" placeholder="Es. Roma"/></div>
       </div>
     </div>
   </div>
 
-  <!-- I -->
   <div class="sec">
     <div class="sec-head" style="background:#0e6655"><span class="sl" style="background:#fff;color:#0e6655">I</span><span class="st">Limiti laterali — Vertici area</span></div>
     <div class="sec-body">
@@ -378,7 +363,6 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- J -->
   <div class="sec">
     <div class="sec-head" style="background:#2c3e50"><span class="sl" style="background:#fff;color:#2c3e50">J</span><span class="st">Limiti verticali</span></div>
     <div class="sec-body">
@@ -388,7 +372,6 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- L -->
   <div class="sec">
     <div class="sec-head" style="background:#4a235a"><span class="sl" style="background:#fff;color:#4a235a">L</span><span class="st">Distanza dall'ARP</span></div>
     <div class="sec-body">
@@ -399,7 +382,6 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- M -->
   <div class="sec">
     <div class="sec-head" style="background:#922b21"><span class="sl" style="background:#fff;color:#922b21">M</span><span class="st">Date e orari ⚠️ UTC!</span></div>
     <div class="sec-body">
@@ -410,7 +392,6 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- N -->
   <div class="sec">
     <div class="sec-head" style="background:#1e5799"><span class="sl" style="background:#fff;color:#1e5799">N</span><span class="st">Altre notizie</span></div>
     <div class="sec-body">
@@ -425,7 +406,6 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- Doc -->
   <div class="sec">
     <div class="sec-head" style="background:#34495e"><span class="sl" style="background:#fff;color:#34495e">📄</span><span class="st">Data e luogo documento</span></div>
     <div class="sec-body">
@@ -436,20 +416,15 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <!-- ALLARMI INLINE -->
   <div id="allarmi-container" style="margin-bottom:10px"></div>
 
-  <!-- PULSANTE UNICO -->
   <div style="padding:4px 0 16px">
     <button class="btn btn-green" style="font-size:15px;padding:14px;width:100%" onclick="verificaEGenera()">
       📄 Verifica e genera PDF ATM-05b
     </button>
   </div>
 
-</div><!-- /tab-form -->
-
-<!-- ══ STATUS BAR ══ -->
-<div id="status-bar">
+</div><div id="status-bar">
   <div style="flex:1;min-width:0">
     <div id="status-nome" style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Nessuna pratica selezionata</div>
     <div id="status-salvato" style="font-size:10px;opacity:.65">— seleziona o crea una pratica</div>
@@ -463,7 +438,6 @@ textarea{resize:vertical}
   <button id="btn-salva" onclick="salvaPratica()">💾 Salva</button>
 </div>
 
-<!-- ══ JAVASCRIPT ══════════════════════════════ -->
 <script>
 'use strict';
 
@@ -500,6 +474,23 @@ let saveTimer = null;
 let modificato = false;
 
 /* ═══════════════════════════════════════════
+   FUNZIONI DI SUPPORTO (SICUREZZA XSS)
+═══════════════════════════════════════════ */
+function escapeHTML(str) {
+  if (!str) return '';
+  return str.replace(/[&<>"']/g, function(m) {
+    switch (m) {
+      case '&': return '&amp;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '"': return '&quot;';
+      case "'": return '&#039;';
+      default: return m;
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════
    STORAGE — MULTI-PRATICA
 ═══════════════════════════════════════════ */
 function getPratiche() {
@@ -512,7 +503,7 @@ function setPratiche(obj) {
     if (e.name === 'QuotaExceededError' || e.code === 22) {
       alert('⚠️ Memoria browser piena!\nEsporta alcune pratiche vecchie in JSON e poi eliminale per liberare spazio.');
     } else if (e.name === 'SecurityError') {
-      alert('⚠️ Il browser ha bloccato il salvataggio locale.\nProva ad aprire la pagina da un server (GitHub Pages) invece che da file locale.');
+      alert('⚠️ Il browser ha bloccato il salvataggio locale.\nProva ad aprire la pagina da un server invece che da file locale.');
     } else {
       console.error('Errore localStorage:', e);
     }
@@ -532,13 +523,16 @@ function scriviForm(d) {
   if (!d) return;
   FIELDS.forEach(k => { const e=document.getElementById(k); if(e && d[k]!=null) e.value=d[k]; });
   if (d.punti && d.punti.length) punti = d.punti.map(p=>({...p})); else punti=[{nome:'',lat:'',lon:''},{nome:'',lat:'',lon:''}];
-  // Checkboxes zone
+  
   document.querySelectorAll('#zona-checks input[type=checkbox]').forEach(cb => { cb.checked=false; });
   if (d.zoneSelezionate) d.zoneSelezionate.forEach(v => {
     const cb = document.querySelector(`#zona-checks input[value="${v}"]`);
     if(cb) cb.checked = true;
   });
-  if (d.notamVerificato) document.getElementById('notamVerificato').checked = true;
+  
+  if (document.getElementById('notamVerificato')) {
+    document.getElementById('notamVerificato').checked = d.notamVerificato || false;
+  }
   aggiornaZone();
   renderPunti();
   updatePreviewN();
@@ -601,11 +595,11 @@ function caricaPratica(id) {
   praticaCorrenteId = id;
   azzeraCampi(true);
   scriviForm(p.dati);
-  // Se la pratica non ha dataRichiesta salvata, usa oggi
   if (!p.dati?.dataRichiesta) document.getElementById('dataRichiesta').value = new Date().toLocaleDateString('it-IT');
   document.getElementById('stato-select').value = p.stato || 'bozza';
   modificato = false;
   aggiornaStatusBar();
+  runValidation();
 }
 
 function eliminaPratica() {
@@ -624,7 +618,13 @@ function eliminaPratica() {
 function cambiaStato(stato) {
   if (!praticaCorrenteId) return;
   const pratiche = getPratiche();
-  if (pratiche[praticaCorrenteId]) { pratiche[praticaCorrenteId].stato = stato; setPratiche(pratiche); }
+  if (pratiche[praticaCorrenteId]) {
+    pratiche[praticaCorrenteId].stato = stato;
+    pratiche[praticaCorrenteId].dati = leggiForm();
+    pratiche[praticaCorrenteId].modificata = new Date().toISOString();
+    setPratiche(pratiche);
+  }
+  modificato = false;
   aggiornaStatusBar();
   aggiornaListaPratiche();
 }
@@ -636,13 +636,12 @@ function aggiornaListaPratiche() {
   const pratiche = getPratiche();
   const sel = document.getElementById('lista-pratiche');
   const val = praticaCorrenteId;
-  // Ordina per data modifica decrescente
   const sorted = Object.values(pratiche).sort((a,b) => new Date(b.modificata)-new Date(a.modificata));
   sel.innerHTML = '<option value="">— Seleziona pratica —</option>' +
     sorted.map(p => {
       const e = STATO_EMOJI[p.stato]||'🟡';
       const d = p.modificata ? new Date(p.modificata).toLocaleDateString('it-IT') : '';
-      return `<option value="${p.id}" ${p.id===val?'selected':''}>${e} ${p.nome} · ${d}</option>`;
+      return `<option value="${p.id}" ${p.id===val?'selected':''}>${e} ${escapeHTML(p.nome)} · ${d}</option>`;
     }).join('');
 }
 
@@ -693,7 +692,6 @@ function importaPratica(event) {
     try {
       const p = JSON.parse(e.target.result);
       if (!p.id || !p.dati) { alert('File JSON non valido.'); return; }
-      // Genera nuovo ID per evitare conflitti
       const newId = Date.now().toString(36) + Math.random().toString(36).slice(2,5);
       p.id = newId;
       p.nome = (p.nome || 'Importata') + ' (importata)';
@@ -705,6 +703,7 @@ function importaPratica(event) {
       document.getElementById('stato-select').value = p.stato || 'bozza';
       aggiornaListaPratiche();
       aggiornaStatusBar();
+      runValidation();
     } catch(err) { alert('Errore lettura file: ' + err.message); }
   };
   reader.readAsText(file);
@@ -721,7 +720,7 @@ function azzeraCampi(silent) {
   document.getElementById('limVerticali').value = 'inferiore GND / superiore 45 m AGL (147 ft)';
   document.getElementById('dataRichiesta').value = new Date().toLocaleDateString('it-IT');
   document.getElementById('luogo').value = 'Roma';
-  document.getElementById('notamVerificato').checked = false;
+  if(document.getElementById('notamVerificato')) document.getElementById('notamVerificato').checked = false;
   document.querySelectorAll('#zona-checks input[type=checkbox]').forEach(cb=>cb.checked=false);
   document.getElementById('zona-avviso').innerHTML='';
   document.getElementById('prov-field').style.display='none';
@@ -731,7 +730,9 @@ function azzeraCampi(silent) {
   document.getElementById('conv-dec-input').value='';
   document.getElementById('conv-dec-result').style.display='none';
   punti=[{nome:'',lat:'',lon:''},{nome:'',lat:'',lon:''}];
-  renderPunti(); updatePreviewN();
+  renderPunti();
+  updatePreviewN();
+  runValidation();
 }
 
 function autoSync(src, dst) {
@@ -763,16 +764,18 @@ function aggiornaZone() {
   if(avvisi.length){
     const hasP=valori.some(v=>ZONE_DB[v]?.tipo==='P');
     const col=hasP?'background:#fff3cd;border:1px solid #ffc107;color:#856404':'background:#e8f4f8;border:1px solid #5bc0de;color:#2c6e7a';
-    av.innerHTML=avvisi.map(m=>`<div style="${col};border-radius:6px;padding:8px 12px;font-size:12.5px;margin-top:6px">${m}</div>`).join('');
+    av.innerHTML=avvisi.map(m=>`<div style="${col};border-radius:6px;padding:8px 12px;font-size:12.5px;margin-top:6px">${escapeHTML(m)}</div>`).join('');
   }else av.innerHTML='';
-  debouncedSave(); runValidation();
+  debouncedSave();
+  runValidation();
 }
 
 /* ─ DRONE ─ */
 function selDrone(val) {
   if(!val)return;
   document.getElementById('aeromobile').value=val.split('||')[0];
-  debouncedSave(); runValidation();
+  debouncedSave();
+  runValidation();
 }
 
 /* ─ COLLASSABILE ─ */
@@ -783,13 +786,22 @@ function toggleSec(bodyId) {
 }
 
 /* ═══════════════════════════════════════════
-   COORDINATE
+   COORDINATE SESSAGESIMALI (FIX RIPORTO PRECISO)
 ═══════════════════════════════════════════ */
-function decToSex(dec,isLat){
-  const abs=Math.abs(dec),d=Math.floor(abs),mAll=(abs-d)*60,m=Math.floor(mAll),s=Math.round((mAll-m)*60);
-  const dir=isLat?(dec>=0?'N':'S'):(dec>=0?'E':'W');
+function decToSex(dec, isLat) {
+  const abs = Math.abs(dec);
+  let d = Math.floor(abs);
+  const mAll = (abs - d) * 60;
+  let m = Math.floor(mAll);
+  let s = Math.round((mAll - m) * 60);
+  
+  if (s === 60) { s = 0; m += 1; }
+  if (m === 60) { m = 0; d += 1; }
+  
+  const dir = isLat ? (dec >= 0 ? 'N' : 'S') : (dec >= 0 ? 'E' : 'W');
   return `${d}°${String(m).padStart(2,'0')}'${String(s).padStart(2,'0')}"${dir}`;
 }
+
 function parseCoordLine(line){
   line=line.trim().replace(/[;|]/g,',');
   const re=/(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/;
@@ -813,6 +825,7 @@ function convDecollo(val){
   res.style.display='block';res.style.background='#e8f5e9';res.style.color='#0e6655';
   res.innerHTML=`✅ Decollo: Lat N ${latS} / Lon E ${lonS}<br><button onclick="sbloccaCoord()" style="margin-top:5px;padding:3px 11px;border:1px solid #0e6655;border-radius:5px;background:#fff;color:#0e6655;font-size:11px;cursor:pointer">🔓 Modifica</button>`;
   debouncedSave();
+  runValidation();
 }
 
 function sbloccaCoord(){
@@ -822,6 +835,8 @@ function sbloccaCoord(){
   });
   document.getElementById('conv-dec-input').value='';
   document.getElementById('conv-dec-result').style.display='none';
+  debouncedSave();
+  runValidation();
 }
 
 function convArea(){
@@ -837,8 +852,9 @@ function convArea(){
   if(!conv.length){res.style.display='block';res.style.background='#fdecea';res.style.color='#922b21';res.innerHTML='❌ Nessuna coordinata valida.';return;}
   punti=conv; renderPunti(); debouncedSave();
   res.style.display='block';res.style.background='#e8f5e9';res.style.color='#0e6655';
-  res.innerHTML=`✅ ${conv.length} vertici:<br>`+conv.map(p=>`${p.nome}: ${p.lat} / ${p.lon}`).join('<br>')+
-    (errs.length?`<br><span style="color:#856404">⚠️ ${errs.join(', ')}</span>`:'');
+  res.innerHTML=`✅ ${conv.length} vertici:<br>`+conv.map(p=>`${escapeHTML(p.nome)}: ${p.lat} / ${p.lon}`)+
+    (errs.length?`<br><span style="color:#856404">⚠️ ${escapeHTML(errs.join(', '))}</span>`:'');
+  runValidation();
 }
 
 /* ═══════════════════════════════════════════
@@ -849,15 +865,15 @@ function renderPunti(){
   if(punti.length){const hdr=document.createElement('div');hdr.className='g3';hdr.style.marginBottom='2px';hdr.innerHTML='<span class="lbl">Punto</span><span class="lbl">Lat N</span><span class="lbl">Lon E</span><span></span>';c.appendChild(hdr);}
   punti.forEach((p,i)=>{
     const row=document.createElement('div');row.className='g3';
-    row.innerHTML=`<input type="text" value="${p.nome}" placeholder="Vertice ${i+1}" oninput="punti[${i}].nome=this.value;debouncedSave()"/>
-      <input type="text" value="${p.lat}" placeholder="Lat N" oninput="punti[${i}].lat=this.value;debouncedSave()"/>
-      <input type="text" value="${p.lon}" placeholder="Lon E" oninput="punti[${i}].lon=this.value;debouncedSave()"/>
+    row.innerHTML=`<input type="text" value="${escapeHTML(p.nome)}" placeholder="Vertice ${i+1}" oninput="punti[${i}].nome=this.value;debouncedSave()"/>
+      <input type="text" value="${escapeHTML(p.lat)}" placeholder="Lat N" oninput="punti[${i}].lat=this.value;debouncedSave()"/>
+      <input type="text" value="${escapeHTML(p.lon)}" placeholder="Lon E" oninput="punti[${i}].lon=this.value;debouncedSave()"/>
       <button onclick="removePunto(${i})" style="background:#fdecea;border:1px solid #fbb;border-radius:6px;padding:6px 10px;cursor:pointer;color:#c0392b;font-size:14px">✕</button>`;
     c.appendChild(row);
   });
 }
-function addPunto(){punti.push({nome:'',lat:'',lon:''});renderPunti();}
-function removePunto(i){punti.splice(i,1);renderPunti();debouncedSave();}
+function addPunto(){ punti.push({nome:'',lat:'',lon:''}); renderPunti(); debouncedSave(); }
+function removePunto(i){ punti.splice(i,1); renderPunti(); debouncedSave(); runValidation(); }
 
 /* ═══════════════════════════════════════════
    PREVIEW N
@@ -866,7 +882,10 @@ function updatePreviewN(){
   const nome=document.getElementById('nomePilota')?.value||'[nome]';
   const tel=document.getElementById('telPilota')?.value||'[tel]';
   const extra=document.getElementById('altreNotizie')?.value||'';
-  document.getElementById('preview-n').innerHTML=`<b>Testo N:</b><br>Il pilota in comando sig. <b>${nome}</b> dichiara la disponibilità all'immediata interruzione dell'operazione tramite comunicazione al numero <b>${tel}</b>. Droni dotati di: RTH, geofencing. Volo VLOS. No sorvolo assembramenti.${extra?'<br>'+extra:''}`;
+  const target = document.getElementById('preview-n');
+  if(target) {
+    target.innerHTML=`<b>Testo N:</b><br>Il pilota in comando sig. <b>${escapeHTML(nome)}</b> dichiara la disponibilità all'immediata interruzione dell'operazione tramite comunicazione al numero <b>${escapeHTML(tel)}</b>. Droni dotati di: RTH, geofencing. Volo VLOS. No sorvolo assembramenti.${extra?'<br>'+escapeHTML(extra):''}`;
+  }
 }
 
 /* ═══════════════════════════════════════════
@@ -877,10 +896,8 @@ function runValidation(){
   const V=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
   const MESI={gennaio:0,febbraio:1,marzo:2,aprile:3,maggio:4,giugno:5,luglio:6,agosto:7,settembre:8,ottobre:9,novembre:10,dicembre:11};
 
-  // Nome pratica
   if(!V('nomePratica'))errs.push('⛔ Nome pratica obbligatorio — necessario per salvare e nominare il PDF.');
 
-  // Date anticipo — anno smart
   const date=V('dateOrari');
   if(date){
     const re=/(\d{1,2})\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\s*(\d{4})?/i;
@@ -890,35 +907,28 @@ function runValidation(){
       let anno=m[3]?parseInt(m[3]):ac;
       if(!m[3]){const dt=new Date(anno,MESI[m[2].toLowerCase()],parseInt(m[1]));if(dt<oggi)anno=ac+1;}
       const data=new Date(anno,MESI[m[2].toLowerCase()],parseInt(m[1]));
-      const diff=Math.round((data-new Date())/86400000);
+      const diff=Math.round((data-oggi)/86400000);
       if(diff<0)errs.push('⛔ Le date inserite sono già passate!');
       else if(diff<15)errs.push(`⛔ Anticipo insufficiente: ${diff} giorni. Servono ALMENO 15 giorni.`);
       else if(diff<20)warns.push(`⚠️ Anticipo breve: ${diff} giorni. Consigliati 20+ giorni.`);
     }
   }
 
-  // Licenza vs drone
   const dp=V('dronePreset'),licReq=(dp.split('||')[1]||'').trim(),lic=V('tipoLic');
   if(licReq&&lic&&!({A1:['A1','A2','A3'],A2:['A2','A3'],A3:['A3']}[licReq]||[]).includes(lic))
     errs.push(`⛔ LICENZA INCOMPATIBILE: drone richiede ${licReq}, pilota ha ${lic}.`);
 
-  // Fix bug zona: usare includes invece di startsWith
   const zona=V('zona');
   if(zona.includes('P -')&&dp&&!dp.includes('249g'))
     warns.push('⚠️ Drone pesante in zona P: difficile ottenere autorizzazione. Considera DJI Mini ≤249g.');
   if(zona.includes('Militare'))
     warns.push('⚠️ Zona militare: richiedere anche nulla osta al comando militare. Anticipo min. 30 gg.');
-
-  // Bollo zona P
   if(zona.includes('P -'))
     warns.push('ℹ️ Zona P: bollo virtuale attivo nel PDF. Verificare se accettato dall\'ente destinatario.');
 
-  // Attestato mancante
   if(V('richiedente')&&!V('attestato'))errs.push('⛔ Numero attestato UAS mancante.');
   if(!V('destA'))warns.push('⚠️ Email destinatario (A) non compilata. Seleziona la zona.');
   if(!V('latDecollo')||!V('lonDecollo'))warns.push('⚠️ Coordinate decollo mancanti.');
-
-  // NOTAM
   if(!document.getElementById('notamVerificato')?.checked)
     warns.push('⚠️ Conferma la verifica NOTAM (casella in sezione N).');
 
@@ -933,7 +943,7 @@ function runValidation(){
 function renderAlerts(){
   const{errs=[],warns=[]}=window._alerts||{};
   const c=document.getElementById('allarmi-container');if(!c)return;
-  c.innerHTML=[...errs.map(m=>`<div class="alert a-err">${m}</div>`),...warns.map(m=>`<div class="alert a-warn">${m}</div>`)].join('');
+  c.innerHTML=[...errs.map(m=>`<div class="alert a-err">${escapeHTML(m)}</div>`),...warns.map(m=>`<div class="alert a-warn">${escapeHTML(m)}</div>`)].join('');
 }
 
 /* ═══════════════════════════════════════════
@@ -955,7 +965,7 @@ function fillPrintTemplate(){
   document.getElementById('p-ts').textContent=new Date().toLocaleString('it-IT');
   const tbody=document.getElementById('p-punti');
   const ptList=punti.filter(p=>p.nome||p.lat);
-  tbody.innerHTML=ptList.length?ptList.map(p=>`<tr><td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.nome}</td><td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.lat}</td><td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${p.lon}</td></tr>`).join(''):'<tr><td colspan="3" style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">—</td></tr>';
+  tbody.innerHTML=ptList.length?ptList.map(p=>`<tr><td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${escapeHTML(p.nome)}</td><td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${escapeHTML(p.lat)}</td><td style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">${escapeHTML(p.lon)}</td></tr>`).join(''):'<tr><td colspan="3" style="border:1px solid #999;padding:4px 7px;font-size:9.5pt">—</td></tr>';
 }
 
 async function verificaEGenera(){
@@ -981,7 +991,6 @@ async function verificaEGenera(){
         pagebreak:{mode:['avoid-all','css']}
       }).from(el).save();
     }else{
-      // Fallback
       window.print();
     }
   }catch(err){
@@ -994,7 +1003,7 @@ async function verificaEGenera(){
 }
 
 /* ═══════════════════════════════════════════
-   REPORT PRATICHE PER STATO
+   REPORT PRATICHE PER STATO (XSS SECURE)
 ═══════════════════════════════════════════ */
 function mostraReport() {
   const pratiche = getPratiche();
@@ -1002,16 +1011,17 @@ function mostraReport() {
   if (!lista.length) { alert('Nessuna pratica salvata.'); return; }
   const conteggi = {bozza:[], pronta:[], inviata:[], autorizzata:[]};
   lista.forEach(p => { if(conteggi[p.stato]) conteggi[p.stato].push(p); else conteggi.bozza.push(p); });
+  
   const righeStato = Object.entries({bozza:'🟡 Bozze', pronta:'🟢 Pronte', inviata:'🔴 Inviate', autorizzata:'🔵 Autorizzate'}).map(([stato,label]) => {
     const items = conteggi[stato];
     if (!items.length) return '';
     const righe = items.map(p => {
       const d = p.modificata ? new Date(p.modificata).toLocaleDateString('it-IT') : '—';
-      return `<div style="padding:5px 8px;border-left:3px solid #c5d8ea;margin:4px 0;font-size:12px;cursor:pointer;border-radius:0 4px 4px 0" onclick="caricaPraticaDaReport('${p.id}')">${p.nome} <span style="color:#aaa;font-size:11px">· ${d}</span></div>`;
+      return `<div style="padding:5px 8px;border-left:3px solid #c5d8ea;margin:4px 0;font-size:12px;cursor:pointer;border-radius:0 4px 4px 0" onclick="caricaPraticaDaReport('${p.id}')">${escapeHTML(p.nome)} <span style="color:#aaa;font-size:11px">· ${d}</span></div>`;
     }).join('');
     return `<div style="margin-bottom:14px"><div style="font-weight:700;font-size:13px;margin-bottom:5px">${label} (${items.length})</div>${righe}</div>`;
   }).join('');
-  // Stima spazio usato
+  
   let bytes = 0;
   try { bytes = (localStorage.getItem(STORAGE_KEY)||'').length * 2; } catch(e){}
   const kb = (bytes/1024).toFixed(1);
@@ -1040,20 +1050,29 @@ function esportaTutte() {
 }
 
 /* ═══════════════════════════════════════════
-   INIT
+   INIT & LISTENERS
 ═══════════════════════════════════════════ */
-window.addEventListener('load',()=>{
-  document.getElementById('dataRichiesta').value=new Date().toLocaleDateString('it-IT');
+window.addEventListener('load', () => {
+  document.getElementById('dataRichiesta').value = new Date().toLocaleDateString('it-IT');
   aggiornaListaPratiche();
   aggiornaStatusBar();
   renderPunti();
   updatePreviewN();
   runValidation();
-});
 
-// Debounce su tutti gli input
-document.addEventListener('input',()=>{debouncedSave();updatePreviewN();});
-document.addEventListener('change',()=>{debouncedSave();updatePreviewN();runValidation();});
+  document.getElementById('tab-form').addEventListener('input', (e) => {
+    debouncedSave();
+    updatePreviewN();
+    if (['dateOrari','tipoLic','nomePratica','richiedente','attestato','destA','telPilota','nomePilota','altreNotizie'].includes(e.target.id)) {
+      runValidation();
+    }
+  });
+
+  document.getElementById('tab-form').addEventListener('change', (e) => {
+    debouncedSave();
+    runValidation();
+  });
+});
 </script>
 </body>
 </html>
