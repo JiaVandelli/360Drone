@@ -157,7 +157,7 @@ textarea{resize:vertical}
   <select id="lista-pratiche" onchange="caricaPratica(this.value)">
     <option value="">— Seleziona pratica —</option>
   </select>
-  <button class="pb-btn" onclick="nuevaPratica()" title="Nuova pratica">+ Nuova</button>
+  <button class="pb-btn" onclick="nuovaPratica()" title="Nuova pratica">+ Nuova</button>
   <button class="pb-btn" onclick="esportaPratica()" title="Esporta JSON">📤</button>
   <button class="pb-btn" onclick="document.getElementById('import-file').click()" title="Importa JSON">📥</button>
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="importaPratica(event)"/>
@@ -343,7 +343,7 @@ textarea{resize:vertical}
     <div class="sec-head" style="background:#1a5276"><span class="sl" style="background:#fff;color:#1a5276">G·K</span><span class="st">Località e Capoluogo</span></div>
     <div class="sec-body">
       <div class="g2">
-        <div class="field"><label class="lbl">G — Comune/Citt <span class="req">*</span></label><input type="text" id="localita" placeholder="Es. Roma" oninput="autoSync('localita','capoluogo')"/></div>
+        <div class="field"><label class="lbl">G — Comune/Città <span class="req">*</span></label><input type="text" id="localita" placeholder="Es. Roma" oninput="autoSync('localita','capoluogo')"/></div>
         <div class="field"><label class="lbl">K — Capoluogo</label><input type="text" id="capoluogo" placeholder="Es. Roma"/></div>
       </div>
     </div>
@@ -620,7 +620,7 @@ function cambiaStato(stato) {
   const pratiche = getPratiche();
   if (pratiche[praticaCorrenteId]) {
     pratiche[praticaCorrenteId].stato = stato;
-    pratiche[praticaCorrenteId].dati = leggiForm();
+    pratiche[praticheCorrenteId].dati = leggiForm();
     pratiche[praticaCorrenteId].modificata = new Date().toISOString();
     setPratiche(pratiche);
   }
@@ -683,6 +683,11 @@ function esportaPratica() {
   a.href = URL.createObjectURL(blob);
   a.download = (p.nome || 'pratica').replace(/[^a-z0-9]/gi,'_') + '_ATM05b.json';
   a.click();
+}
+
+function importsPratica(event) {
+  // Nota: manteniamo la retrocompatibilità del vecchio binding o facciamo match sul nome corretto
+  importaPratica(event);
 }
 
 function importaPratica(event) {
@@ -786,7 +791,7 @@ function toggleSec(bodyId) {
 }
 
 /* ═══════════════════════════════════════════
-   COORDINATE SESSAGESIMALI (FIX RIPORTO PRECISO)
+   COORDINATE SESSAGESIMALI
 ═══════════════════════════════════════════ */
 function decToSex(dec, isLat) {
   const abs = Math.abs(dec);
@@ -852,7 +857,8 @@ function convArea(){
   if(!conv.length){res.style.display='block';res.style.background='#fdecea';res.style.color='#922b21';res.innerHTML='❌ Nessuna coordinata valida.';return;}
   punti=conv; renderPunti(); debouncedSave();
   res.style.display='block';res.style.background='#e8f5e9';res.style.color='#0e6655';
-  res.innerHTML=`✅ ${conv.length} vertici:<br>`+conv.map(p=>`${escapeHTML(p.nome)}: ${p.lat} / ${p.lon}`)+
+  /* FIX MIGLIORIA: .join('<br>') per evitare le virgole tra elementi */
+  res.innerHTML=`✅ ${conv.length} vertici:<br>`+conv.map(p=>`${escapeHTML(p.nome)}: ${p.lat} / ${p.lon}`).join('<br>')+
     (errs.length?`<br><span style="color:#856404">⚠️ ${escapeHTML(errs.join(', '))}</span>`:'');
   runValidation();
 }
@@ -930,7 +936,7 @@ function runValidation(){
   if(!V('destA'))warns.push('⚠️ Email destinatario (A) non compilata. Seleziona la zona.');
   if(!V('latDecollo')||!V('lonDecollo'))warns.push('⚠️ Coordinate decollo mancanti.');
   if(!document.getElementById('notamVerificato')?.checked)
-    warns.push('⚠️ Conferma la verifica NOTAM (casella in sezione N).');
+    warns.push('⚠️ Confirm la verifica NOTAM (casella in sezione N).');
 
   window._alerts={errs,warns};
   const nErr=errs.length;
@@ -1003,7 +1009,7 @@ async function verificaEGenera(){
 }
 
 /* ═══════════════════════════════════════════
-   REPORT PRATICHE PER STATO (XSS SECURE)
+   REPORT PRATICHE PER STATO
 ═══════════════════════════════════════════ */
 function mostraReport() {
   const pratiche = getPratiche();
