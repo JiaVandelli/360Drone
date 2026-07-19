@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>360Drone – ATM-05b</title>
+<title>360Drone – Gestionale ATM-05b</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -47,7 +47,8 @@ textarea{resize:vertical}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .g3{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:7px;align-items:end;margin-bottom:8px}
 /* ── BUTTONS ── */
-.btn{padding:9px 16px;border:none;border-radius:8px;font-weight:700;cursor:pointer;color:#fff;font-size:13px}
+.btn{padding:9px 16px;border:none;border-radius:8px;font-weight:700;cursor:pointer;color:#fff;font-size:13px;transition:all 0.15s ease}
+.btn:hover{opacity:0.95;transform:translateY(-1px)}
 .btn-green{background:#27ae60}.btn-blue{background:#1a3c5e}.btn-teal{background:#0e6655}
 /* ── ALERTS ── */
 .alert{padding:9px 13px;border-radius:8px;margin-bottom:8px;font-size:13px;line-height:1.5}
@@ -102,7 +103,7 @@ textarea{resize:vertical}
     <table style="width:100%;border-collapse:collapse;margin-bottom:12px">
       <tr><td style="border:1px solid #333;padding:5px 8px;background:#f0f0f0;font-weight:bold;width:28%;font-size:10pt;vertical-align:top">A — Destinatario (PEC)</td><td style="border:1px solid #333;padding:5px 8px;font-size:10pt;vertical-align:top" id="p-destA">—</td></tr>
       <tr><td style="border:1px solid #333;padding:5px 8px;background:#f0f0f0;font-weight:bold;font-size:10pt;vertical-align:top">Cc</td><td style="border:1px solid #333;padding:5px 8px;font-size:10pt;vertical-align:top" id="p-destCc">—</td></tr>
-      <tr><td style="border:1px solid #333;padding:5px 8px;background:#f0f0f0;font-weight:bold;font-size:10pt;vertical-align:top">B — Richiedente</td><td style="border:1px solid #333;padding:5px 8px;font-size:10pt;vertical-align:top"><span id="p-rich">—</span><br>Attestato: <span id="p-att">—</span><br>Tel./Mob.: 0187 1755700<br>E-mail/PEC: 360drone@pec.it</td></tr>
+      <tr><td style="border:1px solid #333;padding:5px 8px;background:#f0f0f0;font-weight:bold;font-size:10pt;vertical-align:top">B — Richiedente</td><td style="border:1px solid #333;padding:5px 8px;font-size:10pt;vertical-align:top"><span id="p-rich">—</span><br>Attestato: <span id="p-att">—</span><br>Tel./Mob.: <span id="p-tel-print">0187 1755700</span><br>E-mail/PEC: 360drone@pec.it</td></tr>
       <tr><td style="border:1px solid #333;padding:5px 8px;background:#f0f0f0;font-weight:bold;font-size:10pt;vertical-align:top">C — CHIEDE</td><td style="border:1px solid #333;padding:5px 8px;font-size:10pt;vertical-align:top">l'autorizzazione ad effettuare attività con APR, ai sensi del Reg. (UE) 2019/947 e disposizioni ENAC vigenti.</td></tr>
       <tr><td style="border:1px solid #333;padding:5px 8px;background:#f0f0f0;font-weight:bold;font-size:10pt;vertical-align:top">D — Tipo attività <sup>(3)</sup></td><td style="border:1px solid #333;padding:5px 8px;font-size:10pt;vertical-align:top" id="p-attiv">—</td></tr>
       <tr><td style="border:1px solid #333;padding:5px 8px;background:#f0f0f0;font-weight:bold;font-size:10pt;vertical-align:top">E — Aeromobile <sup>(4)</sup></td><td style="border:1px solid #333;padding:5px 8px;font-size:10pt;vertical-align:top" id="p-aero">—</td></tr>
@@ -164,6 +165,7 @@ textarea{resize:vertical}
   <button class="pb-btn" onclick="eliminaPratica()" title="Elimina pratica" style="border-color:#ff6b6b;color:#ff9999">🗑</button>
   <button class="pb-btn" onclick="mostraReport()" title="Riepilogo pratiche" style="border-color:#5bc0de;color:#aee">📊</button>
 </div>
+
 <div id="report-modal" style="display:none;position:fixed;inset:0;background:#000a;z-index:200;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:12px;padding:20px 22px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 4px 24px #0005">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -190,8 +192,8 @@ textarea{resize:vertical}
     <div class="sec-body">
       <div class="field">
         <label class="lbl">Nome identificativo pratica <span class="req">*</span></label>
-        <input type="text" id="nomePratica" placeholder="Es. Mario Rossi – Roma LI P244 – luglio 2025" oninput="aggiornaNomePratica()"/>
-        <div style="font-size:11px;color:#888;margin-top:3px">Usato per salvare, nominare il PDF e identificare la pratica nell'archivio</div>
+        <input type="text" id="nomePratica" placeholder="Es. Mario Rossi – Roma LI P244 – luglio 2026" oninput="aggiornaNomePratica()"/>
+        <div style="font-size:11px;color:#888;margin-top:3px">Usato per salvare, nominare il PDF e la PEC, e identificare la pratica nell'archivio</div>
       </div>
     </div>
   </div>
@@ -263,6 +265,15 @@ textarea{resize:vertical}
   <div class="sec">
     <div class="sec-head" style="background:#2471a3"><span class="sl" style="background:#fff;color:#2471a3">B</span><span class="st">Richiedente / Attestato</span></div>
     <div class="sec-body">
+      <div class="field">
+        <label class="lbl">Seleziona Pilota / Team 360Drone (pre-compila)</label>
+        <select id="pilotaPreset" onchange="selPilota(this.value)">
+          <option value="">— Compilazione manuale o seleziona —</option>
+          <option value="Mario Rossi||LUX-RP-19930106xxxx||A2||339 5746866">Mario Rossi (Attestato A2)</option>
+          <option value="Luigi Bianchi||ITA-RP-19851122xxxx||A3||333 1234567">Luigi Bianchi (Attestato A3 - Specific)</option>
+          <option value="360Drone Operations||ITA-OP-99999999xxxx||A1||0187 1755700">360Drone Operations (Flotta aziendale)</option>
+        </select>
+      </div>
       <div class="g2">
         <div class="field"><label class="lbl">Nome e cognome pilota <span class="req">*</span></label><input type="text" id="richiedente" placeholder="Es. Mario Rossi" oninput="autoSync('richiedente','nomePilota')"/></div>
         <div class="field"><label class="lbl">Nome pilota in comando (N)</label><input type="text" id="nomePilota" placeholder="Es. Mario Rossi"/></div>
@@ -386,7 +397,7 @@ textarea{resize:vertical}
     <div class="sec-head" style="background:#922b21"><span class="sl" style="background:#fff;color:#922b21">M</span><span class="st">Date e orari ⚠️ UTC!</span></div>
     <div class="sec-body">
       <div class="field"><label class="lbl">Date e orari <span class="req">*</span></label>
-        <textarea id="dateOrari" rows="3" placeholder="Es. 9, 10, 11 luglio 2025 dalle ore 05:00 UTC alle ore 08:00 UTC"></textarea>
+        <textarea id="dateOrari" rows="3" placeholder="Es. 9, 10, 11 agosto 2026 dalle ore 05:00 UTC alle ore 08:00 UTC"></textarea>
       </div>
       <div class="nota-utc">⚠️ Orario SEMPRE in UTC &nbsp;|&nbsp; Ora legale italiana = UTC+2 &nbsp;|&nbsp; Es: 7:00 locale → 05:00 UTC</div>
     </div>
@@ -396,13 +407,9 @@ textarea{resize:vertical}
     <div class="sec-head" style="background:#1e5799"><span class="sl" style="background:#fff;color:#1e5799">N</span><span class="st">Altre notizie</span></div>
     <div class="sec-body">
       <div class="field"><label class="lbl">Note aggiuntive (opzionale)</label>
-        <textarea id="altreNotizie" rows="2" placeholder="Info extra..."></textarea>
+        <textarea id="altreNotizie" rows="2" placeholder="Info extra sul volo o sulle procedure di sicurezza..."></textarea>
       </div>
-      <label style="display:flex;align-items:center;gap:10px;padding:9px 13px;background:#fff3cd;border:1.5px solid #ffc107;border-radius:8px;cursor:pointer;margin-bottom:10px">
-        <input type="checkbox" id="notamVerificato" style="width:17px;height:17px;cursor:pointer;accent-color:#1a3c5e;flex-shrink:0">
-        <span style="font-size:13px;color:#856404;font-weight:600">✅ Ho verificato i NOTAM attivi su ENAV per le date e la zona indicate</span>
-      </label>
-      <div id="preview-n" style="background:#f0f6ff;border:1px solid #aac;border-radius:6px;padding:8px 12px;font-size:12px;color:#334;line-height:1.7"></div>
+      <div id="preview-n" style="background:#f0f6ff;border:1px solid #aac;border-radius:6px;padding:8px 12px;font-size:12px;color:#334;line-height:1.7;margin-top:6px"></div>
     </div>
   </div>
 
@@ -418,9 +425,13 @@ textarea{resize:vertical}
 
   <div id="allarmi-container" style="margin-bottom:10px"></div>
 
-  <div style="padding:4px 0 16px">
-    <button class="btn btn-green" style="font-size:15px;padding:14px;width:100%" onclick="verificaEGenera()">
-      📄 Verifica e genera PDF ATM-05b
+  <!-- WORKFLOW AUTOMATIZZATO IN 2 STEP -->
+  <div style="padding:10px 0 24px; display:flex; flex-direction:column; gap:10px">
+    <button class="btn btn-green" style="font-size:15px; padding:14px; width:100%; box-shadow: 0 4px 12px #27ae6044" onclick="verificaEGenera()">
+      📄 1. Verifica e Scarica PDF ATM-05b
+    </button>
+    <button class="btn" style="font-size:15px; padding:14px; width:100%; background:#2980b9; color:#fff; box-shadow: 0 4px 12px #2980b944" onclick="apriEmailPronta()">
+      📧 2. Apri PEC Pre-compilata (Allega poi il PDF scaricato)
     </button>
   </div>
 
@@ -454,12 +465,12 @@ const ZONE_DB = {
   "R - Prefettura (scegli provincia)":        { A:"protocollo.pref{P}@pec.interno.it",         tipo:"R", needsProv:true, msg:"🟠 Zona RISERVATA – Prefettura. Seleziona la provincia." },
   "R - Militare (COA Difesa)":                { A:"aerosquadra.coa@postacert.difesa.it",        tipo:"R", msg:"🟠 Zona RISERVATA – Militare. Anticipo min. 30 gg." },
   "R - ENAV / Aeroporto":                     { A:"operazioni.atm@enav.it",                    tipo:"R", msg:"🟠 Zona RISERVATA – Aeroportuale. Verificare D-Flight." },
-  "D - Altra zona":                           { A:"",                                           tipo:"D", msg:"🟡 Zona D – Inserisci destinatario manualmente." }
+  "D - Altra zona":                           { A:"",                                          tipo:"D", msg:"🟡 Zona D – Inserisci destinatario manualmente." }
 };
 
 const PROVINCE = ["AG","AL","AN","AO","AP","AQ","AR","AT","AV","BA","BG","BI","BL","BN","BO","BR","BS","BT","BZ","CA","CB","CE","CH","CL","CN","CO","CR","CS","CT","CZ","EN","FC","FE","FG","FI","FM","FR","GE","GO","GR","IM","IS","KR","LC","LE","LI","LO","LT","LU","MB","MC","ME","MI","MN","MO","MS","MT","NA","NO","NU","OR","PA","PC","PD","PE","PG","PI","PN","PO","PR","PT","PU","PV","PZ","RA","RC","RE","RG","RI","RM","RN","RO","SA","SI","SO","SP","SR","SS","SU","SV","TA","TE","TN","TO","TP","TR","TS","TV","UD","VA","VB","VC","VE","VI","VR","VT","VV"];
 
-const FIELDS = ['nomePratica','destA','destCc','richiedente','nomePilota','attestato','tipoLic','telPilota','tipoAttivita','aeromobile','decollo','latDecollo','lonDecollo','atterraggio','latAtterraggio','lonAtterraggio','localita','capoluogo','aeroporto','distanza','limVerticali','dateOrari','altreNotizie','luogo','dataRichiesta','zona','dronePreset','provincia'];
+const FIELDS = ['nomePratica','destA','destCc','richiedente','nomePilota','attestato','tipoLic','telPilota','tipoAttivita','aeromobile','decollo','latDecollo','lonDecollo','atterraggio','latAtterraggio','lonAtterraggio','localita','capoluogo','aeroporto','distanza','limVerticali','dateOrari','altreNotizie','luogo','dataRichiesta','zona','dronePreset','provincia','pilotaPreset'];
 
 // Popola province
 const pSel = document.getElementById('provincia');
@@ -515,7 +526,6 @@ function leggiForm() {
   FIELDS.forEach(k => { const e=document.getElementById(k); if(e) d[k]=e.value; });
   d.punti = punti.map(p => ({...p}));
   d.zoneSelezionate = [...document.querySelectorAll('#zona-checks input[type=checkbox]:checked')].map(c=>c.value);
-  d.notamVerificato = document.getElementById('notamVerificato')?.checked || false;
   return d;
 }
 
@@ -530,9 +540,6 @@ function scriviForm(d) {
     if(cb) cb.checked = true;
   });
   
-  if (document.getElementById('notamVerificato')) {
-    document.getElementById('notamVerificato').checked = d.notamVerificato || false;
-  }
   aggiornaZone();
   renderPunti();
   updatePreviewN();
@@ -620,7 +627,7 @@ function cambiaStato(stato) {
   const pratiche = getPratiche();
   if (pratiche[praticaCorrenteId]) {
     pratiche[praticaCorrenteId].stato = stato;
-    pratiche[praticheCorrenteId].dati = leggiForm();
+    pratiche[praticaCorrenteId].dati = leggiForm();
     pratiche[praticaCorrenteId].modificata = new Date().toISOString();
     setPratiche(pratiche);
   }
@@ -685,11 +692,6 @@ function esportaPratica() {
   a.click();
 }
 
-function importsPratica(event) {
-  // Nota: manteniamo la retrocompatibilità del vecchio binding o facciamo match sul nome corretto
-  importaPratica(event);
-}
-
 function importaPratica(event) {
   const file = event.target.files[0]; if (!file) return;
   const reader = new FileReader();
@@ -725,7 +727,6 @@ function azzeraCampi(silent) {
   document.getElementById('limVerticali').value = 'inferiore GND / superiore 45 m AGL (147 ft)';
   document.getElementById('dataRichiesta').value = new Date().toLocaleDateString('it-IT');
   document.getElementById('luogo').value = 'Roma';
-  if(document.getElementById('notamVerificato')) document.getElementById('notamVerificato').checked = false;
   document.querySelectorAll('#zona-checks input[type=checkbox]').forEach(cb=>cb.checked=false);
   document.getElementById('zona-avviso').innerHTML='';
   document.getElementById('prov-field').style.display='none';
@@ -775,7 +776,21 @@ function aggiornaZone() {
   runValidation();
 }
 
-/* ─ DRONE ─ */
+/* ─ PILOTA PRESET ─ */
+function selPilota(val) {
+  if (!val) return;
+  const p = val.split('||');
+  document.getElementById('richiedente').value = p[0] || '';
+  document.getElementById('nomePilota').value = p[0] || '';
+  document.getElementById('attestato').value = p[1] || '';
+  document.getElementById('tipoLic').value = p[2] || '';
+  document.getElementById('telPilota').value = p[3] || '';
+  debouncedSave();
+  runValidation();
+  updatePreviewN();
+}
+
+/* ─ DRONE PRESET ─ */
 function selDrone(val) {
   if(!val)return;
   document.getElementById('aeromobile').value=val.split('||')[0];
@@ -857,7 +872,6 @@ function convArea(){
   if(!conv.length){res.style.display='block';res.style.background='#fdecea';res.style.color='#922b21';res.innerHTML='❌ Nessuna coordinata valida.';return;}
   punti=conv; renderPunti(); debouncedSave();
   res.style.display='block';res.style.background='#e8f5e9';res.style.color='#0e6655';
-  /* FIX MIGLIORIA: .join('<br>') per evitare le virgole tra elementi */
   res.innerHTML=`✅ ${conv.length} vertici:<br>`+conv.map(p=>`${escapeHTML(p.nome)}: ${p.lat} / ${p.lon}`).join('<br>')+
     (errs.length?`<br><span style="color:#856404">⚠️ ${escapeHTML(errs.join(', '))}</span>`:'');
   runValidation();
@@ -902,7 +916,7 @@ function runValidation(){
   const V=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
   const MESI={gennaio:0,febbraio:1,marzo:2,aprile:3,maggio:4,giugno:5,luglio:6,agosto:7,settembre:8,ottobre:9,novembre:10,dicembre:11};
 
-  if(!V('nomePratica'))errs.push('⛔ Nome pratica obbligatorio — necessario per salvare e nominare il PDF.');
+  if(!V('nomePratica'))errs.push('⛔ Nome pratica obbligatorio — necessario per salvare, nominare la PEC e il PDF.');
 
   const date=V('dateOrari');
   if(date){
@@ -935,8 +949,6 @@ function runValidation(){
   if(V('richiedente')&&!V('attestato'))errs.push('⛔ Numero attestato UAS mancante.');
   if(!V('destA'))warns.push('⚠️ Email destinatario (A) non compilata. Seleziona la zona.');
   if(!V('latDecollo')||!V('lonDecollo'))warns.push('⚠️ Coordinate decollo mancanti.');
-  if(!document.getElementById('notamVerificato')?.checked)
-    warns.push('⚠️ Confirm la verifica NOTAM (casella in sezione N).');
 
   window._alerts={errs,warns};
   const nErr=errs.length;
@@ -961,6 +973,7 @@ function fillPrintTemplate(){
   const notizie=`Il pilota in comando sig. ${nome} dichiara la disponibilità all'immediata interruzione dell'operazione in caso di necessità del gestore tramite comunicazione al numero ${tel}.\nI droni sono dotati di: RTH (return to home), geofencing.\nIl sorvolo durerà il tempo strettamente necessario e sarà sempre condotto in VLOS.\nNon verranno sorvolati assembramenti ed edifici particolari quali: caserme, ospedali, ecc.${extra?'\n'+extra:''}`;
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set('p-destA',V('destA'));set('p-destCc',V('destCc'));set('p-rich',V('richiedente'));set('p-att',V('attestato'));
+  set('p-tel-print',tel||'0187 1755700');
   set('p-attiv',V('tipoAttivita'));set('p-aero',V('aeromobile'));
   set('p-dec',V('decollo')+(V('latDecollo')?' — Lat N '+V('latDecollo')+' Lon E '+V('lonDecollo'):''));
   set('p-att3',(V('atterraggio')||V('decollo'))+(V('latAtterraggio')?' — Lat N '+V('latAtterraggio')+' Lon E '+V('lonAtterraggio'):V('latDecollo')?' — Lat N '+V('latDecollo')+' Lon E '+V('lonDecollo'):''));
@@ -1006,6 +1019,33 @@ async function verificaEGenera(){
   }
   el.classList.remove('generating');
   loading.classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════
+   GENERATORE EMAIL PEC PRE-COMPILATA
+═══════════════════════════════════════════ */
+function apriEmailPronta() {
+  const V = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
+  
+  const destA = V('destA');
+  const destCc = V('destCc');
+  const nomePratica = V('nomePratica') || 'Richiesta autorizzazione volo APR';
+  const localita = V('localita') || 'Italia';
+  const richiedente = V('richiedente') || 'Operatore APR';
+  const tel = V('telPilota') || '0187 1755700';
+  
+  if (!destA) {
+    alert('⚠️ Seleziona prima una Zona (Sezione H) per auto-compilare l\'email PEC del destinatario.');
+    return;
+  }
+
+  const oggetto = encodeURIComponent(`Presentazione Modello ATM-05b - ${nomePratica} - Località: ${localita}`);
+  
+  const corpoTesto = `Spett.le Ufficio Competente / ENAC,\n\nCon la presente si trasmette in allegato il Modello ATM-05b per la richiesta di autorizzazione ad effettuare attività di volo con APR (UAS) ai sensi del Reg. (UE) 2019/947 e delle disposizioni ENAC vigenti.\n\nRiferimento Pratica: ${nomePratica}\nLocalità: ${localita}\nRichiedente: ${richiedente}\nRecapito telefonico operativo: ${tel}\n\nIl modulo ATM-05b debitamente compilato e firmato è allegato alla presente comunicazione.\nRestiamo a disposizione per qualsiasi chiarimento o integrazione.\n\nCordiali saluti,\n${richiedente}\n360Drone – Permessi e Autorizzazioni\nTel. 0187 1755700 - PEC: 360drone@pec.it`;
+
+  const corpo = encodeURIComponent(corpoTesto);
+  const mailtoUrl = `mailto:${destA}?cc=${encodeURIComponent(destCc)}&subject=${oggetto}&body=${corpo}`;
+  window.location.href = mailtoUrl;
 }
 
 /* ═══════════════════════════════════════════
