@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>360Drone – Gestionale ATM-05b</title>
+<title>360Drone – Gestionale ATM-05b v3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -15,9 +15,12 @@ input,textarea,select,button{font-family:inherit;font-size:14px}
 #header .sub{font-size:9px;opacity:.6;text-transform:uppercase;letter-spacing:.12em}
 #header .info{font-size:10px;text-align:right;opacity:.8;line-height:1.6}
 /* ── BARRA PRATICHE ── */
-#pratica-bar{background:#0f2740;padding:8px 12px;display:flex;gap:6px;align-items:center}
-#lista-pratiche{flex:1;min-width:0;padding:6px 8px;border:1.5px solid #ffffff33;border-radius:6px;background:#ffffff18;color:#fff;font-size:13px;outline:none}
+#pratica-bar{background:#0f2740;padding:8px 12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#lista-pratiche{flex:1;min-width:180px;padding:6px 8px;border:1.5px solid #ffffff33;border-radius:6px;background:#ffffff18;color:#fff;font-size:13px;outline:none}
 #lista-pratiche option{color:#1a2a3a;background:#fff}
+#cerca-pratica{width:130px;padding:6px 8px;border:1.5px solid #ffffff44;border-radius:6px;background:#ffffff18;color:#fff;font-size:12px;outline:none;transition:width 0.2s}
+#cerca-pratica:focus{width:160px;background:#ffffff28;border-color:#fff}
+#cerca-pratica::placeholder{color:#ddd;opacity:0.8}
 .pb-btn{padding:6px 11px;border:1.5px solid #ffffff44;border-radius:6px;background:#ffffff18;color:#fff;font-weight:700;cursor:pointer;font-size:12px;white-space:nowrap}
 .pb-btn:hover{background:#ffffff30}
 /* ── ERR BAR ── */
@@ -150,7 +153,7 @@ textarea{resize:vertical}
 <div id="pdf-loading"><div style="font-size:40px;margin-bottom:12px">⏳</div><div>Generazione PDF in corso…</div></div>
 
 <div id="header">
-  <div><div class="sub">360Drone – Permessi di volo</div><h1>Gestionale ATM-05b</h1></div>
+  <div><div class="sub">360Drone – Permessi di volo</div><h1>Gestionale ATM-05b v3</h1></div>
   <div class="info">📞 0187 1755700<br>✉️ 360drone@pec.it</div>
 </div>
 
@@ -158,6 +161,8 @@ textarea{resize:vertical}
   <select id="lista-pratiche" onchange="caricaPratica(this.value)">
     <option value="">— Seleziona pratica —</option>
   </select>
+  <!-- RICERCA RAPIDA ID (Modifica 2) -->
+  <input type="text" id="cerca-pratica" placeholder="🔍 Cerca ID (es. 001)" oninput="cercaPraticaRapida(this.value)"/>
   <button class="pb-btn" onclick="nuovaPratica()" title="Nuova pratica">+ Nuova</button>
   <button class="pb-btn" onclick="esportaPratica()" title="Esporta JSON">📤</button>
   <button class="pb-btn" onclick="document.getElementById('import-file').click()" title="Importa JSON">📥</button>
@@ -187,14 +192,21 @@ textarea{resize:vertical}
   <div class="sec" style="margin-top:12px;border:2px solid #1a3c5e">
     <div class="sec-head" style="background:#1a3c5e">
       <span class="sl" style="background:#fff;color:#1a3c5e">📁</span>
-      <span class="st">Nome pratica</span>
+      <span class="st">Identificativo & Nome Pratica</span>
     </div>
     <div class="sec-body">
-      <div class="field">
-        <label class="lbl">Nome identificativo pratica <span class="req">*</span></label>
-        <input type="text" id="nomePratica" placeholder="Es. Mario Rossi – Roma LI P244 – luglio 2026" oninput="aggiornaNomePratica()"/>
-        <div style="font-size:11px;color:#888;margin-top:3px">Usato per salvare, nominare il PDF e la PEC, e identificare la pratica nell'archivio</div>
+      <!-- ID NUMERICO e NOME DESCRITTIVO (Modifica 2) -->
+      <div class="g3" style="grid-template-columns: 100px 1fr; gap:10px; margin-bottom:0">
+        <div class="field">
+          <label class="lbl">ID Pratica <span class="req">*</span></label>
+          <input type="text" id="idPratica" placeholder="001" style="font-weight:700; text-align:center" oninput="aggiornaNomePratica()"/>
+        </div>
+        <div class="field">
+          <label class="lbl">Descrizione / Nome Pratica <span class="req">*</span></label>
+          <input type="text" id="nomePratica" placeholder="Es. Mario Rossi – Roma LI P244 – agosto 2026" oninput="aggiornaNomePratica()"/>
+        </div>
       </div>
+      <div style="font-size:11px;color:#888;margin-top:3px">L'ID numerico permette ricerche istantanee. Il nome descrive il cantiere o il cliente per il PDF e la PEC.</div>
     </div>
   </div>
 
@@ -258,7 +270,7 @@ textarea{resize:vertical}
     <div class="sec-head" style="background:#1a3c5e"><span class="sl" style="background:#fff;color:#1a3c5e">A</span><span class="st">Destinatari PEC (auto-compilati)</span></div>
     <div class="sec-body">
       <div class="field"><label class="lbl">A — Destinatario principale</label><input type="text" id="destA" placeholder="Seleziona zona qui sopra"/></div>
-      <div class="field"><label class="lbl">Cc — In copia</label><textarea id="destCc" rows="2">protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it</textarea></div>
+      <div class="field"><label class="lbl">Cc — In copia (protetto da sovrascritture se modificato)</label><textarea id="destCc" rows="2">protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it</textarea></div>
     </div>
   </div>
 
@@ -351,11 +363,19 @@ textarea{resize:vertical}
   </div>
 
   <div class="sec">
-    <div class="sec-head" style="background:#1a5276"><span class="sl" style="background:#fff;color:#1a5276">G·K</span><span class="st">Località e Capoluogo</span></div>
+    <div class="sec-head" style="background:#1a5276"><span class="sl" style="background:#fff;color:#1a5276">G·K</span><span class="st">Località e Capoluogo (Autocomplete)</span></div>
     <div class="sec-body">
+      <!-- AUTOCOMPLETE CITTÀ / CAPOLUOGO (Modifica 1) -->
       <div class="g2">
-        <div class="field"><label class="lbl">G — Comune/Città <span class="req">*</span></label><input type="text" id="localita" placeholder="Es. Roma" oninput="autoSync('localita','capoluogo')"/></div>
-        <div class="field"><label class="lbl">K — Capoluogo</label><input type="text" id="capoluogo" placeholder="Es. Roma"/></div>
+        <div class="field">
+          <label class="lbl">G — Comune/Città <span class="req">*</span> (inizia a digitare per cercare)</label>
+          <input type="text" id="localita" list="comuni-list" placeholder="Es. Roma, Milano, Formigine..." oninput="autoCompilaCapoluogo(this.value)"/>
+          <datalist id="comuni-list"></datalist>
+        </div>
+        <div class="field">
+          <label class="lbl">K — Capoluogo / Provincia (auto-compilato, modificabile)</label>
+          <input type="text" id="capoluogo" placeholder="Es. RM"/>
+        </div>
       </div>
     </div>
   </div>
@@ -365,10 +385,11 @@ textarea{resize:vertical}
     <div class="sec-body">
       <div class="conv-box">
         <label>📋 Incolla vertici da D-Flight (uno per riga)</label>
-        <textarea id="conv-area-input" rows="5" placeholder="41.902782, 12.496366&#10;41.903500, 12.497100&#10;41.901200, 12.495800"></textarea>
+        <textarea id="conv-area-input" rows="4" placeholder="41.902782, 12.496366&#10;41.903500, 12.497100&#10;41.901200, 12.495800"></textarea>
         <button class="conv-btn" onclick="convArea()">✅ Converti e compila vertici</button>
         <div id="conv-area-result" class="conv-result"></div>
       </div>
+      <div style="font-size:11px;color:#0e6655;margin-bottom:6px;font-weight:600">⚡ Modalità Veloce: Nel campo "Lat N" qui sotto puoi incollare anche la coordinata decimale intera (es: <code>41.9027, 12.4963</code>) per compilare Lat e Lon in un colpo solo!</div>
       <div id="punti-container"></div>
       <button class="btn btn-teal" style="font-size:12px;padding:6px 13px;margin-top:4px" onclick="addPunto()">+ Aggiungi punto</button>
     </div>
@@ -397,7 +418,7 @@ textarea{resize:vertical}
     <div class="sec-head" style="background:#922b21"><span class="sl" style="background:#fff;color:#922b21">M</span><span class="st">Date e orari ⚠️ UTC!</span></div>
     <div class="sec-body">
       <div class="field"><label class="lbl">Date e orari <span class="req">*</span></label>
-        <textarea id="dateOrari" rows="3" placeholder="Es. 9, 10, 11 agosto 2026 dalle ore 05:00 UTC alle ore 08:00 UTC"></textarea>
+        <textarea id="dateOrari" rows="3" placeholder="Es. 9, 10, 11-15 agosto 2026 dalle ore 05:00 UTC alle ore 08:00 UTC"></textarea>
       </div>
       <div class="nota-utc">⚠️ Orario SEMPRE in UTC &nbsp;|&nbsp; Ora legale italiana = UTC+2 &nbsp;|&nbsp; Es: 7:00 locale → 05:00 UTC</div>
     </div>
@@ -453,9 +474,9 @@ textarea{resize:vertical}
 'use strict';
 
 /* ═══════════════════════════════════════════
-   COSTANTI
+   COSTANTI & DATABASE COMUNI (Modifica 1)
 ═══════════════════════════════════════════ */
-const STORAGE_KEY = 'atm05b_v2';
+const STORAGE_KEY = 'atm05b_v3';
 const STATO_EMOJI = { bozza:'🟡', pronta:'🟢', inviata:'🔴', autorizzata:'🔵' };
 
 const ZONE_DB = {
@@ -470,11 +491,29 @@ const ZONE_DB = {
 
 const PROVINCE = ["AG","AL","AN","AO","AP","AQ","AR","AT","AV","BA","BG","BI","BL","BN","BO","BR","BS","BT","BZ","CA","CB","CE","CH","CL","CN","CO","CR","CS","CT","CZ","EN","FC","FE","FG","FI","FM","FR","GE","GO","GR","IM","IS","KR","LC","LE","LI","LO","LT","LU","MB","MC","ME","MI","MN","MO","MS","MT","NA","NO","NU","OR","PA","PC","PD","PE","PG","PI","PN","PO","PR","PT","PU","PV","PZ","RA","RC","RE","RG","RI","RM","RN","RO","SA","SI","SO","SP","SR","SS","SU","SV","TA","TE","TN","TO","TP","TR","TS","TV","UD","VA","VB","VC","VE","VI","VR","VT","VV"];
 
-const FIELDS = ['nomePratica','destA','destCc','richiedente','nomePilota','attestato','tipoLic','telPilota','tipoAttivita','aeromobile','decollo','latDecollo','lonDecollo','atterraggio','latAtterraggio','lonAtterraggio','localita','capoluogo','aeroporto','distanza','limVerticali','dateOrari','altreNotizie','luogo','dataRichiesta','zona','dronePreset','provincia','pilotaPreset'];
+// Mini-DB Città Italiane (Capoluoghi e centri principali per autocomplete rapido)
+const COMUNI_DB = [
+  {c:"Roma",p:"RM"},{c:"Milano",p:"MI"},{c:"Napoli",p:"NA"},{c:"Torino",p:"TO"},{c:"Palermo",p:"PA"},{c:"Genova",p:"GE"},{c:"Bologna",p:"BO"},{c:"Firenze",p:"FI"},{c:"Bari",p:"BA"},{c:"Catania",p:"CT"},
+  {c:"Venezia",p:"VE"},{c:"Verona",p:"VR"},{c:"Messina",p:"ME"},{c:"Padova",p:"PD"},{c:"Trieste",p:"TS"},{c:"Brescia",p:"BS"},{c:"Taranto",p:"TA"},{c:"Parma",p:"PR"},{c:"Prato",p:"PO"},{c:"Modena",p:"MO"},
+  {c:"Reggio Calabria",p:"RC"},{c:"Reggio Emilia",p:"RE"},{c:"Perugia",p:"PG"},{c:"Ravenna",p:"RA"},{c:"Livorno",p:"LI"},{c:"Cagliari",p:"CA"},{c:"Foggia",p:"FG"},{c:"Rimini",p:"RN"},{c:"Salerno",p:"SA"},{c:"Ferrara",p:"FE"},
+  {c:"Sassari",p:"SS"},{c:"Latina",p:"LT"},{c:"Giugliano in Campania",p:"NA"},{c:"Monza",p:"MB"},{c:"Siracusa",p:"SR"},{c:"Pescara",p:"PE"},{c:"Bergamo",p:"BG"},{c:"Forlì",p:"FC"},{c:"Trento",p:"TN"},{c:"Vicenza",p:"VI"},
+  {c:"Terni",p:"TR"},{c:"Bolzano",p:"BZ"},{c:"Novara",p:"NO"},{c:"Piacenza",p:"PC"},{c:"Ancona",p:"AN"},{c:"Andria",p:"BT"},{c:"Arezzo",p:"AR"},{c:"Udine",p:"UD"},{c:"Cesena",p:"FC"},{c:"Lecce",p:"LE"},
+  {c:"La Spezia",p:"SP"},{c:"Pesaro",p:"PU"},{c:"Alessandria",p:"AL"},{c:"Barletta",p:"BT"},{c:"Catanzaro",p:"CZ"},{c:"Pistoia",p:"PT"},{c:"Brindisi",p:"BR"},{c:"Pisa",p:"PI"},{c:"Torre del Greco",p:"NA"},{c:"Como",p:"CO"},
+  {c:"Lucca",p:"LU"},{c:"Pozzuoli",p:"NA"},{c:"Treviso",p:"TV"},{c:"Marsala",p:"TP"},{c:"Grosseto",p:"GR"},{c:"Busto Arsizio",p:"VA"},{c:"Varese",p:"VA"},{c:"Sesto San Giovanni",p:"MI"},{c:"Casoria",p:"NA"},{c:"Caserta",p:"CE"},
+  {c:"Gela",p:"CL"},{c:"Asti",p:"AT"},{c:"Cinisello Balsamo",p:"MI"},{c:"Ragusa",p:"RG"},{c:"L'Aquila",p:"AQ"},{c:"Cremona",p:"CR"},{c:"Pavia",p:"PV"},{c:"Carpi",p:"MO"},{c:"Quartu Sant'Elena",p:"CA"},{c:"Lamezia Terme",p:"CZ"},
+  {c:"Imola",p:"BO"},{c:"Fiumicino",p:"RM"},{c:"Massa",p:"MS"},{c:"Viterbo",p:"VT"},{c:"Cosenza",p:"CS"},{c:"Potenza",p:"PZ"},{c:"Aprilia",p:"LT"},{c:"Crotone",p:"KR"},{c:"Carrara",p:"MS"},{c:"Castellammare di Stabia",p:"NA"},
+  {c:"Afragola",p:"NA"},{c:"Vittoria",p:"RG"},{c:"Vigevano",p:"PV"},{c:"Pomezia",p:"RM"},{c:"Marano di Napoli",p:"NA"},{c:"Benevento",p:"BN"},{c:"Savona",p:"SV"},{c:"Faenza",p:"RA"},{c:"Legnano",p:"MI"},{c:"Matera",p:"MT"},
+  {c:"Agrigento",p:"AG"},{c:"Cuneo",p:"CN"},{c:"Caltanissetta",p:"CL"},{c:"Avellino",p:"AV"},{c:"Siena",p:"SI"},{c:"Trani",p:"BT"},{c:"Rovigo",p:"RO"},{c:"Campobasso",p:"CB"},{c:"Mantova",p:"MN"},{c:"Olbia",p:"SS"},
+  {c:"Biella",p:"BI"},{c:"Formigine",p:"MO"},{c:"Sassuolo",p:"MO"},{c:"Marano sul Panaro",p:"MO"},{c:"Spilamberto",p:"MO"},{c:"Vignola",p:"MO"},{c:"Castelfranco Emilia",p:"MO"},{c:"Maranello",p:"MO"},{c:"Fiorano Modenese",p:"MO"}
+];
 
-// Popola province
+const FIELDS = ['idPratica','nomePratica','destA','destCc','richiedente','nomePilota','attestato','tipoLic','telPilota','tipoAttivita','aeromobile','decollo','latDecollo','lonDecollo','atterraggio','latAtterraggio','lonAtterraggio','localita','capoluogo','aeroporto','distanza','limVerticali','dateOrari','altreNotizie','luogo','dataRichiesta','zona','dronePreset','provincia','pilotaPreset'];
+
+// Popola province e datalist Comuni
 const pSel = document.getElementById('provincia');
 PROVINCE.forEach(p => { const o = document.createElement('option'); o.value=p; o.textContent=p; pSel.appendChild(o); });
+const cList = document.getElementById('comuni-list');
+COMUNI_DB.forEach(item => { const o = document.createElement('option'); o.value=item.c; o.textContent = `${item.c} (${item.p})`; cList.appendChild(o); });
 
 /* ═══════════════════════════════════════════
    STATO GLOBALE
@@ -526,6 +565,8 @@ function leggiForm() {
   FIELDS.forEach(k => { const e=document.getElementById(k); if(e) d[k]=e.value; });
   d.punti = punti.map(p => ({...p}));
   d.zoneSelezionate = [...document.querySelectorAll('#zona-checks input[type=checkbox]:checked')].map(c=>c.value);
+  // Persiste lo stato readonly delle coordinate (Modifica 5)
+  d.coordsLocked = document.getElementById('latDecollo')?.readOnly || false;
   return d;
 }
 
@@ -540,6 +581,26 @@ function scriviForm(d) {
     if(cb) cb.checked = true;
   });
   
+  // Ripristina lo stato di blocco coordinate se era salvo (Modifica 5)
+  const isLocked = d.coordsLocked || false;
+  ['latDecollo','lonDecollo','latAtterraggio','lonAtterraggio'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) {
+      el.readOnly = isLocked;
+      el.style.background = isLocked ? '#f0f7f0' : '';
+      el.style.color = isLocked ? '#0e6655' : '';
+    }
+  });
+  const resDec = document.getElementById('conv-dec-result');
+  if (isLocked && d.latDecollo) {
+    resDec.style.display = 'block';
+    resDec.style.background = '#e8f5e9';
+    resDec.style.color = '#0e6655';
+    resDec.innerHTML = `✅ Decollo bloccato e validato<br><button onclick="sbloccaCoord()" style="margin-top:5px;padding:3px 11px;border:1px solid #0e6655;border-radius:5px;background:#fff;color:#0e6655;font-size:11px;cursor:pointer">🔓 Modifica</button>`;
+  } else {
+    resDec.style.display = 'none';
+  }
+  
   aggiornaZone();
   renderPunti();
   updatePreviewN();
@@ -550,7 +611,9 @@ function salvaPratica(silenzioso) {
   const pratiche = getPratiche();
   const p = pratiche[praticaCorrenteId] || {};
   p.id = praticaCorrenteId;
-  p.nome = document.getElementById('nomePratica').value.trim() || 'Pratica senza nome';
+  const idNum = document.getElementById('idPratica').value.trim() || '000';
+  const nomeDesc = document.getElementById('nomePratica').value.trim() || 'Pratica senza nome';
+  p.nome = `[${idNum}] ${nomeDesc}`;
   p.stato = p.stato || 'bozza';
   p.creata = p.creata || new Date().toISOString();
   p.modificata = new Date().toISOString();
@@ -572,6 +635,17 @@ function debouncedSave() {
   saveTimer = setTimeout(() => salvaPratica(true), 350);
 }
 
+// Generazione progressivo numerico automatico (Modifica 2)
+function generaProssimoID() {
+  const pratiche = getPratiche();
+  let maxId = 0;
+  Object.values(pratiche).forEach(p => {
+    const num = parseInt(p.dati?.idPratica, 10);
+    if (!isNaN(num) && num > maxId) maxId = num;
+  });
+  return String(maxId + 1).padStart(3, '0');
+}
+
 function nuovaPratica() {
   if (modificato && praticaCorrenteId) {
     const scelta = confirm('Hai modifiche non salvate sulla pratica corrente.\n\nOK = Salva e continua\nAnnulla = Scarta e continua');
@@ -579,11 +653,14 @@ function nuovaPratica() {
   }
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
   const oggi = new Date().toLocaleDateString('it-IT');
+  const nextNum = generaProssimoID();
   const pratiche = getPratiche();
-  pratiche[id] = { id, nome:'Nuova pratica', stato:'bozza', creata:new Date().toISOString(), modificata:new Date().toISOString(), dati:{dataRichiesta:oggi, luogo:'Roma'} };
+  pratiche[id] = { id, nome:`[${nextNum}] Nuova pratica`, stato:'bozza', creata:new Date().toISOString(), modificata:new Date().toISOString(), dati:{idPratica: nextNum, nomePratica:'Nuova pratica', dataRichiesta:oggi, luogo:'Roma'} };
   setPratiche(pratiche);
   praticaCorrenteId = id;
   azzeraCampi(true);
+  document.getElementById('idPratica').value = nextNum;
+  document.getElementById('nomePratica').value = 'Nuova pratica';
   document.getElementById('dataRichiesta').value = oggi;
   aggiornaListaPratiche();
   aggiornaStatusBar();
@@ -592,7 +669,7 @@ function nuovaPratica() {
 
 function caricaPratica(id) {
   if (!id) return;
-  if (modificato && praticaCorrenteId) {
+  if (modificato && praticaCorrenteId && id !== praticaCorrenteId) {
     const scelta = confirm('Hai modifiche non salvate sulla pratica corrente.\n\nOK = Salva e cambia pratica\nAnnulla = Scarta e cambia pratica');
     if (scelta) salvaPratica(true);
   }
@@ -607,6 +684,21 @@ function caricaPratica(id) {
   modificato = false;
   aggiornaStatusBar();
   runValidation();
+}
+
+// Ricerca rapida per ID numerico (Modifica 2)
+function cercaPraticaRapida(query) {
+  if (!query.trim()) return;
+  const q = query.trim().toLowerCase();
+  const pratiche = getPratiche();
+  const match = Object.values(pratiche).find(p => {
+    const idNum = (p.dati?.idPratica || '').toLowerCase();
+    return idNum === q || idNum === String(parseInt(q, 10)).padStart(3, '0');
+  });
+  if (match && match.id !== praticaCorrenteId) {
+    document.getElementById('lista-pratiche').value = match.id;
+    caricaPratica(match.id);
+  }
 }
 
 function eliminaPratica() {
@@ -667,10 +759,14 @@ function aggiornaStatusBar() {
 
 function aggiornaNomePratica() {
   debouncedSave();
-  const n = document.getElementById('nomePratica').value.trim();
-  if (praticaCorrenteId && n) {
+  const idNum = document.getElementById('idPratica').value.trim() || '000';
+  const nomeDesc = document.getElementById('nomePratica').value.trim();
+  if (praticaCorrenteId) {
     const pratiche = getPratiche();
-    if (pratiche[praticaCorrenteId]) { pratiche[praticaCorrenteId].nome = n; setPratiche(pratiche); }
+    if (pratiche[praticaCorrenteId]) {
+      pratiche[praticaCorrenteId].nome = `[${idNum}] ${nomeDesc || 'Senza nome'}`;
+      setPratiche(pratiche);
+    }
     aggiornaStatusBar();
     aggiornaListaPratiche();
   }
@@ -718,11 +814,11 @@ function importaPratica(event) {
 }
 
 /* ═══════════════════════════════════════════
-   FORM — HELPERS
+   FORM — HELPERS & AUTOCOMPLETE
 ═══════════════════════════════════════════ */
 function azzeraCampi(silent) {
   if (!silent && !confirm('Azzerare tutti i campi?')) return;
-  FIELDS.forEach(k => { const e=document.getElementById(k); if(e) e.value=''; });
+  FIELDS.forEach(k => { const e=document.getElementById(k); if(e && k!=='idPratica') e.value=''; });
   document.getElementById('destCc').value = 'protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it';
   document.getElementById('limVerticali').value = 'inferiore GND / superiore 45 m AGL (147 ft)';
   document.getElementById('dataRichiesta').value = new Date().toLocaleDateString('it-IT');
@@ -745,6 +841,16 @@ function autoSync(src, dst) {
   if (!document.getElementById(dst).value) document.getElementById(dst).value = document.getElementById(src).value;
 }
 
+// Autocompilazione capoluogo da ricerca città (Modifica 1)
+function autoCompilaCapoluogo(val) {
+  const match = COMUNI_DB.find(item => item.c.toLowerCase() === val.trim().toLowerCase());
+  if (match) {
+    document.getElementById('capoluogo').value = match.p;
+  }
+  debouncedSave();
+  runValidation();
+}
+
 /* ─ ZONA ─ */
 function aggiornaZone() {
   const checks = [...document.querySelectorAll('#zona-checks input[type=checkbox]:checked')];
@@ -764,7 +870,14 @@ function aggiornaZone() {
     if(z.msg)avvisi.push(z.msg);
   });
   document.getElementById('destA').value=emailsA.join('; ');
-  document.getElementById('destCc').value='protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it';
+  
+  // Protezione campo Cc: non sovrascrive se già modificato (Modifica 4)
+  const defaultCc = 'protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it';
+  const currentCc = document.getElementById('destCc').value.trim();
+  if (!currentCc || currentCc === defaultCc) {
+    document.getElementById('destCc').value = defaultCc;
+  }
+  
   document.getElementById('zona').value=valori.join(', ');
   const av=document.getElementById('zona-avviso');
   if(avvisi.length){
@@ -878,15 +991,32 @@ function convArea(){
 }
 
 /* ═══════════════════════════════════════════
-   PUNTI LATERALI
+   PUNTI LATERALI SMART (Modifica 7)
 ═══════════════════════════════════════════ */
+function handleSmartVertex(val, i) {
+  // Se l'utente incolla una coordinata decimale intera nel campo Lat (es. "41.9027, 12.4963"), compila entrambi!
+  if (val.includes(',') || val.includes(' ')) {
+    const p = parseCoordLine(val);
+    if (p) {
+      punti[i].lat = decToSex(p.lat, true);
+      punti[i].lon = decToSex(p.lon, false);
+      renderPunti();
+      debouncedSave();
+      runValidation();
+      return;
+    }
+  }
+  punti[i].lat = val;
+  debouncedSave();
+}
+
 function renderPunti(){
   const c=document.getElementById('punti-container'); c.innerHTML='';
-  if(punti.length){const hdr=document.createElement('div');hdr.className='g3';hdr.style.marginBottom='2px';hdr.innerHTML='<span class="lbl">Punto</span><span class="lbl">Lat N</span><span class="lbl">Lon E</span><span></span>';c.appendChild(hdr);}
+  if(punti.length){const hdr=document.createElement('div');hdr.className='g3';hdr.style.marginBottom='2px';hdr.innerHTML='<span class="lbl">Punto</span><span class="lbl">Lat N (o incolla "Lat, Lon")</span><span class="lbl">Lon E</span><span></span>';c.appendChild(hdr);}
   punti.forEach((p,i)=>{
     const row=document.createElement('div');row.className='g3';
     row.innerHTML=`<input type="text" value="${escapeHTML(p.nome)}" placeholder="Vertice ${i+1}" oninput="punti[${i}].nome=this.value;debouncedSave()"/>
-      <input type="text" value="${escapeHTML(p.lat)}" placeholder="Lat N" oninput="punti[${i}].lat=this.value;debouncedSave()"/>
+      <input type="text" value="${escapeHTML(p.lat)}" placeholder="Lat N o 41.902, 12.496" oninput="handleSmartVertex(this.value, ${i})"/>
       <input type="text" value="${escapeHTML(p.lon)}" placeholder="Lon E" oninput="punti[${i}].lon=this.value;debouncedSave()"/>
       <button onclick="removePunto(${i})" style="background:#fdecea;border:1px solid #fbb;border-radius:6px;padding:6px 10px;cursor:pointer;color:#c0392b;font-size:14px">✕</button>`;
     c.appendChild(row);
@@ -909,28 +1039,56 @@ function updatePreviewN(){
 }
 
 /* ═══════════════════════════════════════════
-   VALIDAZIONE
+   VALIDAZIONE DATE ROBUSTA (Modifica 6)
 ═══════════════════════════════════════════ */
 function runValidation(){
   const errs=[],warns=[];
   const V=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
-  const MESI={gennaio:0,febbraio:1,marzo:2,aprile:3,maggio:4,giugno:5,luglio:6,agosto:7,settembre:8,ottobre:9,novembre:10,dicembre:11};
+  const MESI={"gennaio":0,"febbraio":1,"marzo":2,"aprile":3,"maggio":4,"giugno":5,"luglio":6,"agosto":7,"settembre":8,"ottobre":9,"novembre":10,"dicembre":11,"gen":0,"feb":1,"mar":2,"apr":3,"mag":4,"giu":5,"lug":6,"ago":7,"set":8,"ott":9,"nov":10,"dic":11};
 
-  if(!V('nomePratica'))errs.push('⛔ Nome pratica obbligatorio — necessario per salvare, nominare la PEC e il PDF.');
+  if(!V('nomePratica') && !V('idPratica'))errs.push('⛔ Identificativo o nome pratica obbligatorio.');
 
-  const date=V('dateOrari');
-  if(date){
-    const re=/(\d{1,2})\s+(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\s*(\d{4})?/i;
-    const m=date.match(re);
-    if(m){
-      const oggi=new Date(); const ac=oggi.getFullYear();
-      let anno=m[3]?parseInt(m[3]):ac;
-      if(!m[3]){const dt=new Date(anno,MESI[m[2].toLowerCase()],parseInt(m[1]));if(dt<oggi)anno=ac+1;}
-      const data=new Date(anno,MESI[m[2].toLowerCase()],parseInt(m[1]));
-      const diff=Math.round((data-oggi)/86400000);
-      if(diff<0)errs.push('⛔ Le date inserite sono già passate!');
-      else if(diff<15)errs.push(`⛔ Anticipo insufficiente: ${diff} giorni. Servono ALMENO 15 giorni.`);
-      else if(diff<20)warns.push(`⚠️ Anticipo breve: ${diff} giorni. Consigliati 20+ giorni.`);
+  const dateStr=V('dateOrari');
+  if(dateStr){
+    // Trova tutti i nomi di mese nel testo ed estrapola i giorni e l'anno associati
+    const regexMesi = /(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic)/gi;
+    let match;
+    let minDiffDays = 999;
+    const oggi = new Date();
+    oggi.setHours(0,0,0,0);
+    const annoCorrente = oggi.getFullYear();
+
+    while ((match = regexMesi.exec(dateStr)) !== null) {
+      const meseNome = match[0].toLowerCase();
+      const idxMese = MESI[meseNome];
+      
+      // Cerca anno nei 10 caratteri successivi al mese
+      const dopoMese = dateStr.slice(regexMesi.lastIndex, regexMesi.lastIndex + 10);
+      const matchAnno = dopoMese.match(/\d{4}/);
+      let anno = matchAnno ? parseInt(matchAnno[0], 10) : annoCorrente;
+
+      // Cerca tutti i numeri (giorni) prima del mese nell'intervallo fino al mese precedente
+      const primaMese = dateStr.slice(0, match.index);
+      const giorniMatch = primaMese.match(/\b([1-9]|[12]\d|3[01])\b/g);
+      
+      if (giorniMatch && giorniMatch.length > 0) {
+        giorniMatch.forEach(gStr => {
+          const giorno = parseInt(gStr, 10);
+          let dataTarget = new Date(anno, idxMese, giorno);
+          // Se l'anno è omesso e la data è già passata, si assume l'anno prossimo
+          if (!matchAnno && dataTarget < oggi) {
+            dataTarget = new Date(annoCorrente + 1, idxMese, giorno);
+          }
+          const diffDays = Math.round((dataTarget - oggi) / 86400000);
+          if (diffDays < minDiffDays) minDiffDays = diffDays;
+        });
+      }
+    }
+
+    if (minDiffDays !== 999) {
+      if (minDiffDays < 0) errs.push('⛔ Le date del volo inserite sono già passate!');
+      else if (minDiffDays < 15) errs.push(`⛔ Anticipo insufficiente: la data più vicina è tra ${minDiffDays} giorni (minimo legale ENAC: 15 giorni lavorativi).`);
+      else if (minDiffDays < 20) warns.push(`⚠️ Anticipo breve: data tra ${minDiffDays} giorni. Consigliati almeno 20 giorni.`);
     }
   }
 
@@ -991,10 +1149,11 @@ async function verificaEGenera(){
   runValidation();
   const{errs=[]}=window._alerts||{};
   if(errs.length>0){document.getElementById('allarmi-container').scrollIntoView({behavior:'smooth',block:'center'});return;}
-  if(!document.getElementById('nomePratica').value.trim()){alert('Inserisci il nome pratica prima di generare il PDF.');return;}
+  if(!document.getElementById('nomePratica').value.trim() && !document.getElementById('idPratica').value.trim()){alert('Inserisci un identificativo o un nome pratica prima di generare il PDF.');return;}
   salvaPratica(true);
   fillPrintTemplate();
   const el=document.getElementById('print-area');
+  const idNum = document.getElementById('idPratica').value.trim() || '000';
   const nomePratica=(document.getElementById('nomePratica').value||'pratica').replace(/[^a-z0-9àèìòù]/gi,'_');
   const loading=document.getElementById('pdf-loading');
   loading.classList.add('show');
@@ -1003,7 +1162,7 @@ async function verificaEGenera(){
     if(typeof html2pdf!=='undefined'){
       await html2pdf().set({
         margin:[12,10,12,10],
-        filename:`ATM05b_${nomePratica}.pdf`,
+        filename:`ATM05b_[${idNum}]_${nomePratica}.pdf`,
         image:{type:'jpeg',quality:0.97},
         html2canvas:{scale:2,useCORS:true,letterRendering:true},
         jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
@@ -1022,13 +1181,14 @@ async function verificaEGenera(){
 }
 
 /* ═══════════════════════════════════════════
-   GENERATORE EMAIL PEC PRE-COMPILATA
+   EMAIL PEC CON SEPARATORI PULITI (Modifica 3)
 ═══════════════════════════════════════════ */
 function apriEmailPronta() {
   const V = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
   
   const destA = V('destA');
   const destCc = V('destCc');
+  const idNum = V('idPratica') || '000';
   const nomePratica = V('nomePratica') || 'Richiesta autorizzazione volo APR';
   const localita = V('localita') || 'Italia';
   const richiedente = V('richiedente') || 'Operatore APR';
@@ -1039,12 +1199,16 @@ function apriEmailPronta() {
     return;
   }
 
-  const oggetto = encodeURIComponent(`Presentazione Modello ATM-05b - ${nomePratica} - Località: ${localita}`);
+  // Conversione di tutti i ";" in "," e rimozione spazi extra per compatibilità client PEC
+  const cleanA = destA.replace(/;/g, ',').replace(/\s+/g, '');
+  const cleanCc = destCc.replace(/;/g, ',').replace(/\s+/g, '');
+
+  const oggetto = encodeURIComponent(`Presentazione Modello ATM-05b - Pratica [${idNum}] ${nomePratica} - Località: ${localita}`);
   
-  const corpoTesto = `Spett.le Ufficio Competente / ENAC,\n\nCon la presente si trasmette in allegato il Modello ATM-05b per la richiesta di autorizzazione ad effettuare attività di volo con APR (UAS) ai sensi del Reg. (UE) 2019/947 e delle disposizioni ENAC vigenti.\n\nRiferimento Pratica: ${nomePratica}\nLocalità: ${localita}\nRichiedente: ${richiedente}\nRecapito telefonico operativo: ${tel}\n\nIl modulo ATM-05b debitamente compilato e firmato è allegato alla presente comunicazione.\nRestiamo a disposizione per qualsiasi chiarimento o integrazione.\n\nCordiali saluti,\n${richiedente}\n360Drone – Permessi e Autorizzazioni\nTel. 0187 1755700 - PEC: 360drone@pec.it`;
+  const corpoTesto = `Spett.le Ufficio Competente / ENAC,\n\nCon la presente si trasmette in allegato il Modello ATM-05b per la richiesta di autorizzazione ad effettuare attività di volo con APR (UAS) ai sensi del Reg. (UE) 2019/947 e delle disposizioni ENAC vigenti.\n\nRiferimento Pratica: [${idNum}] ${nomePratica}\nLocalità: ${localita}\nRichiedente: ${richiedente}\nRecapito telefonico operativo: ${tel}\n\nIl modulo ATM-05b debitamente compilato e firmato è allegato alla presente comunicazione.\nRestiamo a disposizione per qualsiasi chiarimento o integrazione.\n\nCordiali saluti,\n${richiedente}\n360Drone – Permessi e Autorizzazioni\nTel. 0187 1755700 - PEC: 360drone@pec.it`;
 
   const corpo = encodeURIComponent(corpoTesto);
-  const mailtoUrl = `mailto:${destA}?cc=${encodeURIComponent(destCc)}&subject=${oggetto}&body=${corpo}`;
+  const mailtoUrl = `mailto:${cleanA}?cc=${encodeURIComponent(cleanCc)}&subject=${oggetto}&body=${corpo}`;
   window.location.href = mailtoUrl;
 }
 
@@ -1109,7 +1273,7 @@ window.addEventListener('load', () => {
   document.getElementById('tab-form').addEventListener('input', (e) => {
     debouncedSave();
     updatePreviewN();
-    if (['dateOrari','tipoLic','nomePratica','richiedente','attestato','destA','telPilota','nomePilota','altreNotizie'].includes(e.target.id)) {
+    if (['dateOrari','tipoLic','nomePratica','idPratica','richiedente','attestato','destA','telPilota','nomePilota','altreNotizie'].includes(e.target.id)) {
       runValidation();
     }
   });
