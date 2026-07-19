@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>360Drone – Gestionale ATM-05b v3</title>
+<title>360Drone – Gestionale ATM-05b v3.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#edf2f7;min-height:100vh;font-size:14px;padding-bottom:64px}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#edf2f7;min-height:100vh;font-size:14px;padding-bottom:50px}
 input,textarea,select,button{font-family:inherit;font-size:14px}
 /* ── HEADER ── */
 #header{background:#1a3c5e;color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
@@ -64,13 +64,13 @@ textarea{resize:vertical}
 .conv-box textarea{background:#fff;border:1.5px solid #aad4ea;border-radius:6px;font-family:monospace;font-size:13px;width:100%;padding:7px 10px;outline:none}
 .conv-result{margin-top:7px;font-family:monospace;font-size:12px;color:#0e6655;background:#e8f5e9;border-radius:6px;padding:6px 11px;line-height:1.9;display:none}
 .conv-btn{margin-top:7px;padding:6px 14px;border:none;border-radius:6px;background:#1a3c5e;color:#fff;font-weight:700;font-size:12px;cursor:pointer}
-/* ── STATUS BAR FISSA ── */
-#status-bar{position:fixed;bottom:0;left:0;right:0;background:#1a3c5e;color:#fff;padding:8px 14px;display:flex;align-items:center;gap:10px;z-index:100;box-shadow:0 -2px 10px #0005}
-#status-nome{font-size:12px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#status-salvato{font-size:10px;opacity:.65}
-#stato-select{padding:4px 8px;border:1px solid #ffffff44;border-radius:6px;background:#ffffff18;color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+/* ── STATUS BAR FISSA (Modifica 3: Minimal 34px) ── */
+#status-bar{position:fixed;bottom:0;left:0;right:0;height:34px;background:#1a3c5e;color:#fff;padding:0 14px;display:flex;align-items:center;justify-content:flex-end;gap:10px;z-index:100;box-shadow:0 -2px 10px #0005}
+#status-info{margin-right:auto;font-size:15px;cursor:help;display:flex;align-items:center;opacity:0.85;transition:opacity 0.15s}
+#status-info:hover{opacity:1}
+#stato-select{padding:2px 8px;height:24px;border:1px solid #ffffff44;border-radius:4px;background:#ffffff18;color:#fff;font-size:11px;font-weight:700;cursor:pointer;outline:none}
 #stato-select option{color:#1a2a3a;background:#fff}
-#btn-salva{padding:5px 14px;border:1.5px solid #ffffff66;border-radius:6px;background:transparent;color:#fff;font-weight:700;font-size:12px;cursor:pointer}
+#btn-salva{padding:2px 14px;height:24px;border:1.5px solid #ffffff66;border-radius:4px;background:transparent;color:#fff;font-weight:700;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background 0.15s}
 #btn-salva:hover{background:#ffffff22}
 /* ── PDF GENERATING ── */
 #print-area{position:absolute;left:-9999px;top:0;display:none;width:210mm}
@@ -153,7 +153,7 @@ textarea{resize:vertical}
 <div id="pdf-loading"><div style="font-size:40px;margin-bottom:12px">⏳</div><div>Generazione PDF in corso…</div></div>
 
 <div id="header">
-  <div><div class="sub">360Drone – Permessi di volo</div><h1>Gestionale ATM-05b v3</h1></div>
+  <div><div class="sub">360Drone – Permessi di volo</div><h1>Gestionale ATM-05b v3.1</h1></div>
   <div class="info">📞 0187 1755700<br>✉️ 360drone@pec.it</div>
 </div>
 
@@ -161,7 +161,7 @@ textarea{resize:vertical}
   <select id="lista-pratiche" onchange="caricaPratica(this.value)">
     <option value="">— Seleziona pratica —</option>
   </select>
-  <!-- RICERCA RAPIDA ID (Modifica 2) -->
+  <!-- RICERCA RAPIDA ID -->
   <input type="text" id="cerca-pratica" placeholder="🔍 Cerca ID (es. 001)" oninput="cercaPraticaRapida(this.value)"/>
   <button class="pb-btn" onclick="nuovaPratica()" title="Nuova pratica">+ Nuova</button>
   <button class="pb-btn" onclick="esportaPratica()" title="Esporta JSON">📤</button>
@@ -195,7 +195,6 @@ textarea{resize:vertical}
       <span class="st">Identificativo & Nome Pratica</span>
     </div>
     <div class="sec-body">
-      <!-- ID NUMERICO e NOME DESCRITTIVO (Modifica 2) -->
       <div class="g3" style="grid-template-columns: 100px 1fr; gap:10px; margin-bottom:0">
         <div class="field">
           <label class="lbl">ID Pratica <span class="req">*</span></label>
@@ -365,7 +364,6 @@ textarea{resize:vertical}
   <div class="sec">
     <div class="sec-head" style="background:#1a5276"><span class="sl" style="background:#fff;color:#1a5276">G·K</span><span class="st">Località e Capoluogo (Autocomplete)</span></div>
     <div class="sec-body">
-      <!-- AUTOCOMPLETE CITTÀ / CAPOLUOGO (Modifica 1) -->
       <div class="g2">
         <div class="field">
           <label class="lbl">G — Comune/Città <span class="req">*</span> (inizia a digitare per cercare)</label>
@@ -456,25 +454,25 @@ textarea{resize:vertical}
     </button>
   </div>
 
-</div><div id="status-bar">
-  <div style="flex:1;min-width:0">
-    <div id="status-nome" style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Nessuna pratica selezionata</div>
-    <div id="status-salvato" style="font-size:10px;opacity:.65">— seleziona o crea una pratica</div>
-  </div>
+</div>
+
+<!-- BARRA DI STATO MINIMAL (Modifica 3: altezza 34px, solo icona tooltip e azioni) -->
+<div id="status-bar">
+  <div id="status-info" title="Passa il mouse per le info sulla pratica corrente">ℹ️</div>
   <select id="stato-select" onchange="cambiaStato(this.value)">
     <option value="bozza">🟡 Bozza</option>
     <option value="pronta">🟢 Pronta</option>
     <option value="inviata">🔴 Inviata</option>
     <option value="autorizzata">🔵 Autorizzata</option>
   </select>
-  <button id="btn-salva" onclick="salvaPratica()">💾 Salva</button>
+  <button id="btn-salva" onclick="salvaPratica()" title="Salva pratica">💾 Salva</button>
 </div>
 
 <script>
 'use strict';
 
 /* ═══════════════════════════════════════════
-   COSTANTI & DATABASE COMUNI (Modifica 1)
+   COSTANTI & DATABASE COMUNI
 ═══════════════════════════════════════════ */
 const STORAGE_KEY = 'atm05b_v3';
 const STATO_EMOJI = { bozza:'🟡', pronta:'🟢', inviata:'🔴', autorizzata:'🔵' };
@@ -491,7 +489,6 @@ const ZONE_DB = {
 
 const PROVINCE = ["AG","AL","AN","AO","AP","AQ","AR","AT","AV","BA","BG","BI","BL","BN","BO","BR","BS","BT","BZ","CA","CB","CE","CH","CL","CN","CO","CR","CS","CT","CZ","EN","FC","FE","FG","FI","FM","FR","GE","GO","GR","IM","IS","KR","LC","LE","LI","LO","LT","LU","MB","MC","ME","MI","MN","MO","MS","MT","NA","NO","NU","OR","PA","PC","PD","PE","PG","PI","PN","PO","PR","PT","PU","PV","PZ","RA","RC","RE","RG","RI","RM","RN","RO","SA","SI","SO","SP","SR","SS","SU","SV","TA","TE","TN","TO","TP","TR","TS","TV","UD","VA","VB","VC","VE","VI","VR","VT","VV"];
 
-// Mini-DB Città Italiane (Capoluoghi e centri principali per autocomplete rapido)
 const COMUNI_DB = [
   {c:"Roma",p:"RM"},{c:"Milano",p:"MI"},{c:"Napoli",p:"NA"},{c:"Torino",p:"TO"},{c:"Palermo",p:"PA"},{c:"Genova",p:"GE"},{c:"Bologna",p:"BO"},{c:"Firenze",p:"FI"},{c:"Bari",p:"BA"},{c:"Catania",p:"CT"},
   {c:"Venezia",p:"VE"},{c:"Verona",p:"VR"},{c:"Messina",p:"ME"},{c:"Padova",p:"PD"},{c:"Trieste",p:"TS"},{c:"Brescia",p:"BS"},{c:"Taranto",p:"TA"},{c:"Parma",p:"PR"},{c:"Prato",p:"PO"},{c:"Modena",p:"MO"},
@@ -509,7 +506,6 @@ const COMUNI_DB = [
 
 const FIELDS = ['idPratica','nomePratica','destA','destCc','richiedente','nomePilota','attestato','tipoLic','telPilota','tipoAttivita','aeromobile','decollo','latDecollo','lonDecollo','atterraggio','latAtterraggio','lonAtterraggio','localita','capoluogo','aeroporto','distanza','limVerticali','dateOrari','altreNotizie','luogo','dataRichiesta','zona','dronePreset','provincia','pilotaPreset'];
 
-// Popola province e datalist Comuni
 const pSel = document.getElementById('provincia');
 PROVINCE.forEach(p => { const o = document.createElement('option'); o.value=p; o.textContent=p; pSel.appendChild(o); });
 const cList = document.getElementById('comuni-list');
@@ -565,7 +561,6 @@ function leggiForm() {
   FIELDS.forEach(k => { const e=document.getElementById(k); if(e) d[k]=e.value; });
   d.punti = punti.map(p => ({...p}));
   d.zoneSelezionate = [...document.querySelectorAll('#zona-checks input[type=checkbox]:checked')].map(c=>c.value);
-  // Persiste lo stato readonly delle coordinate (Modifica 5)
   d.coordsLocked = document.getElementById('latDecollo')?.readOnly || false;
   return d;
 }
@@ -581,7 +576,6 @@ function scriviForm(d) {
     if(cb) cb.checked = true;
   });
   
-  // Ripristina lo stato di blocco coordinate se era salvo (Modifica 5)
   const isLocked = d.coordsLocked || false;
   ['latDecollo','lonDecollo','latAtterraggio','lonAtterraggio'].forEach(id => {
     const el = document.getElementById(id);
@@ -606,12 +600,25 @@ function scriviForm(d) {
   updatePreviewN();
 }
 
+// Controllo unicità ID pratica (Modifica 2)
+function controllaDuplicatoID(idNum) {
+  if (!idNum || !praticaCorrenteId) return false;
+  const pratiche = getPratiche();
+  return Object.values(pratiche).some(p => p.id !== praticaCorrenteId && (p.dati?.idPratica || '').trim() === idNum.trim());
+}
+
 function salvaPratica(silenzioso) {
   if (!praticaCorrenteId) { if(!silenzioso) alert('Crea prima una nuova pratica con + Nuova'); return; }
+  const idNum = document.getElementById('idPratica').value.trim() || '000';
+  
+  // Avviso se ID duplicato al salvataggio manuale (Modifica 2)
+  if (!silenzioso && controllaDuplicatoID(idNum)) {
+    alert(`⚠️ Attenzione: L'ID "${idNum}" è già assegnato a un'altra pratica in archivio.`);
+  }
+
   const pratiche = getPratiche();
   const p = pratiche[praticaCorrenteId] || {};
   p.id = praticaCorrenteId;
-  const idNum = document.getElementById('idPratica').value.trim() || '000';
   const nomeDesc = document.getElementById('nomePratica').value.trim() || 'Pratica senza nome';
   p.nome = `[${idNum}] ${nomeDesc}`;
   p.stato = p.stato || 'bozza';
@@ -623,9 +630,6 @@ function salvaPratica(silenzioso) {
   modificato = false;
   aggiornaStatusBar();
   aggiornaListaPratiche();
-  if(!silenzioso) {
-    document.getElementById('status-salvato').textContent = '— salvata ' + new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
-  }
 }
 
 function debouncedSave() {
@@ -635,7 +639,6 @@ function debouncedSave() {
   saveTimer = setTimeout(() => salvaPratica(true), 350);
 }
 
-// Generazione progressivo numerico automatico (Modifica 2)
 function generaProssimoID() {
   const pratiche = getPratiche();
   let maxId = 0;
@@ -686,7 +689,6 @@ function caricaPratica(id) {
   runValidation();
 }
 
-// Ricerca rapida per ID numerico (Modifica 2)
 function cercaPraticaRapida(query) {
   if (!query.trim()) return;
   const q = query.trim().toLowerCase();
@@ -729,7 +731,7 @@ function cambiaStato(stato) {
 }
 
 /* ═══════════════════════════════════════════
-   UI ARCHIVIO
+   UI ARCHIVIO & STATO MINIMAL (Modifica 3)
 ═══════════════════════════════════════════ */
 function aggiornaListaPratiche() {
   const pratiche = getPratiche();
@@ -747,13 +749,18 @@ function aggiornaListaPratiche() {
 function aggiornaStatusBar() {
   const pratiche = getPratiche();
   const p = praticaCorrenteId ? pratiche[praticaCorrenteId] : null;
-  document.getElementById('status-nome').textContent = p ? `${STATO_EMOJI[p.stato]||'🟡'} ${p.nome}` : 'Nessuna pratica';
+  const infoIcon = document.getElementById('status-info');
+  const btnSalva = document.getElementById('btn-salva');
+
   if (p) {
     const mod = p.modificata ? new Date(p.modificata).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'}) : '—';
-    document.getElementById('status-salvato').textContent = modificato ? '— modifiche non salvate' : `— salvata ${mod}`;
+    const tooltipText = `Pratica: ${p.nome}\nStato: ${p.stato.toUpperCase()}\nUltima modifica: ${mod}\n${modificato ? '⚠️ MODIFICHE NON SALVATE' : '✅ Tutto salvato'}`;
+    infoIcon.title = tooltipText;
+    btnSalva.title = `Salva modifiche (${modificato ? 'Modificato' : 'Salvato'})`;
     document.getElementById('stato-select').value = p.stato || 'bozza';
   } else {
-    document.getElementById('status-salvato').textContent = '— seleziona o crea una pratica';
+    infoIcon.title = 'Nessuna pratica selezionata o creata';
+    btnSalva.title = 'Salva pratica corrente';
   }
 }
 
@@ -841,7 +848,6 @@ function autoSync(src, dst) {
   if (!document.getElementById(dst).value) document.getElementById(dst).value = document.getElementById(src).value;
 }
 
-// Autocompilazione capoluogo da ricerca città (Modifica 1)
 function autoCompilaCapoluogo(val) {
   const match = COMUNI_DB.find(item => item.c.toLowerCase() === val.trim().toLowerCase());
   if (match) {
@@ -871,7 +877,6 @@ function aggiornaZone() {
   });
   document.getElementById('destA').value=emailsA.join('; ');
   
-  // Protezione campo Cc: non sovrascrive se già modificato (Modifica 4)
   const defaultCc = 'protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it';
   const currentCc = document.getElementById('destCc').value.trim();
   if (!currentCc || currentCc === defaultCc) {
@@ -991,10 +996,9 @@ function convArea(){
 }
 
 /* ═══════════════════════════════════════════
-   PUNTI LATERALI SMART (Modifica 7)
+   PUNTI LATERALI SMART
 ═══════════════════════════════════════════ */
 function handleSmartVertex(val, i) {
-  // Se l'utente incolla una coordinata decimale intera nel campo Lat (es. "41.9027, 12.4963"), compila entrambi!
   if (val.includes(',') || val.includes(' ')) {
     const p = parseCoordLine(val);
     if (p) {
@@ -1039,18 +1043,28 @@ function updatePreviewN(){
 }
 
 /* ═══════════════════════════════════════════
-   VALIDAZIONE DATE ROBUSTA (Modifica 6)
+   VALIDAZIONE DATE ESATTA & ID (Modifica 1 e 2)
 ═══════════════════════════════════════════ */
 function runValidation(){
   const errs=[],warns=[];
   const V=id=>{const e=document.getElementById(id);return e?e.value.trim():''};
   const MESI={"gennaio":0,"febbraio":1,"marzo":2,"aprile":3,"maggio":4,"giugno":5,"luglio":6,"agosto":7,"settembre":8,"ottobre":9,"novembre":10,"dicembre":11,"gen":0,"feb":1,"mar":2,"apr":3,"mag":4,"giu":5,"lug":6,"ago":7,"set":8,"ott":9,"nov":10,"dic":11};
 
-  if(!V('nomePratica') && !V('idPratica'))errs.push('⛔ Identificativo o nome pratica obbligatorio.');
+  const idNum = V('idPratica');
+  if(!V('nomePratica') && !idNum) errs.push('⛔ Identificativo o nome pratica obbligatorio.');
+
+  // Check duplicato ID pratica in tempo reale (Modifica 2)
+  if (idNum && controllaDuplicatoID(idNum)) {
+    warns.push(`⚠️ ATTENZIONE: L'ID "${escapeHTML(idNum)}" è già assegnato a un'altra pratica in archivio.`);
+  }
 
   const dateStr=V('dateOrari');
   if(dateStr){
-    // Trova tutti i nomi di mese nel testo ed estrapola i giorni e l'anno associati
+    // Rimuove orari (es. 15:00), parole chiave di orario e due punti prima di analizzare (Modifica 1)
+    const dateSenzaOrari = dateStr
+      .replace(/\b\d{1,2}:\d{2}(:\d{2})?\b/g, ' ')
+      .replace(/\b(ore|dalle|alle|utc|local[ei]?)\s*\d{1,2}\b/gi, ' ');
+
     const regexMesi = /(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic)/gi;
     let match;
     let minDiffDays = 999;
@@ -1058,24 +1072,24 @@ function runValidation(){
     oggi.setHours(0,0,0,0);
     const annoCorrente = oggi.getFullYear();
 
-    while ((match = regexMesi.exec(dateStr)) !== null) {
+    while ((match = regexMesi.exec(dateSenzaOrari)) !== null) {
       const meseNome = match[0].toLowerCase();
       const idxMese = MESI[meseNome];
       
-      // Cerca anno nei 10 caratteri successivi al mese
-      const dopoMese = dateStr.slice(regexMesi.lastIndex, regexMesi.lastIndex + 10);
+      const dopoMese = dateSenzaOrari.slice(regexMesi.lastIndex, regexMesi.lastIndex + 10);
       const matchAnno = dopoMese.match(/\d{4}/);
       let anno = matchAnno ? parseInt(matchAnno[0], 10) : annoCorrente;
 
-      // Cerca tutti i numeri (giorni) prima del mese nell'intervallo fino al mese precedente
-      const primaMese = dateStr.slice(0, match.index);
-      const giorniMatch = primaMese.match(/\b([1-9]|[12]\d|3[01])\b/g);
+      // Legge ESCLUSIVAMENTE la porzione immediata prima del mese (max 30 caratteri)
+      const startIdx = Math.max(0, match.index - 30);
+      const porzionePrima = dateSenzaOrari.slice(startIdx, match.index);
+      
+      const giorniMatch = porzionePrima.match(/\b([1-9]|[12]\d|3[01])\b/g);
       
       if (giorniMatch && giorniMatch.length > 0) {
         giorniMatch.forEach(gStr => {
           const giorno = parseInt(gStr, 10);
           let dataTarget = new Date(anno, idxMese, giorno);
-          // Se l'anno è omesso e la data è già passata, si assume l'anno prossimo
           if (!matchAnno && dataTarget < oggi) {
             dataTarget = new Date(annoCorrente + 1, idxMese, giorno);
           }
@@ -1181,7 +1195,7 @@ async function verificaEGenera(){
 }
 
 /* ═══════════════════════════════════════════
-   EMAIL PEC CON SEPARATORI PULITI (Modifica 3)
+   EMAIL PEC
 ═══════════════════════════════════════════ */
 function apriEmailPronta() {
   const V = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
@@ -1199,7 +1213,6 @@ function apriEmailPronta() {
     return;
   }
 
-  // Conversione di tutti i ";" in "," e rimozione spazi extra per compatibilità client PEC
   const cleanA = destA.replace(/;/g, ',').replace(/\s+/g, '');
   const cleanCc = destCc.replace(/;/g, ',').replace(/\s+/g, '');
 
