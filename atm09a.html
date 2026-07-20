@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>360Drone – Compilatore Professionale ATM-05 / ATM-09A v4.0</title>
+<title>360Drone – Compilatore Professionale ATM-05 / ATM-09A v4.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -92,11 +92,17 @@ textarea{resize:vertical}
 #btn-salva{padding:2px 14px;height:24px;border:1.5px solid #ffffff66;border-radius:4px;background:transparent;color:#fff;font-weight:700;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background 0.15s}
 #btn-salva:hover{background:#ffffff22}
 
-/* ── PRINT AREA OVERRIDE ── */
-#print-area{display:none}
+/* ── PDF GENERATING ── */
+#print-area{position:absolute;left:-9999px;top:0;display:none;width:210mm}
+#print-area.generating{display:block}
+#pdf-loading{display:none;position:fixed;inset:0;background:#0009;z-index:9999;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-size:16px;font-weight:700}
+#pdf-loading.show{display:flex}
+
+/* ── PRINT FALLBACK ── */
 @media print{
-  body *{display:none!important}
-  #print-area,#print-area *{display:block!important}
+  body>*:not(#print-area){display:none!important}
+  #print-area{display:block!important;position:static!important;left:0!important;width:100%!important}
+  #print-area *{display:block}
   #print-area{font-family:'Times New Roman',serif;font-size:11pt;color:#000;line-height:1.4}
   .p-page{width:100%;padding:12mm 12mm;page-break-after:always}
   .p-page:last-child{page-break-after:avoid}
@@ -136,10 +142,10 @@ textarea{resize:vertical}
       <tr><td class="pc">C — Tipologia Modulo / Istanza</td><td id="p-istanza-tipo">Richiesta di autorizzazione al volo all'interno dei volumi di protezione ATZ / CTR aeroportuali ai sensi della circolare ATM-09A.</td></tr>
       <tr><td class="pc">D — Categoria e Tipo di Attività</td><td id="p-attiv">—</td></tr>
       <tr><td class="pc">E — Specifiche Mezzo e Sistemi RTH</td><td id="p-aero">—</td></tr>
-      <tr><td class="pc">F — Scenario Operativo / Validazione</td><td id="p-scenario">—</td></tr>
+      <tr><td class="pc">F — Scenario Operativo / Validazione</td><td><span id="p-scenario">—</span><br>CRO/Autorizzazione: <span id="p-cro">—</span></td></tr>
       <tr><td class="pc">G — Area Operazioni (Decollo/Sito)</td><td id="p-dec">—</td></tr>
       <tr><td class="pc">H — Comune / Spazio Aereo Coinvolto</td><td id="p-loc">—</td></tr>
-      <tr><td class="pc">I — Limiti Laterali (Coordinate Geografiche WGS84)</td><td>
+      <tr><td class="pc">I — Limiti Laterali (Coordinate WGS84)</td><td>
         <table style="width:100%;border-collapse:collapse">
           <thead>
             <tr>
@@ -154,8 +160,8 @@ textarea{resize:vertical}
       <tr><td class="pc">J — Limiti Verticali (Quote Richieste)</td><td id="p-lim">—</td></tr>
       <tr><td class="pc">K — Quota Massima Operativa</td><td id="p-quota">—</td></tr>
       <tr><td class="pc">L — Diritti Aeronautici / Ricevuta</td><td id="p-diritti">—</td></tr>
-      <tr><td class="pc">M — Calendario Attività ed Orari (Sempre UTC)</td><td id="p-date" style="font-weight:bold">—</td></tr>
-      <tr><td class="pc">N — Note di Sicurezza e Recapiti H24 / TBT</td><td style="white-space:pre-line;font-size:9.5pt" id="p-note">—</td></tr>
+      <tr><td class="pc">M — Calendario Attività ed Orari (Solo UTC)</td><td id="p-date" style="font-weight:bold">—</td></tr>
+      <tr><td class="pc">N — Note Sicurezza, Assicurazione e Recapiti</td><td style="white-space:pre-line;font-size:9.5pt" id="p-note">—</td></tr>
     </table>
     <div class="psig">
       <div>Luogo e Data di emissione:<br><span id="p-luogodata">—</span></div>
@@ -164,10 +170,12 @@ textarea{resize:vertical}
   </div>
 </div>
 
+<div id="pdf-loading"><div style="font-size:40px;margin-bottom:12px">⏳</div><div>Generazione PDF in corso…</div></div>
+
 <!-- INTERFACCIA APPLICAZIONE -->
 <div id="header">
-  <div><div class="sub">360Drone – Servizi per Professionisti</div><h1>Compilatore Rapido ATM-05 / ATM-09A v4.0</h1></div>
-  <div class="info">Anno Operativo: 2026<br>Desk Agenzia Terzi</div>
+  <div><div class="sub">360Drone – Servizi per Professionisti</div><h1>Compilatore Rapido ATM-05 / ATM-09A v4.1</h1></div>
+  <div class="info">Anno Operativo: <span id="header-anno"></span><br>Desk Agenzia Terzi</div>
 </div>
 
 <div id="pratica-bar">
@@ -208,7 +216,7 @@ textarea{resize:vertical}
         </div>
         <div class="field">
           <label class="lbl">Descrizione / Nome Cantiere <span class="req">*</span></label>
-          <input type="text" id="nomePratica" placeholder="Es. Rossi Srl - Linate - 2026" oninput="onPracticeNameChange()"/>
+          <input type="text" id="nomePratica" placeholder="Es. Rossi Srl - Linate" oninput="onPracticeNameChange()"/>
         </div>
         <div class="field">
           <label class="lbl">Modello di Modulo Ministeriale <span class="req">*</span></label>
@@ -332,7 +340,7 @@ textarea{resize:vertical}
         </div>
         <div class="field">
           <label class="lbl">Autorizzazione Nazionale ENAC / Ricevuta CRO <span class="req">*</span></label>
-          <input type="text" id="cro" placeholder="Es. CRO-2026-XXXXXX o Esente (Open)"/>
+          <input type="text" id="cro" placeholder="Es. CRO-202X-XXXXXX o Esente (Open)"/>
         </div>
       </div>
       <div class="field">
@@ -438,7 +446,7 @@ textarea{resize:vertical}
       </div>
       <div class="field">
         <label class="lbl">Programmazione Date e Orari Operativi (Formato Rigoroso UTC) <span class="req">*</span></label>
-        <textarea id="dateOrari" rows="2" placeholder="Es. Dal 15 al 18 Giugno 2026, dalle ore 06:00 UTC alle ore 12:00 UTC giornaliere (Finestra di riserva: 19 Giugno 2026)"></textarea>
+        <textarea id="dateOrari" rows="2" placeholder="Es. Dal 15 al 18 Giugno, dalle ore 06:00 UTC alle ore 12:00 UTC giornaliere (Finestra di riserva: 19 Giugno)"></textarea>
         <div style="font-size:11px; color:#c0392b; margin-top:4px; font-weight:bold;">
           ⚠️ NOTA DI COMPILAZIONE PER TERZI: L'orario deve essere indicato esclusivamente in UTC. (Ora solare italiana = UTC+1, Ora legale estiva italiana = UTC+2).
         </div>
@@ -463,7 +471,7 @@ textarea{resize:vertical}
       </div>
       <div class="field">
         <label class="lbl">Identificativo Pagamento Diritti d'Istruttoria ENAC (€ 94,00) <span class="req">*</span></label>
-        <input type="text" id="pagamentoDiritti" placeholder="Es. Codice Transazione / Fattura ENAC n. 2026/XXXXX del gg/mm/2026"/>
+        <input type="text" id="pagamentoDiritti" placeholder="Es. Codice Transazione / Fattura ENAC n. 202X/XXXXX del gg/mm/202X"/>
       </div>
       <div class="field">
         <label class="lbl">Note Aggiuntive e Integrazioni di Sicurezza (Sezione N)</label>
@@ -519,6 +527,24 @@ textarea{resize:vertical}
 </div>
 
 <script>
+// IMPOSTA ANNO CORRENTE DINAMICO
+document.getElementById('header-anno').textContent = new Date().getFullYear();
+
+// ESCAPE HTML PER SICUREZZA (Bug 1 Fixato)
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>"']/g, function(m) {
+    switch (m) {
+      case '&': return '&amp;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '"': return '&quot;';
+      case "'": return '&#039;';
+      default: return m;
+    }
+  });
+}
+
 const ZONE_DB = {
   "Zona Celeste (60m)":   { tipo:"celeste",   avviso:"🔵 NOTA: Limite area Celeste (60m AGL). Richiesto inoltro documentale con almeno 15 giorni di anticipo." },
   "Zona Gialla (45m)":    { tipo:"gialla",    avviso:"🟡 NOTA: Limite area Gialla (45m AGL). Richiesto inoltro documentale con almeno 15 giorni di anticipo." },
@@ -671,9 +697,11 @@ function loadPractice(id) {
     const el = document.getElementById(id);
     if(el) { el.readOnly = isLocked; el.style.background = isLocked ? '#f0f4f1' : ''; }
   });
-  const resDec = document.getElementById('conv-dec-result');
+  
+  const resDec = document.getElementById('conv-dec-result'); // Fix Bug 2: era res anziché resDec
   if (isLocked && data.latDecollo) {
-    resDec.style.display = 'block'; res.innerHTML = `✅ Decollo bloccato<br><button onclick="sbloccaCoord()" style="margin-top:5px;padding:3px 11px;border:1px solid #0e6655;border-radius:5px;background:#fff;color:#0e6655;font-size:11px;cursor:pointer">🔓 Modifica</button>`;
+    resDec.style.display = 'block'; 
+    resDec.innerHTML = `✅ Decollo bloccato<br><button onclick="sbloccaCoord()" style="margin-top:5px;padding:3px 11px;border:1px solid #0e6655;border-radius:5px;background:#fff;color:#0e6655;font-size:11px;cursor:pointer">🔓 Modifica</button>`;
   } else {
     resDec.style.display = 'none';
   }
@@ -845,11 +873,14 @@ function decToSex(dec, isLat) {
   return `${d}°${String(m).padStart(2,'0')}'${String(s).padStart(2,'0')}"${dir}`;
 }
 
+// Fix Bug 5: Reintrodotto controllo NaN e range geografico Italia/Europa
 function parseCoordLine(line) {
   line = line.trim().replace(/[;|]/g, ',');
   const m = line.match(/(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)/);
   if (!m) return null;
-  return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+  const lat = parseFloat(m[1]), lon = parseFloat(m[2]);
+  if(isNaN(lat) || isNaN(lon) || lat < 35 || lat > 48 || lon < 6 || lon > 19) return null;
+  return { lat, lon };
 }
 
 function convDecollo(val) {
@@ -857,7 +888,7 @@ function convDecollo(val) {
   if (!val.trim()) { res.style.display = 'none'; return; }
   const p = parseCoordLine(val);
   if (!p) {
-    res.style.display='block'; res.style.background='#fdecea'; res.textContent = '❌ Coordinate non valide.'; return;
+    res.style.display='block'; res.style.background='#fdecea'; res.textContent = '❌ Coordinate non valide o fuori zona (richiesto formato WGS84 per l\'Italia).'; return;
   }
   const latS = decToSex(p.lat, true), lonS = decToSex(p.lon, false);
   document.getElementById('latDecollo').value = latS;
@@ -892,7 +923,6 @@ function convArea() {
   res.style.display='block'; res.innerHTML = `✅ Caricati ${convertiti.length} vertici poligonali nel modulo.`;
 }
 
-// Inserimento SMART vertici
 function handleSmartVertex(val, i) {
   if (val.includes(',') || val.includes(' ')) {
     const p = parseCoordLine(val);
@@ -916,12 +946,13 @@ function renderPunti() {
     hdr.innerHTML = '<span class="lbl">Identificativo Vertice</span><span class="lbl">Lat N (o incolla "Lat, Lon")</span><span class="lbl">Lon E</span><span></span>';
     c.appendChild(hdr);
   }
+  // Fix Bug 7: Aggiunto escapeHTML sui value per evitare rotture tag
   punti.forEach((p, i) => {
     const row = document.createElement('div'); row.className='g3';
     row.innerHTML = `
-      <input type="text" value="${p.nome}" oninput="punti[${i}].nome=this.value;debouncedSave()"/>
-      <input type="text" value="${p.lat}" placeholder="Gradi'Minuti'' o 45.46, 9.19" oninput="handleSmartVertex(this.value, ${i})"/>
-      <input type="text" value="${p.lon}" placeholder="Gradi'Minuti''Secondi&quot;" oninput="punti[${i}].lon=this.value;debouncedSave()"/>
+      <input type="text" value="${escapeHTML(p.nome)}" oninput="punti[${i}].nome=this.value;debouncedSave()"/>
+      <input type="text" value="${escapeHTML(p.lat)}" placeholder="Gradi'Minuti'' o 45.46, 9.19" oninput="handleSmartVertex(this.value, ${i})"/>
+      <input type="text" value="${escapeHTML(p.lon)}" placeholder="Gradi'Minuti''Secondi&quot;" oninput="punti[${i}].lon=this.value;debouncedSave()"/>
       <button onclick="removePunto(${i})" style="padding:6px 10px; background:#fdecea; color:#c0392b; border:1px solid #e8a0a0; border-radius:4px; cursor:pointer;">✕</button>`;
     c.appendChild(row);
   });
@@ -951,9 +982,10 @@ function runValidation() {
 
   const modello = V('tipoModello');
   const zona = V('zona');
-  const preavvisoMinimo = zona.includes('CTR Militare') ? 60 : (zona.includes('Rossa') ? 30 : 15);
+  
+  // Fix Bug 8: Preavviso scalato correttamente anche per zona Arancione
+  const preavvisoMinimo = zona.includes('CTR Militare') ? 60 : (zona.includes('Rossa') ? 30 : (zona.includes('Arancione') ? 20 : 15));
 
-  // VALIDAZIONE DATE AVANZATA (V3.1 -> V4.0)
   const dateStr=V('dateOrari');
   if(dateStr){
     const dateSenzaOrari = dateStr
@@ -963,7 +995,7 @@ function runValidation() {
     const regexMesi = /(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic)/gi;
     let match; let minDiffDays = 999;
     const oggi = new Date(); oggi.setHours(0,0,0,0);
-    const annoCorrente = 2026; // Fissato per contesto agenzia
+    const annoCorrente = new Date().getFullYear(); // Fix Bug 9: Anno corrente calcolato dinamicamente
     let ultimoIndiceMese = 0;
 
     while ((match = regexMesi.exec(dateSenzaOrari)) !== null) {
@@ -989,7 +1021,7 @@ function runValidation() {
     }
     
     // Regole convertite in giorni solari
-    const preavvisoSolare = preavvisoMinimo === 15 ? 21 : (preavvisoMinimo === 30 ? 45 : 90);
+    const preavvisoSolare = preavvisoMinimo === 15 ? 21 : (preavvisoMinimo === 20 ? 28 : (preavvisoMinimo === 30 ? 45 : 90));
     if (minDiffDays !== 999) {
       if (minDiffDays < 0) errs.push('⛔ Errore: Le date del volo inserite sono già passate!');
       else if (minDiffDays < preavvisoSolare) errs.push(`⛔ Anticipo insufficiente: volo tra ${minDiffDays} giorni solari. L'Ente richiede minimo ${preavvisoMinimo} gg lavorativi (circa ${preavvisoSolare} solari).`);
@@ -997,7 +1029,6 @@ function runValidation() {
     }
   }
 
-  // CONTROLLO INCROCIATO QUOTA / COLORE D-FLIGHT (Miglioria 4)
   const quota = V('quotaMax');
   if (zona && quota) {
     if (zona.includes('Rossa') && !quota.includes('Speciale')) errs.push('⛔ In Zona Rossa la quota deve essere giustificata da un\'analisi specifica. Seleziona "Quota Speciale".');
@@ -1030,41 +1061,7 @@ function renderAlerts() {
   c.innerHTML = [...errs.map(m=>`<div class="alert a-err">${escapeHTML(m)}</div>`), ...warns.map(m=>`<div class="alert a-warn">${escapeHTML(m)}</div>`)].join('');
 }
 
-function exportPractice() {
-  if (!currentPracticeId) return;
-  saveCurrentPractice(true);
-  const p = getPractices()[currentPracticeId];
-  const blob = new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `Istanza_${p.name.replace(/[^a-zA-Z0-9]/g, '_')}_2026.json`;
-  a.click();
-}
-
-function importPractice(event) {
-  const file = event.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const p = JSON.parse(e.target.result);
-      if (!p.data) throw new Error();
-      p.id = 'PR' + Date.now().toString(36);
-      p.name += ' (Importato)';
-      const practices = getPractices(); practices[p.id] = p; setPractices(practices);
-      currentPracticeId = p.id; loadPractice(p.id);
-    } catch(err) { alert('❌ File JSON non valido o non conforme alla struttura dei moduli.'); }
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
-
-function resetForm() {
-  if (confirm('Azzerare completamente l\'archivio locale delle pratiche?')) {
-    localStorage.removeItem(STORAGE_KEY); location.reload();
-  }
-}
-
-function generaPDF() {
+async function generaPDF() {
   runValidation();
   if (window._alerts.errs.length > 0) {
     switchTab('alert');
@@ -1086,7 +1083,7 @@ function generaPDF() {
   set('p-attiv', V('catOperativa') + ' — ' + V('tipoAttivita'));
   set('p-aero', V('aeromobile'));
   set('p-scenario', V('scenario'));
-  set('p-cro', V('cro'));
+  set('p-cro', V('cro')); // Fix Bug 3: Aggiornato campo CRO nel PDF
   set('p-dec', V('decollo') + (V('latDecollo') ? ` (Lat: ${V('latDecollo')} - Lon: ${V('lonDecollo')})` : ''));
   set('p-loc', `${V('localita')} / Zona D-Flight: ${V('zona')}`);
   set('p-lim', V('limVerticali'));
@@ -1098,9 +1095,11 @@ function generaPDF() {
   const telH24 = V('telPilota');
   const freq = V('freqRadio');
   const aero = V('aeroporto');
+  const assic = V('assicurazione');
   const extra = V('altreNotizie');
 
-  const notizie = `Dichiarazioni d'obbligo e di coordinamento logistico di sicurezza:\nIl pilota in comando e i tecnici a terra associati all'esercente ${nomeEsercente} dichiarano la disponibilità totale all'immediata sospensione dei voli UAS e alla tempestiva liberazione dei volumi d'aria impegnati su richiesta dell'Ente ATS competente (${aero}).\nContatto d'emergenza radiotelefonico TBT interbordo/terra stabilito sulla frequenza ${freq} ed al recapito mobile prioritario H24: ${telH24}.\nI droni impiegati dispongono di sistemi attivi di Geofencing, FailSafe automatico con Return To Home (RTH) tarato sulle quote di sicurezza locali e terminazione rapida del volo conforme. Volo condotto costantemente in visibilità diretta (VLOS).\n${extra}`;
+  // Fix Bug 4: Assicurazione iniettata nelle dichiarazioni d'obbligo
+  const notizie = `Dichiarazioni d'obbligo e di coordinamento logistico di sicurezza:\nIl pilota in comando e i tecnici a terra associati all'esercente ${nomeEsercente} dichiarano la disponibilità totale all'immediata sospensione dei voli UAS e alla tempestiva liberazione dei volumi d'aria impegnati su richiesta dell'Ente ATS competente (${aero}).\nContatto d'emergenza radiotelefonico TBT interbordo/terra stabilito sulla frequenza ${freq} ed al recapito mobile prioritario H24: ${telH24}.\nI droni impiegati dispongono di sistemi attivi di Geofencing, FailSafe automatico con Return To Home (RTH) tarato sulle quote di sicurezza locali e terminazione rapida del volo conforme. Volo condotto costantemente in visibilità diretta (VLOS).\nAssicurazione RC Aeronautica: ${assic}\n${extra}`;
   set('p-note', notizie);
   set('p-luogodata', `${V('luogo')}, ${V('dataRichiesta')}`);
 
@@ -1110,14 +1109,39 @@ function generaPDF() {
     ? validi.map(p => `<tr><td>${escapeHTML(p.nome)}</td><td>${escapeHTML(p.lat)}</td><td>${escapeHTML(p.lon)}</td></tr>`).join('')
     : '<tr><td colspan="3">Nessun vertice specifico inserito (Punto singolo centrale di decollo).</td></tr>';
 
-  document.getElementById('print-area').style.display = 'block';
-  setTimeout(() => {
+  // Fix Bug 6: Ripristinata engine html2pdf per il download automatico del PDF
+  const el = document.getElementById('print-area');
+  const idNum = document.getElementById('idPratica').value.trim() || '000';
+  const nomePratica = (document.getElementById('nomePratica').value||'pratica').replace(/[^a-z0-9àèìòù]/gi,'_');
+  const modello = V('tipoModello') === 'ATM05' ? 'ATM05' : 'ATM09A';
+  
+  const loading = document.getElementById('pdf-loading');
+  loading.classList.add('show');
+  el.style.display = 'block';
+
+  try {
+    if(typeof html2pdf !== 'undefined') {
+      await html2pdf().set({
+        margin: [12, 10, 12, 10],
+        filename: `${modello}_[${idNum}]_${nomePratica}.pdf`,
+        image: { type: 'jpeg', quality: 0.97 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css'] }
+      }).from(el).save();
+    } else {
+      window.print();
+    }
+  } catch(err) {
+    console.error(err);
+    alert('Errore generazione PDF. Uso sistema di stampa di emergenza del browser…');
     window.print();
-    document.getElementById('print-area').style.display = 'none';
-  }, 200);
+  }
+  
+  el.style.display = 'none';
+  loading.classList.remove('show');
 }
 
-// EMAIL PEC PRE-COMPILATA (Miglioria 1)
 function apriEmailPronta() {
   const V = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
   const destA = V('destA');
