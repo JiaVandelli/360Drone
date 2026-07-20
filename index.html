@@ -64,7 +64,7 @@ textarea{resize:vertical}
 .conv-box textarea{background:#fff;border:1.5px solid #aad4ea;border-radius:6px;font-family:monospace;font-size:13px;width:100%;padding:7px 10px;outline:none}
 .conv-result{margin-top:7px;font-family:monospace;font-size:12px;color:#0e6655;background:#e8f5e9;border-radius:6px;padding:6px 11px;line-height:1.9;display:none}
 .conv-btn{margin-top:7px;padding:6px 14px;border:none;border-radius:6px;background:#1a3c5e;color:#fff;font-weight:700;font-size:12px;cursor:pointer}
-/* ── STATUS BAR FISSA (Modifica 3: Minimal 34px) ── */
+/* ── STATUS BAR FISSA (Minimal 34px) ── */
 #status-bar{position:fixed;bottom:0;left:0;right:0;height:34px;background:#1a3c5e;color:#fff;padding:0 14px;display:flex;align-items:center;justify-content:flex-end;gap:10px;z-index:100;box-shadow:0 -2px 10px #0005}
 #status-info{margin-right:auto;font-size:15px;cursor:help;display:flex;align-items:center;opacity:0.85;transition:opacity 0.15s}
 #status-info:hover{opacity:1}
@@ -569,13 +569,13 @@ function scriviForm(d) {
   if (!d) return;
   FIELDS.forEach(k => { const e=document.getElementById(k); if(e && d[k]!=null) e.value=d[k]; });
   if (d.punti && d.punti.length) punti = d.punti.map(p=>({...p})); else punti=[{nome:'',lat:'',lon:''},{nome:'',lat:'',lon:''}];
-  
+
   document.querySelectorAll('#zona-checks input[type=checkbox]').forEach(cb => { cb.checked=false; });
   if (d.zoneSelezionate) d.zoneSelezionate.forEach(v => {
     const cb = document.querySelector(`#zona-checks input[value="${v}"]`);
     if(cb) cb.checked = true;
   });
-  
+
   const isLocked = d.coordsLocked || false;
   ['latDecollo','lonDecollo','latAtterraggio','lonAtterraggio'].forEach(id => {
     const el = document.getElementById(id);
@@ -594,7 +594,7 @@ function scriviForm(d) {
   } else {
     resDec.style.display = 'none';
   }
-  
+
   aggiornaZone();
   renderPunti();
   updatePreviewN();
@@ -610,7 +610,7 @@ function controllaDuplicatoID(idNum) {
 function salvaPratica(silenzioso) {
   if (!praticaCorrenteId) { if(!silenzioso) alert('Crea prima una nuova pratica con + Nuova'); return; }
   const idNum = document.getElementById('idPratica').value.trim() || '000';
-  
+
   // Avviso se ID duplicato al salvataggio manuale (Modifica 2)
   if (!silenzioso && controllaDuplicatoID(idNum)) {
     alert(`⚠️ Attenzione: L'ID "${idNum}" è già assegnato a un'altra pratica in archivio.`);
@@ -731,7 +731,7 @@ function cambiaStato(stato) {
 }
 
 /* ═══════════════════════════════════════════
-   UI ARCHIVIO & STATO MINIMAL (Modifica 3)
+   UI ARCHIVIO & STATO MINIMAL
 ═══════════════════════════════════════════ */
 function aggiornaListaPratiche() {
   const pratiche = getPratiche();
@@ -876,13 +876,13 @@ function aggiornaZone() {
     if(z.msg)avvisi.push(z.msg);
   });
   document.getElementById('destA').value=emailsA.join('; ');
-  
+
   const defaultCc = 'protocollo@pec.enac.gov.it; mobilita.innovativa@enac.gov.it';
   const currentCc = document.getElementById('destCc').value.trim();
   if (!currentCc || currentCc === defaultCc) {
     document.getElementById('destCc').value = defaultCc;
   }
-  
+
   document.getElementById('zona').value=valori.join(', ');
   const av=document.getElementById('zona-avviso');
   if(avvisi.length){
@@ -932,10 +932,10 @@ function decToSex(dec, isLat) {
   const mAll = (abs - d) * 60;
   let m = Math.floor(mAll);
   let s = Math.round((mAll - m) * 60);
-  
+
   if (s === 60) { s = 0; m += 1; }
   if (m === 60) { m = 0; d += 1; }
-  
+
   const dir = isLat ? (dec >= 0 ? 'N' : 'S') : (dec >= 0 ? 'E' : 'W');
   return `${d}°${String(m).padStart(2,'0')}'${String(s).padStart(2,'0')}"${dir}`;
 }
@@ -1043,7 +1043,7 @@ function updatePreviewN(){
 }
 
 /* ═══════════════════════════════════════════
-   VALIDAZIONE DATE ESATTA & ID (Modifica 1 e 2)
+   VALIDAZIONE DATE ESATTA & ID (Modifica 1, 2, 3)
 ═══════════════════════════════════════════ */
 function runValidation(){
   const errs=[],warns=[];
@@ -1053,14 +1053,14 @@ function runValidation(){
   const idNum = V('idPratica');
   if(!V('nomePratica') && !idNum) errs.push('⛔ Identificativo o nome pratica obbligatorio.');
 
-  // Check duplicato ID pratica in tempo reale (Modifica 2)
+  // Check duplicato ID pratica in tempo reale
   if (idNum && controllaDuplicatoID(idNum)) {
-    warns.push(`⚠️ ATTENZIONE: L'ID "${escapeHTML(idNum)}" è già assegnato a un'altra pratica in archivio.`);
+    warns.push(`⚠️ ATTENZIONE: L'ID "${idNum}" è già assegnato a un'altra pratica in archivio.`);
   }
 
   const dateStr=V('dateOrari');
   if(dateStr){
-    // Rimuove orari (es. 15:00), parole chiave di orario e due punti prima di analizzare (Modifica 1)
+    // Rimuove orari (es. 15:00), parole chiave di orario e due punti prima di analizzare
     const dateSenzaOrari = dateStr
       .replace(/\b\d{1,2}:\d{2}(:\d{2})?\b/g, ' ')
       .replace(/\b(ore|dalle|alle|utc|local[ei]?)\s*\d{1,2}\b/gi, ' ');
@@ -1071,21 +1071,24 @@ function runValidation(){
     const oggi = new Date();
     oggi.setHours(0,0,0,0);
     const annoCorrente = oggi.getFullYear();
+    
+    // Variabile per ricordare dove finiva il mese precedente e leggere liste lunghe
+    let ultimoIndiceMese = 0;
 
     while ((match = regexMesi.exec(dateSenzaOrari)) !== null) {
       const meseNome = match[0].toLowerCase();
       const idxMese = MESI[meseNome];
-      
+
       const dopoMese = dateSenzaOrari.slice(regexMesi.lastIndex, regexMesi.lastIndex + 10);
       const matchAnno = dopoMese.match(/\d{4}/);
       let anno = matchAnno ? parseInt(matchAnno[0], 10) : annoCorrente;
 
-      // Legge ESCLUSIVAMENTE la porzione immediata prima del mese (max 30 caratteri)
-      const startIdx = Math.max(0, match.index - 30);
-      const porzionePrima = dateSenzaOrari.slice(startIdx, match.index);
-      
+      // Legge TUTTO ciò che c'è tra l'inizio (o il mese precedente) e il mese attuale
+      const porzionePrima = dateSenzaOrari.slice(ultimoIndiceMese, match.index);
+      ultimoIndiceMese = regexMesi.lastIndex; // Aggiorna per il prossimo ciclo
+
       const giorniMatch = porzionePrima.match(/\b([1-9]|[12]\d|3[01])\b/g);
-      
+
       if (giorniMatch && giorniMatch.length > 0) {
         giorniMatch.forEach(gStr => {
           const giorno = parseInt(gStr, 10);
@@ -1101,8 +1104,8 @@ function runValidation(){
 
     if (minDiffDays !== 999) {
       if (minDiffDays < 0) errs.push('⛔ Le date del volo inserite sono già passate!');
-      else if (minDiffDays < 15) errs.push(`⛔ Anticipo insufficiente: la data più vicina è tra ${minDiffDays} giorni (minimo legale ENAC: 15 giorni lavorativi).`);
-      else if (minDiffDays < 20) warns.push(`⚠️ Anticipo breve: data tra ${minDiffDays} giorni. Consigliati almeno 20 giorni.`);
+      else if (minDiffDays < 21) errs.push(`⛔ Anticipo insufficiente: la data è tra ${minDiffDays} giorni solari. Servono almeno 21 giorni di calendario per garantire i 15 lavorativi richiesti dagli enti.`);
+      else if (minDiffDays < 25) warns.push(`⚠️ Anticipo breve: data tra ${minDiffDays} giorni solari. Sei al limite con il calcolo dei giorni lavorativi, la pratica potrebbe essere respinta.`);
     }
   }
 
@@ -1114,7 +1117,7 @@ function runValidation(){
   if(zona.includes('P -')&&dp&&!dp.includes('249g'))
     warns.push('⚠️ Drone pesante in zona P: difficile ottenere autorizzazione. Considera DJI Mini ≤249g.');
   if(zona.includes('Militare'))
-    warns.push('⚠️ Zona militare: richiedere anche nulla osta al comando militare. Anticipo min. 30 gg.');
+    warns.push('⚠️ Zona militare: richiedere nulla osta al comando militare. Anticipo minimo: 30 gg lavorativi (circa 45 solari).');
   if(zona.includes('P -'))
     warns.push('ℹ️ Zona P: bollo virtuale attivo nel PDF. Verificare se accettato dall\'ente destinatario.');
 
@@ -1199,7 +1202,7 @@ async function verificaEGenera(){
 ═══════════════════════════════════════════ */
 function apriEmailPronta() {
   const V = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
-  
+
   const destA = V('destA');
   const destCc = V('destCc');
   const idNum = V('idPratica') || '000';
@@ -1207,7 +1210,7 @@ function apriEmailPronta() {
   const localita = V('localita') || 'Italia';
   const richiedente = V('richiedente') || 'Operatore APR';
   const tel = V('telPilota') || '0187 1755700';
-  
+
   if (!destA) {
     alert('⚠️ Seleziona prima una Zona (Sezione H) per auto-compilare l\'email PEC del destinatario.');
     return;
@@ -1217,7 +1220,7 @@ function apriEmailPronta() {
   const cleanCc = destCc.replace(/;/g, ',').replace(/\s+/g, '');
 
   const oggetto = encodeURIComponent(`Presentazione Modello ATM-05b - Pratica [${idNum}] ${nomePratica} - Località: ${localita}`);
-  
+
   const corpoTesto = `Spett.le Ufficio Competente / ENAC,\n\nCon la presente si trasmette in allegato il Modello ATM-05b per la richiesta di autorizzazione ad effettuare attività di volo con APR (UAS) ai sensi del Reg. (UE) 2019/947 e delle disposizioni ENAC vigenti.\n\nRiferimento Pratica: [${idNum}] ${nomePratica}\nLocalità: ${localita}\nRichiedente: ${richiedente}\nRecapito telefonico operativo: ${tel}\n\nIl modulo ATM-05b debitamente compilato e firmato è allegato alla presente comunicazione.\nRestiamo a disposizione per qualsiasi chiarimento o integrazione.\n\nCordiali saluti,\n${richiedente}\n360Drone – Permessi e Autorizzazioni\nTel. 0187 1755700 - PEC: 360drone@pec.it`;
 
   const corpo = encodeURIComponent(corpoTesto);
@@ -1234,7 +1237,7 @@ function mostraReport() {
   if (!lista.length) { alert('Nessuna pratica salvata.'); return; }
   const conteggi = {bozza:[], pronta:[], inviata:[], autorizzata:[]};
   lista.forEach(p => { if(conteggi[p.stato]) conteggi[p.stato].push(p); else conteggi.bozza.push(p); });
-  
+
   const righeStato = Object.entries({bozza:'🟡 Bozze', pronta:'🟢 Pronte', inviata:'🔴 Inviate', autorizzata:'🔵 Autorizzate'}).map(([stato,label]) => {
     const items = conteggi[stato];
     if (!items.length) return '';
@@ -1244,7 +1247,7 @@ function mostraReport() {
     }).join('');
     return `<div style="margin-bottom:14px"><div style="font-weight:700;font-size:13px;margin-bottom:5px">${label} (${items.length})</div>${righe}</div>`;
   }).join('');
-  
+
   let bytes = 0;
   try { bytes = (localStorage.getItem(STORAGE_KEY)||'').length * 2; } catch(e){}
   const kb = (bytes/1024).toFixed(1);
