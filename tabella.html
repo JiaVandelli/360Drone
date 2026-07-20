@@ -29,10 +29,13 @@
   #user-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 12px; font-size: 12px; }
   #sync-badge { font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: bold; background: #e74c3c; color: #fff; }
 
+  /* ── BARRA RIEPILOGO ── */
+  #summary-bar { display: flex; gap: 16px; padding: 8px 24px; background: #fff; border-bottom: 1px solid #ddd; font-size: 13px; font-weight: 600; flex-wrap: wrap; align-items: center; }
+
   /* ── STRUTTURA BOARD ── */
   #board { display: flex; padding: 20px; gap: 20px; flex-grow: 1; align-items: flex-start; overflow-x: auto; overflow-y: hidden; }
   
-  .column { background: var(--col-bg); border-radius: 8px; width: 320px; flex-shrink: 0; max-height: calc(100vh - 80px); display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+  .column { background: var(--col-bg); border-radius: 8px; width: 320px; flex-shrink: 0; max-height: calc(100vh - 120px); display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
   .column-header { padding: 14px; font-weight: 800; font-size: 15px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
   .column-count { background: rgba(255,255,255,0.25); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
   
@@ -62,7 +65,7 @@
   
   .field-group { margin-bottom: 14px; }
   .field-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #444; text-transform: uppercase; letter-spacing: 0.05em; }
-  .field-group input[type=text], .field-group select, .field-group textarea { width: 100%; padding: 8px 10px; border: 1px solid #bccea8; border-radius: 4px; outline: none; background: #fff; }
+  .field-group input[type=text], .field-group select, .field-group textarea, .field-group input[type=date] { width: 100%; padding: 8px 10px; border: 1px solid #bccea8; border-radius: 4px; outline: none; background: #fff; font-family: inherit; }
   .field-group input:focus, .field-group select:focus, .field-group textarea:focus { border-color: var(--header-bg); }
   .field-group-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; padding: 4px 0; }
   .field-group-checkbox input { width: 16px; height: 16px; cursor: pointer; }
@@ -110,6 +113,10 @@
       <button class="btn btn-light" onclick="document.getElementById('file-import').click()">📥 Importa</button>
       <button class="btn btn-light" onclick="exportData()">📤 Esporta</button>
     </div>
+  </div>
+
+  <div id="summary-bar">
+    <!-- Verrà riempito da JS -->
   </div>
 
   <div id="board">
@@ -163,7 +170,7 @@
   </div>
 </div>
 
-<!-- MODAL GESTIONE COLONNE (PUNTO 2) -->
+<!-- MODAL GESTIONE COLONNE -->
 <div class="modal-overlay" id="columns-modal">
   <div class="modal">
     <h2>Configurazione Colonne Tipologia</h2>
@@ -177,7 +184,7 @@
   </div>
 </div>
 
-<!-- MODAL GESTIONE STATI COLORI (PUNTO 2) -->
+<!-- MODAL GESTIONE STATI COLORI -->
 <div class="modal-overlay" id="statuses-modal">
   <div class="modal">
     <h2>Configurazione Stati e Flussi</h2>
@@ -192,6 +199,17 @@
 </div>
 
 <script>
+// ESCAPE HTML FUNCTION
+function escapeHTML(str) {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 // DATABASE STRUTTURATO ESTESO
 let appData = {
   columns: [],
@@ -207,10 +225,10 @@ let usingServer = false;
 function initDefaultData() {
   if (appData.columns.length === 0) {
     appData.columns = [
-      { id: "col-atm05b", title: "ATM-05b", color: "#0f341e" },
-      { id: "col-atm09a", title: "ATM-09A", color: "#1a5276" },
-      { id: "col-sora", title: "Valutazioni di Volo / SORA", color: "#7d3c98" },
-      { id: "col-altro", title: "Altre Pratiche", color: "#475569" }
+      { id: "col-atm05b", title: "ATM-05b", color: "#0f341e", order: 0 },
+      { id: "col-atm09a", title: "ATM-09A", color: "#1a5276", order: 1 },
+      { id: "col-sora", title: "Valutazioni di Volo / SORA", color: "#7d3c98", order: 2 },
+      { id: "col-altro", title: "Altre Pratiche", color: "#475569", order: 3 }
     ];
   }
   if (appData.statuses.length === 0) {
@@ -254,7 +272,7 @@ function startApp() {
   connectToServer();
 }
 
-// ── ENGINE REALTIME SINCRONIZZAZIONE (PUNTO 4b) ──
+// ── ENGINE REALTIME SINCRONIZZAZIONE ──
 function connectToServer() {
   if (typeof io === 'undefined') {
     console.log("Server di sincronizzazione non rilevato. Funzionamento in archiviazione locale.");
@@ -295,10 +313,31 @@ function connectToServer() {
 
 function saveAndSync() {
   localStorage.setItem("360drone_board_data", JSON.stringify(appData));
-  updateStatusBar();
   if (usingServer && socket) {
     socket.emit('update', appData);
   }
+}
+
+function updateSummary() {
+  const bar = document.getElementById('summary-bar');
+  if (!bar) return;
+  let total = appData.cards.length;
+  let urgent = appData.cards.filter(c => c.phoneUrgent).length;
+  
+  let statusCounts = {};
+  appData.statuses.forEach(s => { statusCounts[s.id] = 0; });
+  appData.cards.forEach(c => {
+    if (statusCounts[c.status] !== undefined) statusCounts[c.status]++;
+  });
+  
+  let html = `<span style="padding:4px 0;">Totale: <strong>${total}</strong></span>`;
+  if (urgent > 0) html += `<span style="color:#e74c3c; padding:4px 0;">📞 Urgenti: <strong>${urgent}</strong></span>`;
+  
+  appData.statuses.forEach(s => {
+    html += `<span style="background:${s.color}; padding:4px 10px; border-radius:12px; border: 1px solid rgba(0,0,0,0.1);">${escapeHTML(s.label)}: <strong>${statusCounts[s.id]}</strong></span>`;
+  });
+  
+  bar.innerHTML = html;
 }
 
 // ── RENDER GRAPHIC ENGINE ──
@@ -306,7 +345,8 @@ function renderBoard() {
   const board = document.getElementById("board");
   board.innerHTML = "";
   
-  appData.columns.forEach(col => {
+  // Ordina colonne per order
+  appData.columns.sort((a, b) => (a.order || 0) - (b.order || 0)).forEach(col => {
     const colDiv = document.createElement("div");
     colDiv.className = "column";
     
@@ -329,7 +369,6 @@ function renderBoard() {
       cardDiv.className = "card";
       cardDiv.onclick = () => openModal(null, card.id);
       
-      // Calcolo dinamico colore da stato associato (PUNTO 2.3)
       const statusObj = appData.statuses.find(s => s.id === card.status) || { color: "#ffffff" };
       cardDiv.style.background = statusObj.color;
       cardDiv.style.borderLeftColor = "rgba(0,0,0,0.15)";
@@ -340,8 +379,7 @@ function renderBoard() {
         dateHtml = `📅 ${dateObj.toLocaleDateString("it-IT")}`;
       }
       
-      // Controllo urgenza telefonica per icona (PUNTO 2.3)
-      const phoneHtml = card.phoneUrgent ? `<span class="phone-icon">📞</span>` : "";
+      const phoneHtml = card.phoneUrgent ? `<span class="phone-icon" title="Urgente">📞</span>` : "";
       
       cardDiv.innerHTML = `
         <span class="card-id">ID: ${escapeHTML(card.code || "---")}</span>
@@ -355,13 +393,14 @@ function renderBoard() {
       listDiv.appendChild(cardDiv);
     });
   });
+  
+  updateSummary();
 }
 
 // ── CRUD LOGICA MODALE PRATICA ──
 function openModal(columnId = null, cardId = null) {
   document.getElementById("card-modal").style.display = "flex";
   
-  // Generazione dinamica opzioni select basate sugli stati registrati
   const selectStatus = document.getElementById("card-status");
   selectStatus.innerHTML = appData.statuses.map(s => `<option value="${s.id}">${escapeHTML(s.label)}</option>`).join('');
   
@@ -374,7 +413,7 @@ function openModal(columnId = null, cardId = null) {
     document.getElementById("card-name").value = card.title;
     document.getElementById("card-date").value = card.dueDate || "";
     document.getElementById("card-status").value = card.status;
-    document.getElementById("card-phone-urgent").checked = card.phoneUrgent || false; // PUNTO 2.4
+    document.getElementById("card-phone-urgent").checked = card.phoneUrgent || false;
     document.getElementById("card-notes").value = card.notes || "";
     document.getElementById("btn-delete").style.display = "block";
   } else {
@@ -385,7 +424,7 @@ function openModal(columnId = null, cardId = null) {
     document.getElementById("card-name").value = "";
     document.getElementById("card-date").value = "";
     document.getElementById("card-status").value = appData.statuses[0]?.id || "";
-    document.getElementById("card-phone-urgent").checked = false; // PUNTO 2.4
+    document.getElementById("card-phone-urgent").checked = false;
     document.getElementById("card-notes").value = "";
     document.getElementById("btn-delete").style.display = "none";
   }
@@ -404,7 +443,7 @@ function saveCard() {
     columnId: document.getElementById("card-column").value,
     dueDate: document.getElementById("card-date").value,
     status: document.getElementById("card-status").value,
-    phoneUrgent: document.getElementById("card-phone-urgent").checked, // PUNTO 2.4
+    phoneUrgent: document.getElementById("card-phone-urgent").checked,
     notes: document.getElementById("card-notes").value,
     operator: currentUser,
     lastEdit: new Date().toISOString()
@@ -433,7 +472,18 @@ function deleteCard() {
   renderBoard();
 }
 
-// ── MANAGER INTERFACCIA COLONNE (PUNTO 2.2) ──
+// ── MANAGER INTERFACCIA COLONNE ──
+function addColumn(title, color = "#475569") {
+  const newCol = {
+    id: "col-" + Date.now(),
+    title,
+    color,
+    order: appData.columns.length
+  };
+  appData.columns.push(newCol);
+  saveAndSync();
+}
+
 function openColumnsManager() {
   const list = document.getElementById("columns-list");
   list.innerHTML = "";
@@ -454,9 +504,7 @@ function closeColumnsManager() { document.getElementById("columns-modal").style.
 function addColumnFromUI() {
   const title = prompt("Titolo o Tipologia Nuova Pratica (es. ATM-03):");
   if (title && title.trim()) {
-    const newCol = { id: "col-" + Date.now(), title: title.trim(), color: "#475569" };
-    appData.columns.push(newCol);
-    saveAndSync();
+    addColumn(title.trim());
     renderBoard();
     openColumnsManager();
   }
@@ -480,7 +528,13 @@ function deleteColumn(colId) {
   openColumnsManager();
 }
 
-// ── MANAGER INTERFACCIA STATI (PUNTO 2.2) ──
+// ── MANAGER INTERFACCIA STATI ──
+function addStatus(label, color) {
+  const id = "status-" + Date.now();
+  appData.statuses.push({ id, label, color });
+  saveAndSync();
+}
+
 function openStatusManager() {
   const list = document.getElementById("statuses-list");
   list.innerHTML = "";
@@ -501,9 +555,7 @@ function closeStatusManager() { document.getElementById("statuses-modal").style.
 function addStatusFromUI() {
   const label = prompt("Etichetta nuovo stato (es. Sospesa da ENAC):");
   if (label && label.trim()) {
-    const id = "status-" + Date.now();
-    appData.statuses.push({ id, label: label.trim(), color: "#e2e8f0" });
-    saveAndSync();
+    addStatus(label.trim(), "#e2e8f0");
     renderBoard();
     openStatusManager();
   }
@@ -524,13 +576,6 @@ function deleteStatus(statusId) {
 }
 
 // ── UTILITY BACKUP E UTILS ──
-function updateStatusBar() {
-  if (currentPracticeId && document.getElementById('status-name')) {
-    const p = getPractices()[currentPracticeId];
-    document.getElementById('status-name').textContent = p ? `Pratica: ${p.name}` : 'Nessun file aperto';
-  }
-}
-
 function exportData() {
   const dataStr = JSON.stringify(appData, null, 2);
   const blob = new Blob([dataStr], { type: "application/json" });
