@@ -3,171 +3,226 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>360Drone – Board Operativo Pratiche</title>
+<title>360Drone – Board Operativo Pratiche Realtime</title>
+<!-- Collegamento alla libreria Socket.IO erogata dal server Node.js -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   :root {
     --bg-main: #f0f4f8;
     --header-bg: #0f341e;
     --col-bg: #e1e8ed;
     --text-main: #1a2a1e;
-    --red-alert: #ffdddd;
-    --red-border: #ff8888;
-    --yellow-wait: #fff5cc;
-    --yellow-border: #ffcc00;
-    --green-ok: #d4edda;
-    --green-border: #28a745;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
   body { background: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow-x: auto; }
 
-  /* -- HEADER E LOGIN -- */
+  /* ── HEADER ── */
   #header { background: var(--header-bg); color: #fff; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
   #header h1 { font-size: 18px; font-weight: 800; }
-  .header-actions { display: flex; gap: 10px; align-items: center; }
-  .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: opacity 0.2s; }
+  .header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 4px; }
   .btn:hover { opacity: 0.8; }
   .btn-light { background: #fff; color: var(--header-bg); }
   
-  #user-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 12px; font-size: 12px; margin-right: 15px; }
+  #user-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 12px; font-size: 12px; }
+  #sync-badge { font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: bold; background: #e74c3c; color: #fff; }
 
-  /* -- STRUTTURA A COLONNE (BOARD) -- */
+  /* ── STRUTTURA BOARD ── */
   #board { display: flex; padding: 20px; gap: 20px; flex-grow: 1; align-items: flex-start; overflow-x: auto; overflow-y: hidden; }
   
-  .column { background: var(--col-bg); border-radius: 8px; width: 320px; flex-shrink: 0; max-height: calc(100vh - 80px); display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .column-header { padding: 14px; font-weight: 800; font-size: 15px; border-bottom: 2px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
-  .column-count { background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+  .column { background: var(--col-bg); border-radius: 8px; width: 320px; flex-shrink: 0; max-height: calc(100vh - 80px); display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+  .column-header { padding: 14px; font-weight: 800; font-size: 15px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+  .column-count { background: rgba(255,255,255,0.25); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
   
-  .task-list { padding: 10px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
+  .task-list { padding: 10px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 10px; min-height: 20px; }
   
-  .add-task-btn { padding: 12px; text-align: left; color: #555; cursor: pointer; border-radius: 0 0 8px 8px; transition: background 0.2s; }
+  .add-task-btn { padding: 12px; text-align: left; color: #555; cursor: pointer; border-top: 1px solid rgba(0,0,0,0.05); background: rgba(0,0,0,0.02); font-weight: 600; transition: background 0.2s; }
   .add-task-btn:hover { background: rgba(0,0,0,0.05); color: #000; }
 
-  /* -- CARD DELLA PRATICA -- */
-  .card { background: #fff; border-radius: 6px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: pointer; border-left: 4px solid #ccc; transition: transform 0.1s; }
+  /* ── CARD DELLA PRATICA ── */
+  .card { background: #fff; border-radius: 6px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: pointer; border-left: 5px solid #ccc; transition: transform 0.1s, box-shadow 0.1s; position: relative; }
   .card:hover { transform: translateY(-2px); box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
   
-  .card.stato-da-fare { background: var(--red-alert); border-color: var(--red-border); }
-  .card.stato-attesa { background: var(--yellow-wait); border-color: var(--yellow-border); }
-  .card.stato-approvata { background: var(--green-ok); border-color: var(--green-border); }
-
-  .card-id { font-size: 10px; font-weight: bold; color: #666; margin-bottom: 4px; display: block; }
-  .card-title { font-size: 14px; font-weight: bold; margin-bottom: 8px; word-wrap: break-word; }
+  .card-id { font-size: 10px; font-weight: bold; color: rgba(0,0,0,0.5); margin-bottom: 4px; display: block; }
+  .card-title { font-size: 14px; font-weight: bold; margin-bottom: 8px; word-wrap: break-word; padding-right: 20px; }
   
-  .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11px; color: #555; }
-  .card-date { display: flex; align-items: center; gap: 4px; }
+  .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11px; color: rgba(0,0,0,0.7); }
+  .card-date { display: flex; align-items: center; gap: 4px; font-weight: 600; }
   .card-user { background: rgba(0,0,0,0.06); padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+  .phone-icon { position: absolute; top: 10px; right: 10px; font-size: 14px; }
 
-  /* -- MODAL (FINESTRA DI INSERIMENTO/MODIFICA) -- */
-  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
-  .modal { background: #fff; padding: 24px; border-radius: 8px; width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-  .modal h2 { margin-bottom: 16px; font-size: 18px; color: var(--header-bg); }
+  /* ── MODALI UTENTI E CONFIGURAZIONI ── */
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 10px; }
+  .modal { background: #fff; padding: 24px; border-radius: 8px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; display: flex; flex-direction: column; }
+  .modal h2 { margin-bottom: 16px; font-size: 18px; color: var(--header-bg); font-weight: 800; }
+  
+  .modal-scroll-body { overflow-y: auto; flex-grow: 1; margin-bottom: 15px; padding-right: 4px; }
   
   .field-group { margin-bottom: 14px; }
-  .field-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #444; }
-  .field-group input, .field-group select, .field-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
+  .field-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #444; text-transform: uppercase; letter-spacing: 0.05em; }
+  .field-group input[type=text], .field-group select, .field-group textarea { width: 100%; padding: 8px 10px; border: 1px solid #bccea8; border-radius: 4px; outline: none; background: #fff; }
   .field-group input:focus, .field-group select:focus, .field-group textarea:focus { border-color: var(--header-bg); }
-  
-  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-  .btn-save { background: var(--header-bg); color: #fff; }
-  .btn-cancel { background: #eee; color: #333; }
-  .btn-delete { background: #e74c3c; color: #fff; margin-right: auto; } /* Spinto a sinistra */
+  .field-group-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; padding: 4px 0; }
+  .field-group-checkbox input { width: 16px; height: 16px; cursor: pointer; }
 
-  /* Fix per far sparire il prompt login all'inizio */
+  .manager-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #e9ecef; }
+  .manager-row input[type=text] { flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; }
+  .manager-row input[type=color] { width: 34px; height: 30px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 0; background: none; }
+
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; padding-top: 10px; border-top: 1px solid #eee; }
+  .btn-save { background: var(--header-bg); color: #fff; }
+  .btn-cancel { background: #e2e8f0; color: #334155; }
+  .btn-delete { background: #e74c3c; color: #fff; }
+  .modal-actions .btn-delete { margin-right: auto; }
+
   #login-overlay { display: flex; }
   #app-content { display: none; }
 </style>
 </head>
 <body>
 
-<!-- OVERLAY DI ACCESSO -->
+<!-- OVERLAY DI ACCESSO OPERATORE -->
 <div class="modal-overlay" id="login-overlay">
   <div class="modal">
-    <h2>Accesso Board 360Drone</h2>
+    <h2>Accesso Monitor 360Drone</h2>
     <div class="field-group">
-      <label>Inserisci il tuo Nome o Identificativo:</label>
-      <input type="text" id="login-name" placeholder="Es. Mario Rossi / MR">
+      <label>Operatore in turno (Nome Cognome / Sigla):</label>
+      <input type="text" id="login-name" placeholder="Es. Mario Rossi">
     </div>
     <div class="modal-actions">
-      <button class="btn btn-save" onclick="login()">Entra</button>
+      <button class="btn btn-save" onclick="login()">Configura Sessione</button>
     </div>
   </div>
 </div>
 
-<!-- CONTENUTO PRINCIPALE DELL'APP -->
+<!-- CONTAINER PRINCIPALE APPLICAZIONE -->
 <div id="app-content" style="height: 100%; display: flex; flex-direction: column;">
   <div id="header">
-    <h1>Board Operativo Pratiche</h1>
+    <h1>Lavagna Operativa Pratiche</h1>
     <div class="header-actions">
+      <span id="sync-badge">OFFLINE</span>
       <span id="user-badge">Operatore: </span>
+      <button class="btn btn-light" onclick="openColumnsManager()">⚙️ Colonne</button>
+      <button class="btn btn-light" onclick="openStatusManager()">🎨 Stati</button>
       <input type="file" id="file-import" accept=".json" style="display:none" onchange="importData(event)">
-      <button class="btn btn-light" onclick="document.getElementById('file-import').click()">📥 Importa DB</button>
-      <button class="btn btn-light" onclick="exportData()">📤 Esporta DB</button>
+      <button class="btn btn-light" onclick="document.getElementById('file-import').click()">📥 Importa</button>
+      <button class="btn btn-light" onclick="exportData()">📤 Esporta</button>
     </div>
   </div>
 
   <div id="board">
-    <!-- Le colonne verranno generate qui dal Javascript -->
+    <!-- Generazione dinamica lato script -->
   </div>
 </div>
 
-<!-- MODAL CREAZIONE / MODIFICA CARD -->
+<!-- MODAL COMPILAZIONE / EDITING CARD -->
 <div class="modal-overlay" id="card-modal">
   <div class="modal">
     <h2 id="modal-title">Dettagli Pratica</h2>
     <input type="hidden" id="card-id">
     <input type="hidden" id="card-column">
     
-    <div class="field-group">
-      <label>Codice / ID Pratica Interno</label>
-      <input type="text" id="card-code" placeholder="Es. 001">
-    </div>
-    <div class="field-group">
-      <label>Nome Cantiere / Cliente (Titolo)</label>
-      <input type="text" id="card-name" placeholder="Es. Rilievo Fotogrammetrico Linate">
-    </div>
-    <div class="field-group">
-      <label>Scadenza / Data Volo</label>
-      <input type="date" id="card-date">
-    </div>
-    <div class="field-group">
-      <label>Stato d'Avanzamento (Modifica Colore)</label>
-      <select id="card-status">
-        <option value="da-fare">🔴 Da Iniziare / Compilare</option>
-        <option value="attesa">🟡 In Attesa di Risposta (ENAC/Prefettura)</option>
-        <option value="approvata">🟢 Approvata / Conclusa</option>
-      </select>
-    </div>
-    <div class="field-group">
-      <label>Note veloci</label>
-      <textarea id="card-notes" rows="3" placeholder="Appunti..."></textarea>
+    <div class="modal-scroll-body">
+      <div class="field-group">
+        <label>ID Numerico Pratica</label>
+        <input type="text" id="card-code" placeholder="Es. 001">
+      </div>
+      <div class="field-group">
+        <label>Nome Cantiere / Committente</label>
+        <input type="text" id="card-name" placeholder="Es. Ispezione Linate Srl">
+      </div>
+      <div class="field-group">
+        <label>Data di Scadenza Istanza / Volo</label>
+        <input type="date" id="card-date">
+      </div>
+      <div class="field-group">
+        <label>Stato di Avanzamento</label>
+        <select id="card-status">
+          <!-- Popolato dinamicamente da appData.statuses -->
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-group-checkbox">
+          <input type="checkbox" id="card-phone-urgent">
+          <span>📞 Richiesta reperibilità telefonica immediata (H24)</span>
+        </label>
+      </div>
+      <div class="field-group">
+        <label>Note di Campo / Prescrizioni Enti</label>
+        <textarea id="card-notes" rows="3" placeholder="Aggiungi dettagli..."></textarea>
+      </div>
     </div>
     
     <div class="modal-actions">
-      <button class="btn btn-delete" id="btn-delete" onclick="deleteCard()" style="display:none;">Elimina</button>
+      <button class="btn btn-delete" id="btn-delete" onclick="deleteCard()">Elimina</button>
       <button class="btn btn-cancel" onclick="closeModal()">Annulla</button>
-      <button class="btn btn-save" onclick="saveCard()">Salva</button>
+      <button class="btn btn-save" onclick="saveCard()">Salva Pratica</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL GESTIONE COLONNE (PUNTO 2) -->
+<div class="modal-overlay" id="columns-modal">
+  <div class="modal">
+    <h2>Configurazione Colonne Tipologia</h2>
+    <div class="modal-scroll-body" id="columns-list">
+      <!-- Lista righe generata da JS -->
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-save" onclick="addColumnFromUI()">+ Aggiungi Colonna</button>
+      <button class="btn btn-cancel" onclick="closeColumnsManager()">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL GESTIONE STATI COLORI (PUNTO 2) -->
+<div class="modal-overlay" id="statuses-modal">
+  <div class="modal">
+    <h2>Configurazione Stati e Flussi</h2>
+    <div class="modal-scroll-body" id="statuses-list">
+      <!-- Lista righe generata da JS -->
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-save" onclick="addStatusFromUI()">+ Nuovo Stato</button>
+      <button class="btn btn-cancel" onclick="closeStatusManager()">Chiudi</button>
     </div>
   </div>
 </div>
 
 <script>
-// IL NOSTRO DATABASE VIRTUALE (Si salva nel browser)
+// DATABASE STRUTTURATO ESTESO
 let appData = {
-  columns: [
-    { id: "col-atm05b", title: "ATM-05b" },
-    { id: "col-atm09a", title: "ATM-09A" },
-    { id: "col-sora", title: "Valutazioni di Volo / SORA" },
-    { id: "col-altro", title: "Altre Pratiche" }
-  ],
-  cards: []
+  columns: [],
+  cards: [],
+  statuses: []
 };
 
 let currentUser = "";
+let socket = null;
+let usingServer = false;
 
-// -- INIZIALIZZAZIONE --
+// ── INIZIALIZZAZIONE DEFAULT SE LOCALE VUOTO ──
+function initDefaultData() {
+  if (appData.columns.length === 0) {
+    appData.columns = [
+      { id: "col-atm05b", title: "ATM-05b", color: "#0f341e" },
+      { id: "col-atm09a", title: "ATM-09A", color: "#1a5276" },
+      { id: "col-sora", title: "Valutazioni di Volo / SORA", color: "#7d3c98" },
+      { id: "col-altro", title: "Altre Pratiche", color: "#475569" }
+    ];
+  }
+  if (appData.statuses.length === 0) {
+    appData.statuses = [
+      { id: "da-fare", label: "Da Iniziare", color: "#ffdddd" },
+      { id: "attesa", label: "In Attesa", color: "#fff5cc" },
+      { id: "approvata", label: "Approvata", color: "#d4edda" }
+    ];
+  }
+}
+
 window.onload = () => {
-  // Controlla se c'è un utente salvato
   const savedUser = localStorage.getItem("360drone_user");
   if (savedUser) {
     currentUser = savedUser;
@@ -179,7 +234,7 @@ window.onload = () => {
 
 function login() {
   const name = document.getElementById("login-name").value.trim();
-  if (!name) return alert("Inserisci un identificativo");
+  if (!name) return alert("Identificativo operatore obbligatorio per tracciare le modifiche.");
   localStorage.setItem("360drone_user", name);
   currentUser = name;
   startApp();
@@ -190,62 +245,111 @@ function startApp() {
   document.getElementById("app-content").style.display = "flex";
   document.getElementById("user-badge").textContent = `Operatore: ${currentUser}`;
   
-  // Carica i dati salvati
   const savedData = localStorage.getItem("360drone_board_data");
   if (savedData) {
-    appData = JSON.parse(savedData);
+    try { appData = JSON.parse(savedData); } catch(e) { console.error("Errore parse cache locale"); }
   }
-  
+  initDefaultData();
   renderBoard();
+  connectToServer();
 }
 
-// -- RENDERIZZAZIONE DELLA BOARD --
+// ── ENGINE REALTIME SINCRONIZZAZIONE (PUNTO 4b) ──
+function connectToServer() {
+  if (typeof io === 'undefined') {
+    console.log("Server di sincronizzazione non rilevato. Funzionamento in archiviazione locale.");
+    return;
+  }
+  
+  socket = io();
+  const badge = document.getElementById("sync-badge");
+
+  socket.on('connect', () => {
+    badge.textContent = "ONLINE (REALTIME)";
+    badge.style.background = "#28a745";
+    usingServer = true;
+  });
+  
+  socket.on('init', (serverData) => {
+    if (serverData && (serverData.columns?.length || serverData.cards?.length)) {
+      appData = serverData;
+      localStorage.setItem("360drone_board_data", JSON.stringify(appData));
+      renderBoard();
+    }
+  });
+  
+  socket.on('update', (serverData) => {
+    if (serverData) {
+      appData = serverData;
+      localStorage.setItem("360drone_board_data", JSON.stringify(appData));
+      renderBoard();
+    }
+  });
+
+  socket.on('disconnect', () => {
+    badge.textContent = "OFFLINE (LOCALE)";
+    badge.style.background = "#e74c3c";
+    usingServer = false;
+  });
+}
+
+function saveAndSync() {
+  localStorage.setItem("360drone_board_data", JSON.stringify(appData));
+  updateStatusBar();
+  if (usingServer && socket) {
+    socket.emit('update', appData);
+  }
+}
+
+// ── RENDER GRAPHIC ENGINE ──
 function renderBoard() {
   const board = document.getElementById("board");
-  board.innerHTML = ""; // Pulisce
+  board.innerHTML = "";
   
   appData.columns.forEach(col => {
-    // Crea la struttura della colonna
     const colDiv = document.createElement("div");
     colDiv.className = "column";
     
-    // Trova le card per questa colonna
     const columnCards = appData.cards.filter(c => c.columnId === col.id);
     
     colDiv.innerHTML = `
-      <div class="column-header">
-        <span>${col.title}</span>
+      <div class="column-header" style="background: ${col.color || '#4a5568'}">
+        <span>${escapeHTML(col.title)}</span>
         <span class="column-count">${columnCards.length}</span>
       </div>
-      <div class="task-list" id="list-${col.id}">
-        <!-- Le card verranno inserite qui -->
-      </div>
+      <div class="task-list" id="list-${col.id}"></div>
       <div class="add-task-btn" onclick="openModal('${col.id}')">+ Aggiungi Pratica</div>
     `;
     
     board.appendChild(colDiv);
-    
-    // Inserisce le card nella lista
     const listDiv = colDiv.querySelector(".task-list");
+    
     columnCards.forEach(card => {
       const cardDiv = document.createElement("div");
-      // Assegna la classe del colore in base allo stato
-      cardDiv.className = `card stato-${card.status}`;
+      cardDiv.className = "card";
       cardDiv.onclick = () => openModal(null, card.id);
       
-      // Formatta la data (se presente)
+      // Calcolo dinamico colore da stato associato (PUNTO 2.3)
+      const statusObj = appData.statuses.find(s => s.id === card.status) || { color: "#ffffff" };
+      cardDiv.style.background = statusObj.color;
+      cardDiv.style.borderLeftColor = "rgba(0,0,0,0.15)";
+      
       let dateHtml = "";
       if (card.dueDate) {
         const dateObj = new Date(card.dueDate);
         dateHtml = `📅 ${dateObj.toLocaleDateString("it-IT")}`;
       }
       
+      // Controllo urgenza telefonica per icona (PUNTO 2.3)
+      const phoneHtml = card.phoneUrgent ? `<span class="phone-icon">📞</span>` : "";
+      
       cardDiv.innerHTML = `
-        <span class="card-id">ID: ${card.code || "---"}</span>
-        <div class="card-title">${card.title}</div>
+        <span class="card-id">ID: ${escapeHTML(card.code || "---")}</span>
+        <div class="card-title">${escapeHTML(card.title)}</div>
+        ${phoneHtml}
         <div class="card-footer">
           <span class="card-date">${dateHtml}</span>
-          <span class="card-user">${card.operator}</span>
+          <span class="card-user">${escapeHTML(card.operator)}</span>
         </div>
       `;
       listDiv.appendChild(cardDiv);
@@ -253,12 +357,15 @@ function renderBoard() {
   });
 }
 
-// -- GESTIONE MODAL E SALVATAGGIO --
+// ── CRUD LOGICA MODALE PRATICA ──
 function openModal(columnId = null, cardId = null) {
   document.getElementById("card-modal").style.display = "flex";
   
+  // Generazione dinamica opzioni select basate sugli stati registrati
+  const selectStatus = document.getElementById("card-status");
+  selectStatus.innerHTML = appData.statuses.map(s => `<option value="${s.id}">${escapeHTML(s.label)}</option>`).join('');
+  
   if (cardId) {
-    // MODIFICA CARD ESISTENTE
     const card = appData.cards.find(c => c.id === cardId);
     document.getElementById("modal-title").textContent = "Modifica Pratica";
     document.getElementById("card-id").value = card.id;
@@ -267,29 +374,28 @@ function openModal(columnId = null, cardId = null) {
     document.getElementById("card-name").value = card.title;
     document.getElementById("card-date").value = card.dueDate || "";
     document.getElementById("card-status").value = card.status;
+    document.getElementById("card-phone-urgent").checked = card.phoneUrgent || false; // PUNTO 2.4
     document.getElementById("card-notes").value = card.notes || "";
-    document.getElementById("btn-delete").style.display = "block"; // Mostra tasto elimina
+    document.getElementById("btn-delete").style.display = "block";
   } else {
-    // NUOVA CARD
     document.getElementById("modal-title").textContent = "Nuova Pratica";
     document.getElementById("card-id").value = "";
-    document.getElementById("card-column").value = columnId; // Sa in che colonna va
+    document.getElementById("card-column").value = columnId;
     document.getElementById("card-code").value = "";
     document.getElementById("card-name").value = "";
     document.getElementById("card-date").value = "";
-    document.getElementById("card-status").value = "da-fare"; // Default rosso
+    document.getElementById("card-status").value = appData.statuses[0]?.id || "";
+    document.getElementById("card-phone-urgent").checked = false; // PUNTO 2.4
     document.getElementById("card-notes").value = "";
     document.getElementById("btn-delete").style.display = "none";
   }
 }
 
-function closeModal() {
-  document.getElementById("card-modal").style.display = "none";
-}
+function closeModal() { document.getElementById("card-modal").style.display = "none"; }
 
 function saveCard() {
   const title = document.getElementById("card-name").value.trim();
-  if (!title) return alert("Il nome del cantiere è obbligatorio");
+  if (!title) return alert("Specificare il nome del cantiere o committente.");
 
   const id = document.getElementById("card-id").value;
   const cardData = {
@@ -298,74 +404,158 @@ function saveCard() {
     columnId: document.getElementById("card-column").value,
     dueDate: document.getElementById("card-date").value,
     status: document.getElementById("card-status").value,
+    phoneUrgent: document.getElementById("card-phone-urgent").checked, // PUNTO 2.4
     notes: document.getElementById("card-notes").value,
-    operator: currentUser, // Registra chi sta salvando
+    operator: currentUser,
     lastEdit: new Date().toISOString()
   };
 
   if (id) {
-    // Aggiorna esistente
     const index = appData.cards.findIndex(c => c.id === id);
     cardData.id = id;
     appData.cards[index] = cardData;
   } else {
-    // Crea nuova
     cardData.id = "card-" + Date.now();
     appData.cards.push(cardData);
   }
 
-  saveToLocal();
+  saveAndSync();
   closeModal();
   renderBoard();
 }
 
 function deleteCard() {
-  if (!confirm("Sei sicuro di voler eliminare questa pratica dal tabellone?")) return;
+  if (!confirm("Eliminare definitivamente la pratica selezionata?")) return;
   const id = document.getElementById("card-id").value;
   appData.cards = appData.cards.filter(c => c.id !== id);
-  saveToLocal();
+  saveAndSync();
   closeModal();
   renderBoard();
 }
 
-// -- SALVATAGGIO E IMPORT/EXPORT --
-function saveToLocal() {
-  localStorage.setItem("360drone_board_data", JSON.stringify(appData));
+// ── MANAGER INTERFACCIA COLONNE (PUNTO 2.2) ──
+function openColumnsManager() {
+  const list = document.getElementById("columns-list");
+  list.innerHTML = "";
+  appData.columns.forEach(col => {
+    const div = document.createElement("div");
+    div.className = "manager-row";
+    div.innerHTML = `
+      <input type="text" value="${escapeHTML(col.title)}" onchange="renameColumn('${col.id}', this.value)">
+      <input type="color" value="${col.color || '#4a5568'}" onchange="changeColumnColor('${col.id}', this.value)" title="Colore Intestazione">
+      <button class="btn btn-delete" onclick="if(confirm('Eliminare la colonna? Tutte le pratiche associate dovranno essere spostate.')) deleteColumn('${col.id}')">✕</button>
+    `;
+    list.appendChild(div);
+  });
+  document.getElementById("columns-modal").style.display = "flex";
+}
+function closeColumnsManager() { document.getElementById("columns-modal").style.display = "none"; }
+
+function addColumnFromUI() {
+  const title = prompt("Titolo o Tipologia Nuova Pratica (es. ATM-03):");
+  if (title && title.trim()) {
+    const newCol = { id: "col-" + Date.now(), title: title.trim(), color: "#475569" };
+    appData.columns.push(newCol);
+    saveAndSync();
+    renderBoard();
+    openColumnsManager();
+  }
+}
+function renameColumn(colId, newTitle) {
+  const col = appData.columns.find(c => c.id === colId);
+  if (col && newTitle.trim()) { col.title = newTitle.trim(); saveAndSync(); renderBoard(); }
+}
+function changeColumnColor(colId, color) {
+  const col = appData.columns.find(c => c.id === colId);
+  if (col) { col.color = color; saveAndSync(); renderBoard(); }
+}
+function deleteColumn(colId) {
+  if (appData.cards.some(c => c.columnId === colId)) {
+    alert("Impossibile eliminare. Sposta o cancella prima tutte le pratiche all'interno di questa colonna.");
+    return;
+  }
+  appData.columns = appData.columns.filter(c => c.id !== colId);
+  saveAndSync();
+  renderBoard();
+  openColumnsManager();
+}
+
+// ── MANAGER INTERFACCIA STATI (PUNTO 2.2) ──
+function openStatusManager() {
+  const list = document.getElementById("statuses-list");
+  list.innerHTML = "";
+  appData.statuses.forEach(st => {
+    const div = document.createElement("div");
+    div.className = "manager-row";
+    div.innerHTML = `
+      <input type="text" value="${escapeHTML(st.label)}" onchange="updateStatus('${st.id}', this.value, '${st.color}')">
+      <input type="color" value="${st.color}" onchange="updateStatus('${st.id}', '${st.label}', this.value)" title="Colore Sfondo Card">
+      <button class="btn btn-delete" onclick="if(confirm('Eliminare lo stato corrente?')) deleteStatus('${st.id}')">✕</button>
+    `;
+    list.appendChild(div);
+  });
+  document.getElementById("statuses-modal").style.display = "flex";
+}
+function closeStatusManager() { document.getElementById("statuses-modal").style.display = "none"; }
+
+function addStatusFromUI() {
+  const label = prompt("Etichetta nuovo stato (es. Sospesa da ENAC):");
+  if (label && label.trim()) {
+    const id = "status-" + Date.now();
+    appData.statuses.push({ id, label: label.trim(), color: "#e2e8f0" });
+    saveAndSync();
+    renderBoard();
+    openStatusManager();
+  }
+}
+function updateStatus(statusId, newLabel, newColor) {
+  const st = appData.statuses.find(s => s.id === statusId);
+  if (st && newLabel.trim()) { st.label = newLabel.trim(); st.color = newColor; saveAndSync(); renderBoard(); }
+}
+function deleteStatus(statusId) {
+  if (appData.cards.some(c => c.status === statusId)) {
+    alert("Impossibile rimuovere. Ci sono pratiche attive impostate su questo stato.");
+    return;
+  }
+  appData.statuses = appData.statuses.filter(s => s.id !== statusId);
+  saveAndSync();
+  renderBoard();
+  openStatusManager();
+}
+
+// ── UTILITY BACKUP E UTILS ──
+function updateStatusBar() {
+  if (currentPracticeId && document.getElementById('status-name')) {
+    const p = getPractices()[currentPracticeId];
+    document.getElementById('status-name').textContent = p ? `Pratica: ${p.name}` : 'Nessun file aperto';
+  }
 }
 
 function exportData() {
   const dataStr = JSON.stringify(appData, null, 2);
   const blob = new Blob([dataStr], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const dataOggi = new Date().toISOString().split('T')[0];
-  a.href = url;
-  a.download = `Board_360Drone_${dataOggi}.json`;
+  a.href = URL.createObjectURL(blob);
+  a.download = `Backup_Lavagna_360Drone_${new Date().toISOString().split('T')[0]}.json`;
   a.click();
 }
 
 function importData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  
+  const file = event.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
       const importedData = JSON.parse(e.target.result);
-      if (importedData.columns && importedData.cards) {
+      if (importedData.columns && importedData.cards && importedData.statuses) {
         appData = importedData;
-        saveToLocal();
+        saveAndSync();
         renderBoard();
-        alert("Database aggiornato con successo!");
-      } else {
-        alert("Il file non sembra essere un backup valido.");
-      }
-    } catch (err) {
-      alert("Errore nella lettura del file JSON.");
-    }
+        alert("Database importato e sincronizzato!");
+      } else { alert("Struttura file JSON non valida per la lavagna."); }
+    } catch (err) { alert("Errore lettura file."); }
   };
   reader.readAsText(file);
-  event.target.value = ""; // Resetta l'input
+  event.target.value = "";
 }
 </script>
 </body>
