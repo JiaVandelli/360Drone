@@ -3,29 +3,38 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>360Drone – Compilatore Professionale ATM-05 / ATM-09A</title>
+<title>360Drone – Compilatore Professionale ATM-05 / ATM-09A v4.0</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f7f5;min-height:100vh;font-size:14px;color:#1a2a1e}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f4f7f5;min-height:100vh;font-size:14px;color:#1a2a1e;padding-bottom:50px}
 input,textarea,select,button{font-family:inherit;font-size:14px}
+
+/* ── HEADER ── */
 #header{background:#0f341e;color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 4px rgba(0,0,0,0.1)}
 #header h1{font-size:20px;font-weight:800;letter-spacing:-0.02em}
 #header .sub{font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:.12em}
 #header .info{font-size:11px;text-align:right;opacity:.9;line-height:1.6}
 
-/* BARRA PRATICHE */
+/* ── BARRA PRATICHE ── */
 #pratica-bar{background:#e7f3eb;padding:10px 16px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #cfe2d5;flex-wrap:wrap}
 #lista-pratiche{flex:1;min-width:180px;padding:8px 12px;border:1.5px solid #b1caa9;border-radius:6px;background:#fff;color:#1a2a1e;font-size:13px;outline:none}
 #lista-pratiche:focus{border-color:#0f341e}
-.pb-btn{padding:8px 14px;border:1.5px solid #a4c29b;border-radius:6px;background:#fff;color:#0f341e;font-weight:700;cursor:pointer;font-size:12.5px;transition:all .15s ease}
+
+/* RICERCA RAPIDA */
+#cerca-pratica{width:130px;padding:8px 12px;border:1.5px solid #b1caa9;border-radius:6px;background:#fff;color:#1a2a1e;font-size:13px;outline:none;transition:width 0.2s}
+#cerca-pratica:focus{width:170px;border-color:#0f341e;box-shadow:0 0 0 3px rgba(15,52,30,0.05)}
+#cerca-pratica::placeholder{color:#888}
+
+.pb-btn{padding:8px 14px;border:1.5px solid #a4c29b;border-radius:6px;background:#fff;color:#0f341e;font-weight:700;cursor:pointer;font-size:12.5px;transition:all .15s ease;white-space:nowrap}
 .pb-btn:hover{background:#dceddf}
 #elimina-pratica-btn{border-color:#e8a0a0;color:#c0392b}
 #elimina-pratica-btn:hover{background:#fdecea}
 
-/* ERR BAR */
+/* ── ERR BAR ── */
 #err-bar{background:#c0392b;color:#fff;padding:10px 16px;font-size:12.5px;font-weight:700;cursor:pointer;display:none;text-align:center}
 
-/* TABS */
+/* ── TABS ── */
 #tabs{display:flex;background:#cfe2d5;border-bottom:2px solid #0f341e22}
 .tab-btn{padding:12px 0;border:none;cursor:pointer;font-weight:600;background:transparent;color:#0f341e;font-size:13px;border-right:1px solid #b1caa9;position:relative;flex:1;transition:background 0.2s}
 .tab-btn:hover{background:#dceddf}
@@ -33,46 +42,57 @@ input,textarea,select,button{font-family:inherit;font-size:14px}
 .badge{position:absolute;top:4px;right:6px;background:#c0392b;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;display:none;align-items:center;justify-content:center;font-weight:700}
 #reset-btn{padding:8px 16px;border:none;cursor:pointer;background:transparent;color:#c0392b;font-size:12px;font-weight:700}
 
+/* ── CONTENT ── */
 .tab-content{display:none;max-width:900px;margin:0 auto;padding:16px 16px 80px}
 .tab-content.active{display:block}
 
+/* ── SEZIONI ── */
 .sec{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(15,52,30,0.08);margin-bottom:18px;overflow:hidden;border:1px solid #e1ebe3}
 .sec-head{padding:10px 16px;display:flex;gap:10px;align-items:center}
 .sl{border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;flex-shrink:0}
 .st{color:#fff;font-weight:700;font-size:14px;flex-grow:1}
 .sec-body{padding:16px}
 
+/* ── FORM ── */
 .field{margin-bottom:12px}
 .lbl{font-size:11px;font-weight:700;color:#0f341e;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px}
 .req{color:#c0392b;margin-left:2px}
 input[type=text],textarea,select{width:100%;padding:9px 12px;border:1.5px solid #bccea8;border-radius:6px;background:#fff;color:#1a2a1e;outline:none;transition:border .15s}
 input[type=text]:focus,textarea:focus,select:focus{border-color:#0f341e;box-shadow:0 0 0 3px rgba(15,52,30,0.05)}
+input[readonly]{background:#f0f4f1;color:#0f341e;cursor:default}
 textarea{resize:vertical}
 
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .g3{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:end;margin-bottom:8px}
 
+/* ── BUTTONS ── */
 .btn{padding:10px 20px;border:none;border-radius:8px;font-weight:700;cursor:pointer;color:#fff;font-size:13px;transition:opacity 0.2s}
 .btn:hover{opacity:0.9}
-.btn-green{background:#27ae60}.btn-dark{background:#0f341e}.btn-orange{background:#e67e22}.btn-teal{background:#0e6655}
+.btn-green{background:#27ae60}.btn-dark{background:#0f341e}.btn-orange{background:#e67e22}.btn-teal{background:#0e6655}.btn-blue{background:#2980b9}
 
+/* ── ALERTS ── */
 .alert{padding:12px 16px;border-radius:8px;margin-bottom:12px;font-size:13px;line-height:1.6}
 .a-err{background:#fdecea;border:1.5px solid #c0392b;color:#922b21}
 .a-warn{background:#fff3cd;border:1.5px solid #ffc107;color:#856404}
 .a-ok{background:#d4edda;border:1.5px solid #28a745;color:#155724}
 
-/* CONVERTITORE */
+/* ── CONVERTITORE ── */
 .conv-box{background:#f1f7f2;border:1.5px solid #99c2a2;border-radius:8px;padding:14px;margin-bottom:14px}
 .conv-box label{font-size:11px;font-weight:700;color:#0f341e;text-transform:uppercase;margin-bottom:6px;display:block}
 .conv-box textarea{background:#fff;border:1.5px solid #b2d4b9;font-family:monospace}
 .conv-result{margin-top:8px;font-family:monospace;font-size:12.5px;color:#0e6655;background:#e8f5e9;border-radius:6px;padding:8px 12px;line-height:1.8;display:none}
+.conv-btn{margin-top:7px;padding:8px 14px;border:none;border-radius:6px;background:#0f341e;color:#fff;font-weight:700;font-size:12.5px;cursor:pointer}
 
-/* STATUS BAR */
-#status-bar{position:fixed;bottom:0;left:0;right:0;background:#0f341e;color:#fff;padding:8px 16px;font-size:11px;display:flex;gap:8px;align-items:center;z-index:100}
-#status-name{font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#status-dirty{color:#ffd54f;font-weight:bold}
+/* ── STATUS BAR FISSA (Minimal 34px) ── */
+#status-bar{position:fixed;bottom:0;left:0;right:0;height:34px;background:#0f341e;color:#fff;padding:0 14px;display:flex;align-items:center;justify-content:flex-end;gap:10px;z-index:100;box-shadow:0 -2px 10px rgba(0,0,0,0.3)}
+#status-info{margin-right:auto;font-size:15px;cursor:help;display:flex;align-items:center;opacity:0.85;transition:opacity 0.15s}
+#status-info:hover{opacity:1}
+#stato-select{padding:2px 8px;height:24px;border:1px solid #ffffff44;border-radius:4px;background:#ffffff18;color:#fff;font-size:11px;font-weight:700;cursor:pointer;outline:none}
+#stato-select option{color:#1a2a3a;background:#fff}
+#btn-salva{padding:2px 14px;height:24px;border:1.5px solid #ffffff66;border-radius:4px;background:transparent;color:#fff;font-weight:700;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background 0.15s}
+#btn-salva:hover{background:#ffffff22}
 
-/* PRINT AREA OVERRIDE */
+/* ── PRINT AREA OVERRIDE ── */
 #print-area{display:none}
 @media print{
   body *{display:none!important}
@@ -100,8 +120,8 @@ textarea{resize:vertical}
   <div class="p-page">
     <div class="p-box">
       <div style="font-size:8.5pt;font-weight:bold;margin-bottom:4px">MINISTERO DELLE INFRASTRUTTURE E DEI TRASPORTI – ENAC</div>
-      <div class="p-h1" id="p-modello-titolo">MODELLO ATM - 05</div>
-      <div class="p-h2" id="p-modello-sottotitolo">RICHIESTA DI RISERVA DI SPAZIO AEREO / EMISSIONE NOTAM PER ATTIVITÀ CON UAS</div>
+      <div class="p-h1" id="p-modello-titolo">MODELLO ATM - 09A</div>
+      <div class="p-h2" id="p-modello-sottotitolo">RICHIESTA DI AUTORIZZAZIONE AD EFFETTUARE ATTIVITÀ CON APR IN PROSSIMITÀ DI AEROPORTI</div>
       <div style="font-size:8.5pt;font-style:italic">Ai sensi del Regolamento d'Esecuzione (UE) 2019/947 e delle disposizioni ATM vigenti</div>
     </div>
     <table class="pt">
@@ -113,7 +133,7 @@ textarea{resize:vertical}
         Contatto Telefonico: <span id="p-tel-print">—</span><br>
         E-mail / PEC di riferimento: <span id="p-email-print">—</span>
       </td></tr>
-      <tr><td class="pc">C — Tipologia Modulo / Istanza</td><td id="p-istanza-tipo">Richiesta formale di segregazione dello spazio aereo ai fini operativi di sicurezza UAS.</td></tr>
+      <tr><td class="pc">C — Tipologia Modulo / Istanza</td><td id="p-istanza-tipo">Richiesta di autorizzazione al volo all'interno dei volumi di protezione ATZ / CTR aeroportuali ai sensi della circolare ATM-09A.</td></tr>
       <tr><td class="pc">D — Categoria e Tipo di Attività</td><td id="p-attiv">—</td></tr>
       <tr><td class="pc">E — Specifiche Mezzo e Sistemi RTH</td><td id="p-aero">—</td></tr>
       <tr><td class="pc">F — Scenario Operativo / Validazione</td><td id="p-scenario">—</td></tr>
@@ -146,7 +166,7 @@ textarea{resize:vertical}
 
 <!-- INTERFACCIA APPLICAZIONE -->
 <div id="header">
-  <div><div class="sub">360Drone – Servizi per Professionisti</div><h1>Compilatore Rapido ATM-05 / ATM-09A</h1></div>
+  <div><div class="sub">360Drone – Servizi per Professionisti</div><h1>Compilatore Rapido ATM-05 / ATM-09A v4.0</h1></div>
   <div class="info">Anno Operativo: 2026<br>Desk Agenzia Terzi</div>
 </div>
 
@@ -154,6 +174,8 @@ textarea{resize:vertical}
   <select id="lista-pratiche" onchange="loadPractice(this.value)">
     <option value="">— Seleziona una pratica in archivio —</option>
   </select>
+  <!-- RICERCA RAPIDA ID -->
+  <input type="text" id="cerca-pratica" placeholder="🔍 Cerca ID (es. 001)" oninput="cercaPraticaRapida(this.value)"/>
   <button class="pb-btn" onclick="newPractice()">+ Nuova Pratica</button>
   <button class="pb-btn" onclick="exportPractice()" title="Esporta file di backup JSON">Esporta JSON 📤</button>
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="importPractice(event)"/>
@@ -172,17 +194,21 @@ textarea{resize:vertical}
 <!-- CONTENUTO FORM -->
 <div class="tab-content active" id="tab-form">
 
-  <!-- CONFIGURAZIONE MODELLO -->
+  <!-- CONFIGURAZIONE MODELLO E ID -->
   <div class="sec" style="border: 2px solid #0f341e;">
     <div class="sec-head" style="background:#0f341e">
       <span class="sl" style="background:#fff;color:#0f341e">📋</span>
       <span class="st">Impostazioni Pratica e Scelta Modello</span>
     </div>
     <div class="sec-body">
-      <div class="g2">
+      <div class="g3" style="grid-template-columns: 100px 1fr 1fr; gap:12px; margin-bottom:0">
         <div class="field">
-          <label class="lbl">Identificativo Pratica / Cliente <span class="req">*</span></label>
-          <input type="text" id="nomePratica" placeholder="Es. Rossi Srl - Cantiere Milano Linate - 2026" oninput="onPracticeNameChange()"/>
+          <label class="lbl">ID Pratica <span class="req">*</span></label>
+          <input type="text" id="idPratica" placeholder="001" style="font-weight:700; text-align:center" oninput="onPracticeNameChange()"/>
+        </div>
+        <div class="field">
+          <label class="lbl">Descrizione / Nome Cantiere <span class="req">*</span></label>
+          <input type="text" id="nomePratica" placeholder="Es. Rossi Srl - Linate - 2026" oninput="onPracticeNameChange()"/>
         </div>
         <div class="field">
           <label class="lbl">Modello di Modulo Ministeriale <span class="req">*</span></label>
@@ -192,10 +218,11 @@ textarea{resize:vertical}
           </select>
         </div>
       </div>
+      <div style="font-size:11px;color:#888;margin-top:3px">L'ID numerico permette ricerche istantanee. La descrizione serve per il PDF e l'oggetto della PEC.</div>
     </div>
   </div>
 
-  <!-- PROFILO PROFESSIONALE (Pre-compilazione rapida) -->
+  <!-- PROFILO PROFESSIONALE -->
   <div class="sec">
     <div class="sec-head" style="background:#2e5b3f">
       <span class="sl" style="background:#fff;color:#2e5b3f">👤</span>
@@ -223,7 +250,7 @@ textarea{resize:vertical}
           <input type="text" id="telPilota" placeholder="Es. +39 0187 1755700"/>
         </div>
         <div class="field"><label class="lbl">Email / PEC Contatto <span class="req">*</span></label>
-          <input type="text" id="emailPilota" placeholder="Es. amministrazione@pec.it"/>
+          <input type="text" id="emailPilota" placeholder="Es. 360drone@pec.it"/>
         </div>
         <div class="field"><label class="lbl">Licenza / Grado Pilota</label>
           <select id="tipoLic">
@@ -283,7 +310,7 @@ textarea{resize:vertical}
         </div>
       </div>
       <div class="field">
-        <label class="lbl">Cc: Enti Fornitori Servizi ATS e Monitoraggio Spazio Aereo</label>
+        <label class="lbl">Cc: Enti Fornitori Servizi ATS e Monitoraggio Spazio Aereo (protetto)</label>
         <textarea id="destCc" rows="2">operazioni.atm@enav.it; mobilita.innovativa@enac.gov.it</textarea>
       </div>
       <input type="hidden" id="zona"/>
@@ -372,7 +399,7 @@ textarea{resize:vertical}
         </div>
       </div>
 
-      <!-- VERTICI AREA MULTIPLI -->
+      <!-- VERTICI AREA MULTIPLI (Con Inserimento Smart) -->
       <div style="margin-top:16px; border-top:1px solid #bccea8; padding-top:14px;">
         <div class="conv-box">
           <label>🗺️ Importazione in blocco Poligono Vertici (una coppia di coordinate decimali per riga)</label>
@@ -380,6 +407,7 @@ textarea{resize:vertical}
           <button class="conv-btn" onclick="convArea()" style="margin-top:6px;">Elabora e Inserisci Vertici Poligonali</button>
           <div id="conv-area-result" class="conv-result"></div>
         </div>
+        <div style="font-size:11px;color:#0e6655;margin-bottom:6px;font-weight:600">⚡ Modalità Veloce: Nel campo "Lat N" qui sotto puoi incollare anche la coordinata decimale intera (es: <code>45.464, 9.190</code>) per compilare Lat e Lon in un colpo solo!</div>
         <div id="punti-container"></div>
         <button class="btn btn-teal" style="font-size:12px; padding:6px 12px;" onclick="addPunto()">+ Aggiungi Vertice Manuale</button>
       </div>
@@ -459,8 +487,14 @@ textarea{resize:vertical}
     </div>
   </div>
 
-  <div style="text-align:center; padding:10px 0 30px; display:flex; gap:12px; justify-content:center;">
-    <button class="btn btn-green" style="font-size:16px; padding:14px 36px;" onclick="generaPDF()">📄 Esporta e Stampa Modulo Ufficiale</button>
+  <!-- WORKFLOW AUTOMATIZZATO IN 2 STEP -->
+  <div style="padding:10px 0 30px; display:flex; flex-direction:column; gap:10px">
+    <button class="btn btn-green" style="font-size:15px; padding:14px; width:100%; box-shadow: 0 4px 12px rgba(39,174,96,0.2)" onclick="generaPDF()">
+      📄 1. Verifica e Scarica Modulo Ufficiale ENAC
+    </button>
+    <button class="btn btn-blue" style="font-size:15px; padding:14px; width:100%; box-shadow: 0 4px 12px rgba(41,128,185,0.2)" onclick="apriEmailPronta()">
+      📧 2. Genera Email PEC Pre-compilata (Allega poi il PDF scaricato)
+    </button>
   </div>
 </div>
 
@@ -472,11 +506,16 @@ textarea{resize:vertical}
   </div>
 </div>
 
-<!-- BARRA DI STATO INFERIORE -->
+<!-- BARRA DI STATO INFERIORE MINIMAL (34px) -->
 <div id="status-bar">
-  <span id="status-name">—</span>
-  <span id="status-dirty">⚠️ Modifiche non salvate in locale</span>
-  <span id="status-saved"></span>
+  <div id="status-info" title="Passa il mouse per le info sulla pratica corrente">ℹ️</div>
+  <select id="stato-select" onchange="cambiaStato(this.value)">
+    <option value="bozza">🟡 Bozza</option>
+    <option value="pronta">🟢 Pronta</option>
+    <option value="inviata">🔴 Inviata</option>
+    <option value="autorizzata">🔵 Autorizzata</option>
+  </select>
+  <button id="btn-salva" onclick="saveCurrentPractice(false)" title="Salva pratica">💾 Salva</button>
 </div>
 
 <script>
@@ -516,14 +555,14 @@ const PROFILI_PRESET = {
   }
 };
 
-const STORAGE_KEY = 'atm_pro_practices';
+const STORAGE_KEY = 'atm_pro_practices_v4';
 let currentPracticeId = null;
 let isDirty = false;
 let saveTimer = null;
 let punti = [{nome:'Vertice 1',lat:'',lon:''},{nome:'Vertice 2',lat:'',lon:''}];
 
 const FIELDS = [
-  'nomePratica','tipoModello','destA','destCc','richiedente','attestato','telPilota','emailPilota','tipoLic',
+  'idPratica','nomePratica','tipoModello','destA','destCc','richiedente','attestato','telPilota','emailPilota','tipoLic',
   'scenario','cro','catOperativa','dronePreset','aeromobile','tipoAttivita',
   'decollo','latDecollo','lonDecollo','localita','aeroporto','limVerticali','quotaMax','dateOrari',
   'freqRadio','assicurazione','pagamentoDiritti','altreNotizie','luogo','dataRichiesta','zona','enacDir'
@@ -541,31 +580,59 @@ function setPractices(obj) {
 
 function debouncedSave() {
   isDirty = true;
-  document.getElementById('status-dirty').style.display = 'inline';
+  updateStatusBar();
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveCurrentPractice, 300);
+  saveTimer = setTimeout(() => saveCurrentPractice(true), 300);
 }
 
-function saveCurrentPractice() {
+function controllaDuplicatoID(idNum) {
+  if (!idNum || !currentPracticeId) return false;
+  const practices = getPractices();
+  return Object.values(practices).some(p => p.id !== currentPracticeId && (p.data?.idPratica || '').trim() === idNum.trim());
+}
+
+function saveCurrentPractice(silent = false) {
   if (!currentPracticeId) return;
+  const idNum = document.getElementById('idPratica').value.trim() || '000';
+
+  if (!silent && controllaDuplicatoID(idNum)) {
+    alert(`⚠️ Attenzione: L'ID "${idNum}" è già assegnato a un'altra pratica in archivio.`);
+  }
+
   const practices = getPractices();
   const d = {};
   FIELDS.forEach(k => { const e = document.getElementById(k); if (e) d[k] = e.value; });
   d.punti = punti;
   d.zonaChecks = [...document.querySelectorAll('#zona-checks input[type=checkbox]')]
     .map(cb => ({ value: cb.value, checked: cb.checked }));
+  
+  d.coordsLocked = document.getElementById('latDecollo')?.readOnly || false;
 
-  practices[currentPracticeId] = {
-    id: currentPracticeId,
-    name: document.getElementById('nomePratica')?.value.trim() || 'Istanza senza nome',
-    savedTimestamp: new Date().toISOString(),
-    data: d
-  };
+  const nomeDesc = document.getElementById('nomePratica').value.trim() || 'Pratica senza nome';
+  const statoVal = document.getElementById('stato-select') ? document.getElementById('stato-select').value : 'bozza';
+
+  const practiceObj = practices[currentPracticeId] || {};
+  practiceObj.id = currentPracticeId;
+  practiceObj.name = `[${idNum}] ${nomeDesc}`;
+  practiceObj.stato = practiceObj.stato || statoVal;
+  practiceObj.savedTimestamp = new Date().toISOString();
+  practiceObj.data = d;
+
+  practices[currentPracticeId] = practiceObj;
   setPractices(practices);
   isDirty = false;
-  document.getElementById('status-dirty').style.display = 'none';
   updatePracticeList();
   updateStatusBar();
+}
+
+function generaProssimoID() {
+  const practices = getPractices();
+  let maxId = 0;
+  Object.values(practices).forEach(p => {
+    const num = parseInt(p.data?.idPratica, 10);
+    if (!isNaN(num) && num > maxId) maxId = num;
+  });
+  return String(maxId + 1).padStart(3, '0');
 }
 
 function updatePracticeList() {
@@ -577,7 +644,8 @@ function updatePracticeList() {
     .forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.id;
-      opt.textContent = p.name + ' (' + new Date(p.savedTimestamp).toLocaleDateString('it-IT') + ')';
+      const emoji = {"bozza":"🟡","pronta":"🟢","inviata":"🔴","autorizzata":"🔵"}[p.stato || "bozza"] || "🟡";
+      opt.textContent = `${emoji} ${p.name} (${new Date(p.savedTimestamp).toLocaleDateString('it-IT')})`;
       sel.appendChild(opt);
     });
   if (currentPracticeId) sel.value = currentPracticeId;
@@ -585,18 +653,32 @@ function updatePracticeList() {
 
 function loadPractice(id) {
   if (!id) return;
-  if (isDirty) saveCurrentPractice();
+  if (isDirty) saveCurrentPractice(true);
   const practice = getPractices()[id];
   if (!practice) return;
   currentPracticeId = id;
   const data = practice.data;
   FIELDS.forEach(k => { const e = document.getElementById(k); if (e && data[k] != null) e.value = data[k]; });
   punti = (data.punti && data.punti.length) ? [...data.punti] : [{nome:'Vertice 1',lat:'',lon:''},{nome:'Vertice 2',lat:'',lon:''}];
-  
+
   document.querySelectorAll('#zona-checks input[type=checkbox]').forEach(cb => {
     const sc = data.zonaChecks?.find(z => z.value === cb.value);
     cb.checked = sc ? sc.checked : false;
   });
+
+  const isLocked = data.coordsLocked || false;
+  ['latDecollo','lonDecollo'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) { el.readOnly = isLocked; el.style.background = isLocked ? '#f0f4f1' : ''; }
+  });
+  const resDec = document.getElementById('conv-dec-result');
+  if (isLocked && data.latDecollo) {
+    resDec.style.display = 'block'; res.innerHTML = `✅ Decollo bloccato<br><button onclick="sbloccaCoord()" style="margin-top:5px;padding:3px 11px;border:1px solid #0e6655;border-radius:5px;background:#fff;color:#0e6655;font-size:11px;cursor:pointer">🔓 Modifica</button>`;
+  } else {
+    resDec.style.display = 'none';
+  }
+
+  if (document.getElementById('stato-select')) document.getElementById('stato-select').value = practice.stato || 'bozza';
 
   cambiaTipoModello();
   aggiornaZone();
@@ -606,10 +688,29 @@ function loadPractice(id) {
   updateStatusBar();
 }
 
+function cercaPraticaRapida(query) {
+  if (!query.trim()) return;
+  const q = query.trim().toLowerCase();
+  const practices = getPractices();
+  const match = Object.values(practices).find(p => {
+    const idNum = (p.data?.idPratica || '').toLowerCase();
+    return idNum === q || idNum === String(parseInt(q, 10)).padStart(3, '0');
+  });
+  if (match && match.id !== currentPracticeId) {
+    document.getElementById('lista-pratiche').value = match.id;
+    loadPractice(match.id);
+  }
+}
+
 function newPractice() {
-  if (isDirty) saveCurrentPractice();
+  if (isDirty) saveCurrentPractice(true);
   currentPracticeId = 'PR' + Date.now().toString(36);
   FIELDS.forEach(k => { const e = document.getElementById(k); if (e) e.value = ''; });
+  
+  const nextNum = generaProssimoID();
+  document.getElementById('idPratica').value = nextNum;
+  document.getElementById('nomePratica').value = 'Nuova pratica';
+
   document.getElementById('luogo').value = 'Roma';
   document.getElementById('dataRichiesta').value = new Date().toLocaleDateString('it-IT');
   document.getElementById('destCc').value = 'operazioni.atm@enav.it; mobilita.innovativa@enac.gov.it';
@@ -618,7 +719,8 @@ function newPractice() {
   document.getElementById('tipoModello').value = 'ATM09A';
   document.querySelectorAll('#zona-checks input[type=checkbox]').forEach(cb => cb.checked = false);
   punti = [{nome:'Vertice 1',lat:'',lon:''},{nome:'Vertice 2',lat:'',lon:''}];
-  
+
+  saveCurrentPractice(true);
   cambiaTipoModello();
   aggiornaZone();
   renderPunti();
@@ -638,9 +740,28 @@ function deletePractice() {
   newPractice();
 }
 
+function cambiaStato(stato) {
+  if (!currentPracticeId) return;
+  const practices = getPractices();
+  if (practices[currentPracticeId]) {
+    practices[currentPracticeId].stato = stato;
+    setPractices(practices);
+    updatePracticeList();
+    updateStatusBar();
+  }
+}
+
 function updateStatusBar() {
   const p = currentPracticeId ? getPractices()[currentPracticeId] : null;
-  document.getElementById('status-name').textContent = p ? `Pratica attiva: ${p.name}` : 'Nessun file aperto';
+  const infoIcon = document.getElementById('status-info');
+  if (p) {
+    const mod = p.savedTimestamp ? new Date(p.savedTimestamp).toLocaleString('it-IT',{dateStyle:'short',timeStyle:'short'}) : '—';
+    const tooltipText = `Pratica: ${p.name}\nStato: ${(p.stato||'bozza').toUpperCase()}\nUltima modifica: ${mod}\n${isDirty ? '⚠️ MODIFICHE NON SALVATE' : '✅ Tutto salvato'}`;
+    infoIcon.title = tooltipText;
+    document.getElementById('stato-select').value = p.stato || 'bozza';
+  } else {
+    infoIcon.title = 'Nessuna pratica attiva';
+  }
 }
 
 function onPracticeNameChange() { debouncedSave(); updateStatusBar(); }
@@ -687,14 +808,18 @@ function aggiornaZone() {
   const checks = [...document.querySelectorAll('#zona-checks input[type=checkbox]:checked')].map(c => c.value);
   const dir = document.getElementById('enacDir').value;
   document.getElementById('destA').value = dir ? ENAC_MAIL[dir] || '' : '';
-  
+
+  const defaultCc = 'operazioni.atm@enav.it; mobilita.innovativa@enac.gov.it';
+  const currentCc = document.getElementById('destCc').value.trim();
   const isMil = checks.includes('CTR Militare');
-  document.getElementById('destCc').value = isMil
-    ? 'operazioni.atm@enav.it; mobilita.innovativa@enac.gov.it; posta.dgpam@postacert.difesa.it'
-    : 'operazioni.atm@enav.it; mobilita.innovativa@enac.gov.it';
+  const targetCc = isMil ? defaultCc + '; posta.dgpam@postacert.difesa.it' : defaultCc;
+  
+  if (!currentCc || currentCc === defaultCc || currentCc === defaultCc + '; posta.dgpam@postacert.difesa.it') {
+    document.getElementById('destCc').value = targetCc;
+  }
 
   document.getElementById('zona').value = checks.join(', ');
-  
+
   const av = document.getElementById('zona-avviso');
   av.innerHTML = checks.map(v => {
     const z = ZONE_DB[v]; if (!z) return '';
@@ -737,8 +862,18 @@ function convDecollo(val) {
   const latS = decToSex(p.lat, true), lonS = decToSex(p.lon, false);
   document.getElementById('latDecollo').value = latS;
   document.getElementById('lonDecollo').value = lonS;
+  document.getElementById('latDecollo').readOnly = true;
+  document.getElementById('lonDecollo').readOnly = true;
   res.style.display='block'; res.style.background='#e8f5e9';
-  res.innerHTML = `✅ Elaborate: Lat ${latS} - Lon ${lonS}`;
+  res.innerHTML = `✅ Elaborate: Lat ${latS} - Lon ${lonS} <button onclick="sbloccaCoord()" style="margin-left:10px;padding:2px 8px;border:1px solid #0e6655;border-radius:4px;background:#fff;color:#0e6655;font-size:11px;cursor:pointer">🔓 Sblocca</button>`;
+  debouncedSave();
+}
+
+function sbloccaCoord() {
+  document.getElementById('latDecollo').readOnly = false;
+  document.getElementById('lonDecollo').readOnly = false;
+  document.getElementById('conv-dec-input').value = '';
+  document.getElementById('conv-dec-result').style.display = 'none';
   debouncedSave();
 }
 
@@ -757,18 +892,35 @@ function convArea() {
   res.style.display='block'; res.innerHTML = `✅ Caricati ${convertiti.length} vertici poligonali nel modulo.`;
 }
 
+// Inserimento SMART vertici
+function handleSmartVertex(val, i) {
+  if (val.includes(',') || val.includes(' ')) {
+    const p = parseCoordLine(val);
+    if (p) {
+      punti[i].lat = decToSex(p.lat, true);
+      punti[i].lon = decToSex(p.lon, false);
+      renderPunti();
+      debouncedSave();
+      runValidation();
+      return;
+    }
+  }
+  punti[i].lat = val;
+  debouncedSave();
+}
+
 function renderPunti() {
   const c = document.getElementById('punti-container'); c.innerHTML = '';
   if (punti.length) {
     const hdr = document.createElement('div'); hdr.className='g3';
-    hdr.innerHTML = '<span class="lbl">Identificativo Vertice</span><span class="lbl">Lat N (WGS84)</span><span class="lbl">Lon E (WGS84)</span><span></span>';
+    hdr.innerHTML = '<span class="lbl">Identificativo Vertice</span><span class="lbl">Lat N (o incolla "Lat, Lon")</span><span class="lbl">Lon E</span><span></span>';
     c.appendChild(hdr);
   }
   punti.forEach((p, i) => {
     const row = document.createElement('div'); row.className='g3';
     row.innerHTML = `
       <input type="text" value="${p.nome}" oninput="punti[${i}].nome=this.value;debouncedSave()"/>
-      <input type="text" value="${p.lat}" placeholder="Gradi'Minuti''Secondi&quot;" oninput="punti[${i}].lat=this.value;debouncedSave()"/>
+      <input type="text" value="${p.lat}" placeholder="Gradi'Minuti'' o 45.46, 9.19" oninput="handleSmartVertex(this.value, ${i})"/>
       <input type="text" value="${p.lon}" placeholder="Gradi'Minuti''Secondi&quot;" oninput="punti[${i}].lon=this.value;debouncedSave()"/>
       <button onclick="removePunto(${i})" style="padding:6px 10px; background:#fdecea; color:#c0392b; border:1px solid #e8a0a0; border-radius:4px; cursor:pointer;">✕</button>`;
     c.appendChild(row);
@@ -783,7 +935,7 @@ function updatePreviewN() {
   const freq = document.getElementById('freqRadio').value || '[Canale TBT]';
   const aero = document.getElementById('aeroporto').value || '[Ente ATS]';
   const extra = document.getElementById('altreNotizie').value || '';
-  
+
   const testo = `Dichiarazioni Sez. N: L'esercente ${nome} garantisce il monitoraggio continuo e la prontezza all'immediato sgombero dello spazio aereo in caso di richiesta dell'Ente ATS di riferimento (${aero}). Contatto operativo TBT attivo al numero H24: ${tel}, frequenza radio di ascolto/coordinamento: ${freq}. I mezzi impiegati sono dotati di sistemi ridondanti di posizionamento GNSS, Geofencing aggiornato e Terminazione del Volo automatica (RTH). Operazioni condotte in modalità VLOS. ${extra}`;
   document.getElementById('preview-n').innerHTML = `<strong>Anteprima Dichiarazione di Sicurezza (Sezione N):</strong><br>${testo}`;
 }
@@ -791,43 +943,71 @@ function updatePreviewN() {
 function runValidation() {
   const errs = [], warns = [];
   const V = id => document.getElementById(id) ? document.getElementById(id).value.trim() : '';
-  
+  const MESI={"gennaio":0,"febbraio":1,"marzo":2,"aprile":3,"maggio":4,"giugno":5,"luglio":6,"agosto":7,"settembre":8,"ottobre":9,"novembre":10,"dicembre":11,"gen":0,"feb":1,"mar":2,"apr":3,"mag":4,"giu":5,"lug":6,"ago":7,"set":8,"ott":9,"nov":10,"dic":11};
+
+  const idNum = V('idPratica');
+  if(!V('nomePratica') && !idNum) errs.push('⛔ Identificativo o nome cantiere obbligatorio.');
+  if (idNum && controllaDuplicatoID(idNum)) warns.push(`⚠️ ATTENZIONE: L'ID "${idNum}" è già in uso.`);
+
   const modello = V('tipoModello');
   const zona = V('zona');
   const preavvisoMinimo = zona.includes('CTR Militare') ? 60 : (zona.includes('Rossa') ? 30 : 15);
 
-  // Sistema Avanzato di Parsing delle Date (Gestione intervalli e formati complessi)
-  const dateStr = V('dateOrari');
-  if (dateStr) {
-    const numeriMese = {gennaio:0,febbraio:1,marzo:2,aprile:3,maggio:4,giugno:5,luglio:6,agosto:7,settembre:8,ottobre:9,novembre:10,dicembre:11};
-    // Estrae il primo gruppo numerico coerente con un giorno del mese
-    const matchGiorno = dateStr.replace(/-/g, ' ').match(/(\d{1,2})/);
-    const matchMese = dateStr.match(/(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)/i);
-    
-    if (matchGiorno && matchMese) {
-      const giorno = parseInt(matchGiorno[1]);
-      const mese = numeriMese[matchMese[1].toLowerCase()];
-      const anno = 2026; // Forzatura anno corrente 2026
-      const dataVolo = new Date(anno, mese, giorno);
-      const diffGiorni = Math.round((dataVolo - new Date()) / 86400000);
-      
-      if (diffGiorni < 0) {
-        errs.push('⛔ Errore Temporale: La data inserita risulta antecedente alla data odierna del 2026.');
-      } else if (diffGiorni < preavvisoMinimo) {
-        errs.push(`⛔ Tempistica Violata: Mancano solo ${diffGiorni} giorni al volo. Per le zone selezionate l'Ente richiede minimo ${preavvisoMinimo} giorni di preavviso.`);
-      } else if (diffGiorni < (preavvisoMinimo + 7)) {
-        warns.push(`⚠️ Margine Stretto: Mancano ${diffGiorni} giorni. L'istruttoria è a rischio ritardo, consigliabile aumentare il preavviso.`);
+  // VALIDAZIONE DATE AVANZATA (V3.1 -> V4.0)
+  const dateStr=V('dateOrari');
+  if(dateStr){
+    const dateSenzaOrari = dateStr
+      .replace(/\b\d{1,2}:\d{2}(:\d{2})?\b/g, ' ')
+      .replace(/\b(ore|dalle|alle|utc|local[ei]?)\s*\d{1,2}\b/gi, ' ');
+
+    const regexMesi = /(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|gen|feb|mar|apr|mag|giu|lug|ago|set|ott|nov|dic)/gi;
+    let match; let minDiffDays = 999;
+    const oggi = new Date(); oggi.setHours(0,0,0,0);
+    const annoCorrente = 2026; // Fissato per contesto agenzia
+    let ultimoIndiceMese = 0;
+
+    while ((match = regexMesi.exec(dateSenzaOrari)) !== null) {
+      const meseNome = match[0].toLowerCase();
+      const idxMese = MESI[meseNome];
+      const dopoMese = dateSenzaOrari.slice(regexMesi.lastIndex, regexMesi.lastIndex + 10);
+      const matchAnno = dopoMese.match(/\d{4}/);
+      let anno = matchAnno ? parseInt(matchAnno[0], 10) : annoCorrente;
+
+      const porzionePrima = dateSenzaOrari.slice(ultimoIndiceMese, match.index);
+      ultimoIndiceMese = regexMesi.lastIndex;
+
+      const giorniMatch = porzionePrima.match(/\b([1-9]|[12]\d|3[01])\b/g);
+      if (giorniMatch && giorniMatch.length > 0) {
+        giorniMatch.forEach(gStr => {
+          const giorno = parseInt(gStr, 10);
+          let dataTarget = new Date(anno, idxMese, giorno);
+          if (!matchAnno && dataTarget < oggi) dataTarget = new Date(annoCorrente + 1, idxMese, giorno);
+          const diffDays = Math.round((dataTarget - oggi) / 86400000);
+          if (diffDays < minDiffDays) minDiffDays = diffDays;
+        });
       }
+    }
+    
+    // Regole convertite in giorni solari
+    const preavvisoSolare = preavvisoMinimo === 15 ? 21 : (preavvisoMinimo === 30 ? 45 : 90);
+    if (minDiffDays !== 999) {
+      if (minDiffDays < 0) errs.push('⛔ Errore: Le date del volo inserite sono già passate!');
+      else if (minDiffDays < preavvisoSolare) errs.push(`⛔ Anticipo insufficiente: volo tra ${minDiffDays} giorni solari. L'Ente richiede minimo ${preavvisoMinimo} gg lavorativi (circa ${preavvisoSolare} solari).`);
+      else if (minDiffDays < (preavvisoSolare + 4)) warns.push(`⚠️ Anticipo al limite: data tra ${minDiffDays} giorni solari. La pratica rischia di essere respinta per ritardo.`);
     }
   }
 
-  if (modello === 'ATM05' && !V('pagamentoDiritti')) {
-    errs.push('⛔ Modello ATM-05 richiede obbligatoriamente l\'attestazione del pagamento dei diritti erariali ENAC.');
+  // CONTROLLO INCROCIATO QUOTA / COLORE D-FLIGHT (Miglioria 4)
+  const quota = V('quotaMax');
+  if (zona && quota) {
+    if (zona.includes('Rossa') && !quota.includes('Speciale')) errs.push('⛔ In Zona Rossa la quota deve essere giustificata da un\'analisi specifica. Seleziona "Quota Speciale".');
+    if (zona.includes('Arancione') && !quota.includes('25 m') && !quota.includes('Speciale')) errs.push('⛔ Limite superato: In Zona Arancione la quota massima consentita è 25m AGL.');
+    if (zona.includes('Gialla') && (quota.includes('60 m') || quota.includes('120 m'))) errs.push('⛔ Limite superato: In Zona Gialla la quota massima consentita è 45m AGL.');
+    if (zona.includes('Celeste') && quota.includes('120 m')) errs.push('⛔ Limite superato: In Zona Celeste la quota massima consentita è 60m AGL.');
   }
-  if (!V('cro') || V('cro').toUpperCase() === 'ESENTE') {
-    warns.push('⚠️ Se l\'operazione rientra in categoria Open, assicurarsi che le limitazioni geografiche non impongano lo scenario Specific.');
-  }
-  if (!V('freqRadio')) errs.push('⛔ Campo obbligatorio mancante: Frequenza Radio o canale di comunicazione TBT coordinata.');
+
+  if (modello === 'ATM05' && !V('pagamentoDiritti')) errs.push('⛔ Modello ATM-05 richiede obbligatoriamente l\'attestazione del pagamento dei diritti erariali ENAC.');
+  if (!V('freqRadio')) errs.push('⛔ Campo obbligatorio mancante: Frequenza Radio o canale di comunicazione TBT.');
 
   window._alerts = { errs, warns };
   const badge = document.getElementById('err-badge');
@@ -844,15 +1024,15 @@ function renderAlerts() {
   const { errs = [], warns = [] } = window._alerts || {};
   const c = document.getElementById('allarmi-container'); if (!c) return;
   if (!errs.length && !warns.length) {
-    c.innerHTML = '<div class="alert a-ok">✅ Configurazione conforme. Nessuna anomalia bloccante riscontrata per i modelli ATM-05 / ATM-09A.</div>';
+    c.innerHTML = '<div class="alert a-ok">✅ Configurazione conforme. Nessuna anomalia bloccante riscontrata per l\'istanza.</div>';
     return;
   }
-  c.innerHTML = [...errs.map(m=>`<div class="alert a-err">${m}</div>`), ...warns.map(m=>`<div class="alert a-warn">${m}</div>`)].join('');
+  c.innerHTML = [...errs.map(m=>`<div class="alert a-err">${escapeHTML(m)}</div>`), ...warns.map(m=>`<div class="alert a-warn">${escapeHTML(m)}</div>`)].join('');
 }
 
 function exportPractice() {
   if (!currentPracticeId) return;
-  saveCurrentPractice();
+  saveCurrentPractice(true);
   const p = getPractices()[currentPracticeId];
   const blob = new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -885,9 +1065,18 @@ function resetForm() {
 }
 
 function generaPDF() {
+  runValidation();
+  if (window._alerts.errs.length > 0) {
+    switchTab('alert');
+    alert('⛔ Risolvi gli errori critici nella scheda Diagnostica prima di generare il PDF.');
+    return;
+  }
+
   const V = id => document.getElementById(id) ? document.getElementById(id).value.trim() : '';
   const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val || '—'; };
-  
+
+  saveCurrentPractice(true);
+
   set('p-destA', V('destA'));
   set('p-destCc', V('destCc'));
   set('p-rich', V('richiedente'));
@@ -904,13 +1093,13 @@ function generaPDF() {
   set('p-quota', V('quotaMax'));
   set('p-diritti', V('pagamentoDiritti') || 'Esente / Diritti non applicabili');
   set('p-date', V('dateOrari'));
-  
+
   const nomeEsercente = V('richiedente');
   const telH24 = V('telPilota');
   const freq = V('freqRadio');
   const aero = V('aeroporto');
   const extra = V('altreNotizie');
-  
+
   const notizie = `Dichiarazioni d'obbligo e di coordinamento logistico di sicurezza:\nIl pilota in comando e i tecnici a terra associati all'esercente ${nomeEsercente} dichiarano la disponibilità totale all'immediata sospensione dei voli UAS e alla tempestiva liberazione dei volumi d'aria impegnati su richiesta dell'Ente ATS competente (${aero}).\nContatto d'emergenza radiotelefonico TBT interbordo/terra stabilito sulla frequenza ${freq} ed al recapito mobile prioritario H24: ${telH24}.\nI droni impiegati dispongono di sistemi attivi di Geofencing, FailSafe automatico con Return To Home (RTH) tarato sulle quote di sicurezza locali e terminazione rapida del volo conforme. Volo condotto costantemente in visibilità diretta (VLOS).\n${extra}`;
   set('p-note', notizie);
   set('p-luogodata', `${V('luogo')}, ${V('dataRichiesta')}`);
@@ -918,10 +1107,36 @@ function generaPDF() {
   const tbody = document.getElementById('p-punti');
   const validi = punti.filter(p => p.lat || p.lon);
   tbody.innerHTML = validi.length 
-    ? validi.map(p => `<tr><td>${p.nome}</td><td>${p.lat}</td><td>${p.lon}</td></tr>`).join('')
+    ? validi.map(p => `<tr><td>${escapeHTML(p.nome)}</td><td>${escapeHTML(p.lat)}</td><td>${escapeHTML(p.lon)}</td></tr>`).join('')
     : '<tr><td colspan="3">Nessun vertice specifico inserito (Punto singolo centrale di decollo).</td></tr>';
 
-  setTimeout(() => window.print(), 200);
+  document.getElementById('print-area').style.display = 'block';
+  setTimeout(() => {
+    window.print();
+    document.getElementById('print-area').style.display = 'none';
+  }, 200);
+}
+
+// EMAIL PEC PRE-COMPILATA (Miglioria 1)
+function apriEmailPronta() {
+  const V = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
+  const destA = V('destA');
+  const destCc = V('destCc');
+  const idNum = V('idPratica') || '000';
+  const nomePratica = V('nomePratica') || 'Istanza UAS';
+  const localita = V('localita') || 'Italia';
+  const richiedente = V('richiedente') || 'Operatore APR';
+  const tel = V('telPilota') || '0187 1755700';
+  const modello = V('tipoModello') === 'ATM05' ? 'ATM-05' : 'ATM-09A';
+
+  if (!destA) { alert('⚠️ Seleziona la Direzione ENAC di competenza per generare la PEC.'); return; }
+
+  const cleanA = destA.replace(/;/g, ',').replace(/\s+/g, '');
+  const cleanCc = destCc.replace(/;/g, ',').replace(/\s+/g, '');
+  const oggetto = encodeURIComponent(`Presentazione Modello ${modello} - Pratica [${idNum}] ${nomePratica} - Località: ${localita}`);
+  const corpoTesto = `Spett.le Ufficio Competente / ATS,\n\nCon la presente si trasmette in allegato il Modello ${modello} per la richiesta di autorizzazione ad effettuare attività di volo con UAS ai sensi del Reg. (UE) 2019/947.\n\nRiferimento Pratica: [${idNum}] ${nomePratica}\nLocalità: ${localita}\nRichiedente: ${richiedente}\nRecapito telefonico H24: ${tel}\n\nIl modulo debitamente compilato e firmato è allegato alla presente comunicazione.\nRestiamo a disposizione per qualsiasi chiarimento.\n\nCordiali saluti,\n${richiedente}\nDesk 360Drone`;
+  
+  window.location.href = `mailto:${cleanA}?cc=${encodeURIComponent(cleanCc)}&subject=${oggetto}&body=${encodeURIComponent(corpoTesto)}`;
 }
 
 document.addEventListener('input', () => { debouncedSave(); updatePreviewN(); });
