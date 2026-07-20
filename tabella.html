@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>360Drone – Board Operativo Pratiche</title>
+<style>
+  :root {
+    --bg-main: #f0f4f8;
+    --header-bg: #0f341e;
+    --col-bg: #e1e8ed;
+    --text-main: #1a2a1e;
+    --red-alert: #ffdddd;
+    --red-border: #ff8888;
+    --yellow-wait: #fff5cc;
+    --yellow-border: #ffcc00;
+    --green-ok: #d4edda;
+    --green-border: #28a745;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+  body { background: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow-x: auto; }
+
+  /* -- HEADER E LOGIN -- */
+  #header { background: var(--header-bg); color: #fff; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  #header h1 { font-size: 18px; font-weight: 800; }
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+  .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: opacity 0.2s; }
+  .btn:hover { opacity: 0.8; }
+  .btn-light { background: #fff; color: var(--header-bg); }
+  
+  #user-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 12px; font-size: 12px; margin-right: 15px; }
+
+  /* -- STRUTTURA A COLONNE (BOARD) -- */
+  #board { display: flex; padding: 20px; gap: 20px; flex-grow: 1; align-items: flex-start; overflow-x: auto; overflow-y: hidden; }
+  
+  .column { background: var(--col-bg); border-radius: 8px; width: 320px; flex-shrink: 0; max-height: calc(100vh - 80px); display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .column-header { padding: 14px; font-weight: 800; font-size: 15px; border-bottom: 2px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+  .column-count { background: rgba(0,0,0,0.1); padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+  
+  .task-list { padding: 10px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 10px; }
+  
+  .add-task-btn { padding: 12px; text-align: left; color: #555; cursor: pointer; border-radius: 0 0 8px 8px; transition: background 0.2s; }
+  .add-task-btn:hover { background: rgba(0,0,0,0.05); color: #000; }
+
+  /* -- CARD DELLA PRATICA -- */
+  .card { background: #fff; border-radius: 6px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: pointer; border-left: 4px solid #ccc; transition: transform 0.1s; }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
+  
+  .card.stato-da-fare { background: var(--red-alert); border-color: var(--red-border); }
+  .card.stato-attesa { background: var(--yellow-wait); border-color: var(--yellow-border); }
+  .card.stato-approvata { background: var(--green-ok); border-color: var(--green-border); }
+
+  .card-id { font-size: 10px; font-weight: bold; color: #666; margin-bottom: 4px; display: block; }
+  .card-title { font-size: 14px; font-weight: bold; margin-bottom: 8px; word-wrap: break-word; }
+  
+  .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11px; color: #555; }
+  .card-date { display: flex; align-items: center; gap: 4px; }
+  .card-user { background: rgba(0,0,0,0.06); padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+
+  /* -- MODAL (FINESTRA DI INSERIMENTO/MODIFICA) -- */
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+  .modal { background: #fff; padding: 24px; border-radius: 8px; width: 90%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+  .modal h2 { margin-bottom: 16px; font-size: 18px; color: var(--header-bg); }
+  
+  .field-group { margin-bottom: 14px; }
+  .field-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #444; }
+  .field-group input, .field-group select, .field-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
+  .field-group input:focus, .field-group select:focus, .field-group textarea:focus { border-color: var(--header-bg); }
+  
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+  .btn-save { background: var(--header-bg); color: #fff; }
+  .btn-cancel { background: #eee; color: #333; }
+  .btn-delete { background: #e74c3c; color: #fff; margin-right: auto; } /* Spinto a sinistra */
+
+  /* Fix per far sparire il prompt login all'inizio */
+  #login-overlay { display: flex; }
+  #app-content { display: none; }
+</style>
+</head>
+<body>
+
+<!-- OVERLAY DI ACCESSO -->
+<div class="modal-overlay" id="login-overlay">
+  <div class="modal">
+    <h2>Accesso Board 360Drone</h2>
+    <div class="field-group">
+      <label>Inserisci il tuo Nome o Identificativo:</label>
+      <input type="text" id="login-name" placeholder="Es. Mario Rossi / MR">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-save" onclick="login()">Entra</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTENUTO PRINCIPALE DELL'APP -->
+<div id="app-content" style="height: 100%; display: flex; flex-direction: column;">
+  <div id="header">
+    <h1>Board Operativo Pratiche</h1>
+    <div class="header-actions">
+      <span id="user-badge">Operatore: </span>
+      <input type="file" id="file-import" accept=".json" style="display:none" onchange="importData(event)">
+      <button class="btn btn-light" onclick="document.getElementById('file-import').click()">📥 Importa DB</button>
+      <button class="btn btn-light" onclick="exportData()">📤 Esporta DB</button>
+    </div>
+  </div>
+
+  <div id="board">
+    <!-- Le colonne verranno generate qui dal Javascript -->
+  </div>
+</div>
+
+<!-- MODAL CREAZIONE / MODIFICA CARD -->
+<div class="modal-overlay" id="card-modal">
+  <div class="modal">
+    <h2 id="modal-title">Dettagli Pratica</h2>
+    <input type="hidden" id="card-id">
+    <input type="hidden" id="card-column">
+    
+    <div class="field-group">
+      <label>Codice / ID Pratica Interno</label>
+      <input type="text" id="card-code" placeholder="Es. 001">
+    </div>
+    <div class="field-group">
+      <label>Nome Cantiere / Cliente (Titolo)</label>
+      <input type="text" id="card-name" placeholder="Es. Rilievo Fotogrammetrico Linate">
+    </div>
+    <div class="field-group">
+      <label>Scadenza / Data Volo</label>
+      <input type="date" id="card-date">
+    </div>
+    <div class="field-group">
+      <label>Stato d'Avanzamento (Modifica Colore)</label>
+      <select id="card-status">
+        <option value="da-fare">🔴 Da Iniziare / Compilare</option>
+        <option value="attesa">🟡 In Attesa di Risposta (ENAC/Prefettura)</option>
+        <option value="approvata">🟢 Approvata / Conclusa</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label>Note veloci</label>
+      <textarea id="card-notes" rows="3" placeholder="Appunti..."></textarea>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn btn-delete" id="btn-delete" onclick="deleteCard()" style="display:none;">Elimina</button>
+      <button class="btn btn-cancel" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-save" onclick="saveCard()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// IL NOSTRO DATABASE VIRTUALE (Si salva nel browser)
+let appData = {
+  columns: [
+    { id: "col-atm05b", title: "ATM-05b" },
+    { id: "col-atm09a", title: "ATM-09A" },
+    { id: "col-sora", title: "Valutazioni di Volo / SORA" },
+    { id: "col-altro", title: "Altre Pratiche" }
+  ],
+  cards: []
+};
+
+let currentUser = "";
+
+// -- INIZIALIZZAZIONE --
+window.onload = () => {
+  // Controlla se c'è un utente salvato
+  const savedUser = localStorage.getItem("360drone_user");
+  if (savedUser) {
+    currentUser = savedUser;
+    startApp();
+  } else {
+    document.getElementById("login-overlay").style.display = "flex";
+  }
+};
+
+function login() {
+  const name = document.getElementById("login-name").value.trim();
+  if (!name) return alert("Inserisci un identificativo");
+  localStorage.setItem("360drone_user", name);
+  currentUser = name;
+  startApp();
+}
+
+function startApp() {
+  document.getElementById("login-overlay").style.display = "none";
+  document.getElementById("app-content").style.display = "flex";
+  document.getElementById("user-badge").textContent = `Operatore: ${currentUser}`;
+  
+  // Carica i dati salvati
+  const savedData = localStorage.getItem("360drone_board_data");
+  if (savedData) {
+    appData = JSON.parse(savedData);
+  }
+  
+  renderBoard();
+}
+
+// -- RENDERIZZAZIONE DELLA BOARD --
+function renderBoard() {
+  const board = document.getElementById("board");
+  board.innerHTML = ""; // Pulisce
+  
+  appData.columns.forEach(col => {
+    // Crea la struttura della colonna
+    const colDiv = document.createElement("div");
+    colDiv.className = "column";
+    
+    // Trova le card per questa colonna
+    const columnCards = appData.cards.filter(c => c.columnId === col.id);
+    
+    colDiv.innerHTML = `
+      <div class="column-header">
+        <span>${col.title}</span>
+        <span class="column-count">${columnCards.length}</span>
+      </div>
+      <div class="task-list" id="list-${col.id}">
+        <!-- Le card verranno inserite qui -->
+      </div>
+      <div class="add-task-btn" onclick="openModal('${col.id}')">+ Aggiungi Pratica</div>
+    `;
+    
+    board.appendChild(colDiv);
+    
+    // Inserisce le card nella lista
+    const listDiv = colDiv.querySelector(".task-list");
+    columnCards.forEach(card => {
+      const cardDiv = document.createElement("div");
+      // Assegna la classe del colore in base allo stato
+      cardDiv.className = `card stato-${card.status}`;
+      cardDiv.onclick = () => openModal(null, card.id);
+      
+      // Formatta la data (se presente)
+      let dateHtml = "";
+      if (card.dueDate) {
+        const dateObj = new Date(card.dueDate);
+        dateHtml = `📅 ${dateObj.toLocaleDateString("it-IT")}`;
+      }
+      
+      cardDiv.innerHTML = `
+        <span class="card-id">ID: ${card.code || "---"}</span>
+        <div class="card-title">${card.title}</div>
+        <div class="card-footer">
+          <span class="card-date">${dateHtml}</span>
+          <span class="card-user">${card.operator}</span>
+        </div>
+      `;
+      listDiv.appendChild(cardDiv);
+    });
+  });
+}
+
+// -- GESTIONE MODAL E SALVATAGGIO --
+function openModal(columnId = null, cardId = null) {
+  document.getElementById("card-modal").style.display = "flex";
+  
+  if (cardId) {
+    // MODIFICA CARD ESISTENTE
+    const card = appData.cards.find(c => c.id === cardId);
+    document.getElementById("modal-title").textContent = "Modifica Pratica";
+    document.getElementById("card-id").value = card.id;
+    document.getElementById("card-column").value = card.columnId;
+    document.getElementById("card-code").value = card.code || "";
+    document.getElementById("card-name").value = card.title;
+    document.getElementById("card-date").value = card.dueDate || "";
+    document.getElementById("card-status").value = card.status;
+    document.getElementById("card-notes").value = card.notes || "";
+    document.getElementById("btn-delete").style.display = "block"; // Mostra tasto elimina
+  } else {
+    // NUOVA CARD
+    document.getElementById("modal-title").textContent = "Nuova Pratica";
+    document.getElementById("card-id").value = "";
+    document.getElementById("card-column").value = columnId; // Sa in che colonna va
+    document.getElementById("card-code").value = "";
+    document.getElementById("card-name").value = "";
+    document.getElementById("card-date").value = "";
+    document.getElementById("card-status").value = "da-fare"; // Default rosso
+    document.getElementById("card-notes").value = "";
+    document.getElementById("btn-delete").style.display = "none";
+  }
+}
+
+function closeModal() {
+  document.getElementById("card-modal").style.display = "none";
+}
+
+function saveCard() {
+  const title = document.getElementById("card-name").value.trim();
+  if (!title) return alert("Il nome del cantiere è obbligatorio");
+
+  const id = document.getElementById("card-id").value;
+  const cardData = {
+    title: title,
+    code: document.getElementById("card-code").value.trim(),
+    columnId: document.getElementById("card-column").value,
+    dueDate: document.getElementById("card-date").value,
+    status: document.getElementById("card-status").value,
+    notes: document.getElementById("card-notes").value,
+    operator: currentUser, // Registra chi sta salvando
+    lastEdit: new Date().toISOString()
+  };
+
+  if (id) {
+    // Aggiorna esistente
+    const index = appData.cards.findIndex(c => c.id === id);
+    cardData.id = id;
+    appData.cards[index] = cardData;
+  } else {
+    // Crea nuova
+    cardData.id = "card-" + Date.now();
+    appData.cards.push(cardData);
+  }
+
+  saveToLocal();
+  closeModal();
+  renderBoard();
+}
+
+function deleteCard() {
+  if (!confirm("Sei sicuro di voler eliminare questa pratica dal tabellone?")) return;
+  const id = document.getElementById("card-id").value;
+  appData.cards = appData.cards.filter(c => c.id !== id);
+  saveToLocal();
+  closeModal();
+  renderBoard();
+}
+
+// -- SALVATAGGIO E IMPORT/EXPORT --
+function saveToLocal() {
+  localStorage.setItem("360drone_board_data", JSON.stringify(appData));
+}
+
+function exportData() {
+  const dataStr = JSON.stringify(appData, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const dataOggi = new Date().toISOString().split('T')[0];
+  a.href = url;
+  a.download = `Board_360Drone_${dataOggi}.json`;
+  a.click();
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const importedData = JSON.parse(e.target.result);
+      if (importedData.columns && importedData.cards) {
+        appData = importedData;
+        saveToLocal();
+        renderBoard();
+        alert("Database aggiornato con successo!");
+      } else {
+        alert("Il file non sembra essere un backup valido.");
+      }
+    } catch (err) {
+      alert("Errore nella lettura del file JSON.");
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = ""; // Resetta l'input
+}
+</script>
+</body>
+</html>
