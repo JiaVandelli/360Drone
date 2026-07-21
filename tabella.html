@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>360Drone – Board Operativo Pratiche Realtime</title>
-<!-- Collegamento alla libreria Socket.IO erogata dal server Node.js -->
 <script src="/socket.io/socket.io.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   :root {
     --bg-main: #f0f4f8;
@@ -45,7 +43,7 @@
   .add-task-btn:hover { background: rgba(0,0,0,0.05); color: #000; }
 
   /* ── CARD DELLA PRATICA ── */
-  .card { background: #fff; border-radius: 6px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: pointer; border-left: 5px solid #ccc; transition: transform 0.1s, box-shadow 0.1s; position: relative; }
+  .card { border-radius: 6px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: pointer; border-left: 5px solid rgba(0,0,0,0.15); transition: transform 0.1s, box-shadow 0.1s; position: relative; }
   .card:hover { transform: translateY(-2px); box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
   
   .card-id { font-size: 10px; font-weight: bold; color: rgba(0,0,0,0.5); margin-bottom: 4px; display: block; }
@@ -65,10 +63,17 @@
   
   .field-group { margin-bottom: 14px; }
   .field-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #444; text-transform: uppercase; letter-spacing: 0.05em; }
-  .field-group input[type=text], .field-group select, .field-group textarea, .field-group input[type=date] { width: 100%; padding: 8px 10px; border: 1px solid #bccea8; border-radius: 4px; outline: none; background: #fff; font-family: inherit; }
-  .field-group input:focus, .field-group select:focus, .field-group textarea:focus { border-color: var(--header-bg); }
+  .field-group input[type=text], .field-group textarea, .field-group input[type=date] { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; outline: none; background: #fff; font-family: inherit; }
+  .field-group input:focus, .field-group textarea:focus { border-color: var(--header-bg); }
+  
   .field-group-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; padding: 4px 0; }
   .field-group-checkbox input { width: 16px; height: 16px; cursor: pointer; }
+
+  /* COLOR PICKER */
+  .color-picker { display: flex; gap: 12px; margin-top: 4px; }
+  .color-swatch { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.1s; }
+  .color-swatch:hover { transform: scale(1.1); }
+  .color-swatch.selected { border-color: #1a2a1e; transform: scale(1.15); box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
 
   .manager-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #e9ecef; }
   .manager-row input[type=text] { flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; }
@@ -86,7 +91,6 @@
 </head>
 <body>
 
-<!-- OVERLAY DI ACCESSO OPERATORE -->
 <div class="modal-overlay" id="login-overlay">
   <div class="modal">
     <h2>Accesso Monitor 360Drone</h2>
@@ -95,36 +99,28 @@
       <input type="text" id="login-name" placeholder="Es. Mario Rossi">
     </div>
     <div class="modal-actions">
-      <button class="btn btn-save" onclick="login()">Configura Sessione</button>
+      <button class="btn btn-save" onclick="login()">Entra</button>
     </div>
   </div>
 </div>
 
-<!-- CONTAINER PRINCIPALE APPLICAZIONE -->
-<div id="app-content" style="height: 100%; display: flex; flex-direction: column;">
+<div id="app-content">
   <div id="header">
     <h1>Lavagna Operativa Pratiche</h1>
     <div class="header-actions">
       <span id="sync-badge">OFFLINE</span>
       <span id="user-badge">Operatore: </span>
       <button class="btn btn-light" onclick="openColumnsManager()">⚙️ Colonne</button>
-      <button class="btn btn-light" onclick="openStatusManager()">🎨 Stati</button>
       <input type="file" id="file-import" accept=".json" style="display:none" onchange="importData(event)">
       <button class="btn btn-light" onclick="document.getElementById('file-import').click()">📥 Importa</button>
       <button class="btn btn-light" onclick="exportData()">📤 Esporta</button>
     </div>
   </div>
 
-  <div id="summary-bar">
-    <!-- Verrà riempito da JS -->
-  </div>
-
-  <div id="board">
-    <!-- Generazione dinamica lato script -->
-  </div>
+  <div id="summary-bar"></div>
+  <div id="board"></div>
 </div>
 
-<!-- MODAL COMPILAZIONE / EDITING CARD -->
 <div class="modal-overlay" id="card-modal">
   <div class="modal">
     <h2 id="modal-title">Dettagli Pratica</h2>
@@ -141,24 +137,24 @@
         <input type="text" id="card-name" placeholder="Es. Ispezione Linate Srl">
       </div>
       <div class="field-group">
-        <label>Data di Scadenza Istanza / Volo</label>
+        <label>Data di Scadenza / Volo</label>
         <input type="date" id="card-date">
       </div>
+      
       <div class="field-group">
-        <label>Stato di Avanzamento</label>
-        <select id="card-status">
-          <!-- Popolato dinamicamente da appData.statuses -->
-        </select>
+        <label>Colore Pratica (Scegli tu il significato a vista)</label>
+        <div class="color-picker" id="color-picker"></div>
       </div>
+
       <div class="field-group">
         <label class="field-group-checkbox">
           <input type="checkbox" id="card-phone-urgent">
-          <span>📞 Richiesta reperibilità telefonica immediata (H24)</span>
+          <span>📞 Richiesta reperibilità telefonica immediata</span>
         </label>
       </div>
       <div class="field-group">
-        <label>Note di Campo / Prescrizioni Enti</label>
-        <textarea id="card-notes" rows="3" placeholder="Aggiungi dettagli..."></textarea>
+        <label>Note veloci</label>
+        <textarea id="card-notes" rows="3" placeholder="Appunti..."></textarea>
       </div>
     </div>
     
@@ -170,13 +166,10 @@
   </div>
 </div>
 
-<!-- MODAL GESTIONE COLONNE -->
 <div class="modal-overlay" id="columns-modal">
   <div class="modal">
-    <h2>Configurazione Colonne Tipologia</h2>
-    <div class="modal-scroll-body" id="columns-list">
-      <!-- Lista righe generata da JS -->
-    </div>
+    <h2>Configurazione Colonne</h2>
+    <div class="modal-scroll-body" id="columns-list"></div>
     <div class="modal-actions">
       <button class="btn btn-save" onclick="addColumnFromUI()">+ Aggiungi Colonna</button>
       <button class="btn btn-cancel" onclick="closeColumnsManager()">Chiudi</button>
@@ -184,22 +177,8 @@
   </div>
 </div>
 
-<!-- MODAL GESTIONE STATI COLORI -->
-<div class="modal-overlay" id="statuses-modal">
-  <div class="modal">
-    <h2>Configurazione Stati e Flussi</h2>
-    <div class="modal-scroll-body" id="statuses-list">
-      <!-- Lista righe generata da JS -->
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-save" onclick="addStatusFromUI()">+ Nuovo Stato</button>
-      <button class="btn btn-cancel" onclick="closeStatusManager()">Chiudi</button>
-    </div>
-  </div>
-</div>
-
 <script>
-// ESCAPE HTML FUNCTION
+// ── ESCAPE HTML (Sicurezza Dati) ──
 function escapeHTML(str) {
   if (!str) return "";
   return String(str)
@@ -210,32 +189,29 @@ function escapeHTML(str) {
     .replace(/'/g, "&#039;");
 }
 
-// DATABASE STRUTTURATO ESTESO
-let appData = {
-  columns: [],
-  cards: [],
-  statuses: []
-};
+// ── COLORI PREDEFINITI PER LE CARD ──
+const CARD_COLORS = [
+  { value: "#f8f9fa", name: "Grigio Chiaro (Neutro/Da assegnare)" },
+  { value: "#ffdddd", name: "Rosso" },
+  { value: "#fff5cc", name: "Giallo" },
+  { value: "#d4edda", name: "Verde" },
+  { value: "#cce5ff", name: "Azzurro" },
+  { value: "#e2d9f3", name: "Viola" }
+];
+let selectedCardColor = "#f8f9fa";
 
+let appData = { columns: [], cards: [] };
 let currentUser = "";
 let socket = null;
 let usingServer = false;
 
-// ── INIZIALIZZAZIONE DEFAULT SE LOCALE VUOTO ──
 function initDefaultData() {
   if (appData.columns.length === 0) {
     appData.columns = [
       { id: "col-atm05b", title: "ATM-05b", color: "#0f341e", order: 0 },
       { id: "col-atm09a", title: "ATM-09A", color: "#1a5276", order: 1 },
-      { id: "col-sora", title: "Valutazioni di Volo / SORA", color: "#7d3c98", order: 2 },
+      { id: "col-sora", title: "Valutazioni / SORA", color: "#7d3c98", order: 2 },
       { id: "col-altro", title: "Altre Pratiche", color: "#475569", order: 3 }
-    ];
-  }
-  if (appData.statuses.length === 0) {
-    appData.statuses = [
-      { id: "da-fare", label: "Da Iniziare", color: "#ffdddd" },
-      { id: "attesa", label: "In Attesa", color: "#fff5cc" },
-      { id: "approvata", label: "Approvata", color: "#d4edda" }
     ];
   }
 }
@@ -252,7 +228,7 @@ window.onload = () => {
 
 function login() {
   const name = document.getElementById("login-name").value.trim();
-  if (!name) return alert("Identificativo operatore obbligatorio per tracciare le modifiche.");
+  if (!name) return alert("Inserisci il tuo nome per tracciare il lavoro.");
   localStorage.setItem("360drone_user", name);
   currentUser = name;
   startApp();
@@ -272,13 +248,8 @@ function startApp() {
   connectToServer();
 }
 
-// ── ENGINE REALTIME SINCRONIZZAZIONE ──
 function connectToServer() {
-  if (typeof io === 'undefined') {
-    console.log("Server di sincronizzazione non rilevato. Funzionamento in archiviazione locale.");
-    return;
-  }
-  
+  if (typeof io === 'undefined') return;
   socket = io();
   const badge = document.getElementById("sync-badge");
 
@@ -289,7 +260,7 @@ function connectToServer() {
   });
   
   socket.on('init', (serverData) => {
-    if (serverData && (serverData.columns?.length || serverData.cards?.length)) {
+    if (serverData && serverData.columns) {
       appData = serverData;
       localStorage.setItem("360drone_board_data", JSON.stringify(appData));
       renderBoard();
@@ -316,6 +287,7 @@ function saveAndSync() {
   if (usingServer && socket) {
     socket.emit('update', appData);
   }
+  renderBoard(); 
 }
 
 function updateSummary() {
@@ -324,28 +296,32 @@ function updateSummary() {
   let total = appData.cards.length;
   let urgent = appData.cards.filter(c => c.phoneUrgent).length;
   
-  let statusCounts = {};
-  appData.statuses.forEach(s => { statusCounts[s.id] = 0; });
+  let colorCounts = {};
+  CARD_COLORS.forEach(c => colorCounts[c.value] = 0);
   appData.cards.forEach(c => {
-    if (statusCounts[c.status] !== undefined) statusCounts[c.status]++;
+    const col = c.color || '#f8f9fa';
+    if(colorCounts[col] !== undefined) colorCounts[col]++;
   });
   
-  let html = `<span style="padding:4px 0;">Totale: <strong>${total}</strong></span>`;
-  if (urgent > 0) html += `<span style="color:#e74c3c; padding:4px 0;">📞 Urgenti: <strong>${urgent}</strong></span>`;
+  let html = `<span style="padding:4px 0;">Totale Pratiche: <strong>${total}</strong></span>`;
+  if (urgent > 0) html += `<span style="color:#e74c3c; padding:4px 0; margin-left:10px;">📞 Urgenti: <strong>${urgent}</strong></span>`;
   
-  appData.statuses.forEach(s => {
-    html += `<span style="background:${s.color}; padding:4px 10px; border-radius:12px; border: 1px solid rgba(0,0,0,0.1);">${escapeHTML(s.label)}: <strong>${statusCounts[s.id]}</strong></span>`;
+  html += `<span style="margin-left:auto; display:flex; gap:8px; align-items:center;">Conteggio per colore:`;
+  
+  CARD_COLORS.forEach(c => {
+    if(colorCounts[c.value] > 0) {
+      html += `<span style="background:${c.value}; width:24px; height:24px; border-radius:50%; border: 1px solid rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold;" title="${c.name}">${colorCounts[c.value]}</span>`;
+    }
   });
+  html += `</span>`;
   
   bar.innerHTML = html;
 }
 
-// ── RENDER GRAPHIC ENGINE ──
 function renderBoard() {
   const board = document.getElementById("board");
   board.innerHTML = "";
   
-  // Ordina colonne per order
   appData.columns.sort((a, b) => (a.order || 0) - (b.order || 0)).forEach(col => {
     const colDiv = document.createElement("div");
     colDiv.className = "column";
@@ -368,10 +344,7 @@ function renderBoard() {
       const cardDiv = document.createElement("div");
       cardDiv.className = "card";
       cardDiv.onclick = () => openModal(null, card.id);
-      
-      const statusObj = appData.statuses.find(s => s.id === card.status) || { color: "#ffffff" };
-      cardDiv.style.background = statusObj.color;
-      cardDiv.style.borderLeftColor = "rgba(0,0,0,0.15)";
+      cardDiv.style.background = card.color || "#f8f9fa";
       
       let dateHtml = "";
       if (card.dueDate) {
@@ -397,12 +370,24 @@ function renderBoard() {
   updateSummary();
 }
 
-// ── CRUD LOGICA MODALE PRATICA ──
+function renderColorPicker(selected = "#f8f9fa") {
+  const container = document.getElementById('color-picker');
+  container.innerHTML = '';
+  CARD_COLORS.forEach(c => {
+    const div = document.createElement('div');
+    div.className = `color-swatch ${c.value === selected ? 'selected' : ''}`;
+    div.style.background = c.value;
+    div.title = c.name;
+    div.onclick = () => {
+      selectedCardColor = c.value;
+      renderColorPicker(c.value);
+    };
+    container.appendChild(div);
+  });
+}
+
 function openModal(columnId = null, cardId = null) {
   document.getElementById("card-modal").style.display = "flex";
-  
-  const selectStatus = document.getElementById("card-status");
-  selectStatus.innerHTML = appData.statuses.map(s => `<option value="${s.id}">${escapeHTML(s.label)}</option>`).join('');
   
   if (cardId) {
     const card = appData.cards.find(c => c.id === cardId);
@@ -412,10 +397,10 @@ function openModal(columnId = null, cardId = null) {
     document.getElementById("card-code").value = card.code || "";
     document.getElementById("card-name").value = card.title;
     document.getElementById("card-date").value = card.dueDate || "";
-    document.getElementById("card-status").value = card.status;
     document.getElementById("card-phone-urgent").checked = card.phoneUrgent || false;
     document.getElementById("card-notes").value = card.notes || "";
     document.getElementById("btn-delete").style.display = "block";
+    selectedCardColor = card.color || "#f8f9fa";
   } else {
     document.getElementById("modal-title").textContent = "Nuova Pratica";
     document.getElementById("card-id").value = "";
@@ -423,11 +408,12 @@ function openModal(columnId = null, cardId = null) {
     document.getElementById("card-code").value = "";
     document.getElementById("card-name").value = "";
     document.getElementById("card-date").value = "";
-    document.getElementById("card-status").value = appData.statuses[0]?.id || "";
     document.getElementById("card-phone-urgent").checked = false;
     document.getElementById("card-notes").value = "";
     document.getElementById("btn-delete").style.display = "none";
+    selectedCardColor = "#f8f9fa"; 
   }
+  renderColorPicker(selectedCardColor);
 }
 
 function closeModal() { document.getElementById("card-modal").style.display = "none"; }
@@ -442,7 +428,7 @@ function saveCard() {
     code: document.getElementById("card-code").value.trim(),
     columnId: document.getElementById("card-column").value,
     dueDate: document.getElementById("card-date").value,
-    status: document.getElementById("card-status").value,
+    color: selectedCardColor,
     phoneUrgent: document.getElementById("card-phone-urgent").checked,
     notes: document.getElementById("card-notes").value,
     operator: currentUser,
@@ -460,7 +446,6 @@ function saveCard() {
 
   saveAndSync();
   closeModal();
-  renderBoard();
 }
 
 function deleteCard() {
@@ -469,17 +454,10 @@ function deleteCard() {
   appData.cards = appData.cards.filter(c => c.id !== id);
   saveAndSync();
   closeModal();
-  renderBoard();
 }
 
-// ── MANAGER INTERFACCIA COLONNE ──
 function addColumn(title, color = "#475569") {
-  const newCol = {
-    id: "col-" + Date.now(),
-    title,
-    color,
-    order: appData.columns.length
-  };
+  const newCol = { id: "col-" + Date.now(), title, color, order: appData.columns.length };
   appData.columns.push(newCol);
   saveAndSync();
 }
@@ -502,80 +480,27 @@ function openColumnsManager() {
 function closeColumnsManager() { document.getElementById("columns-modal").style.display = "none"; }
 
 function addColumnFromUI() {
-  const title = prompt("Titolo o Tipologia Nuova Pratica (es. ATM-03):");
-  if (title && title.trim()) {
-    addColumn(title.trim());
-    renderBoard();
-    openColumnsManager();
-  }
+  const title = prompt("Titolo Nuova Colonna Pratiche:");
+  if (title && title.trim()) { addColumn(title.trim()); openColumnsManager(); }
 }
 function renameColumn(colId, newTitle) {
   const col = appData.columns.find(c => c.id === colId);
-  if (col && newTitle.trim()) { col.title = newTitle.trim(); saveAndSync(); renderBoard(); }
+  if (col && newTitle.trim()) { col.title = newTitle.trim(); saveAndSync(); }
 }
 function changeColumnColor(colId, color) {
   const col = appData.columns.find(c => c.id === colId);
-  if (col) { col.color = color; saveAndSync(); renderBoard(); }
+  if (col) { col.color = color; saveAndSync(); }
 }
 function deleteColumn(colId) {
   if (appData.cards.some(c => c.columnId === colId)) {
-    alert("Impossibile eliminare. Sposta o cancella prima tutte le pratiche all'interno di questa colonna.");
+    alert("Impossibile eliminare. Cancella o sposta prima tutte le pratiche da questa colonna.");
     return;
   }
   appData.columns = appData.columns.filter(c => c.id !== colId);
   saveAndSync();
-  renderBoard();
   openColumnsManager();
 }
 
-// ── MANAGER INTERFACCIA STATI ──
-function addStatus(label, color) {
-  const id = "status-" + Date.now();
-  appData.statuses.push({ id, label, color });
-  saveAndSync();
-}
-
-function openStatusManager() {
-  const list = document.getElementById("statuses-list");
-  list.innerHTML = "";
-  appData.statuses.forEach(st => {
-    const div = document.createElement("div");
-    div.className = "manager-row";
-    div.innerHTML = `
-      <input type="text" value="${escapeHTML(st.label)}" onchange="updateStatus('${st.id}', this.value, '${st.color}')">
-      <input type="color" value="${st.color}" onchange="updateStatus('${st.id}', '${st.label}', this.value)" title="Colore Sfondo Card">
-      <button class="btn btn-delete" onclick="if(confirm('Eliminare lo stato corrente?')) deleteStatus('${st.id}')">✕</button>
-    `;
-    list.appendChild(div);
-  });
-  document.getElementById("statuses-modal").style.display = "flex";
-}
-function closeStatusManager() { document.getElementById("statuses-modal").style.display = "none"; }
-
-function addStatusFromUI() {
-  const label = prompt("Etichetta nuovo stato (es. Sospesa da ENAC):");
-  if (label && label.trim()) {
-    addStatus(label.trim(), "#e2e8f0");
-    renderBoard();
-    openStatusManager();
-  }
-}
-function updateStatus(statusId, newLabel, newColor) {
-  const st = appData.statuses.find(s => s.id === statusId);
-  if (st && newLabel.trim()) { st.label = newLabel.trim(); st.color = newColor; saveAndSync(); renderBoard(); }
-}
-function deleteStatus(statusId) {
-  if (appData.cards.some(c => c.status === statusId)) {
-    alert("Impossibile rimuovere. Ci sono pratiche attive impostate su questo stato.");
-    return;
-  }
-  appData.statuses = appData.statuses.filter(s => s.id !== statusId);
-  saveAndSync();
-  renderBoard();
-  openStatusManager();
-}
-
-// ── UTILITY BACKUP E UTILS ──
 function exportData() {
   const dataStr = JSON.stringify(appData, null, 2);
   const blob = new Blob([dataStr], { type: "application/json" });
@@ -591,11 +516,21 @@ function importData(event) {
   reader.onload = (e) => {
     try {
       const importedData = JSON.parse(e.target.result);
-      if (importedData.columns && importedData.cards && importedData.statuses) {
+      if (importedData.columns && importedData.cards) {
+        // MIGRAZIONE VECCHI BACKUP (Punto 1)
+        importedData.cards.forEach(card => {
+          if (!card.color) {
+            const oldColorMap = {
+              "da-fare": "#ffdddd",
+              "attesa": "#fff5cc",
+              "approvata": "#d4edda"
+            };
+            card.color = oldColorMap[card.status] || "#f8f9fa";
+          }
+        });
         appData = importedData;
         saveAndSync();
-        renderBoard();
-        alert("Database importato e sincronizzato!");
+        alert("Database importato con successo!");
       } else { alert("Struttura file JSON non valida per la lavagna."); }
     } catch (err) { alert("Errore lettura file."); }
   };
