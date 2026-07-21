@@ -2,8 +2,8 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>360Drone – Board Operativo Pratiche v5.1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>360Drone – Board Operativo Pratiche</title>
 <!-- Collegamento Socket.IO per sincronizzazione realtime -->
 <script src="/socket.io/socket.io.js"></script>
 <style>
@@ -15,106 +15,109 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
-  body { background: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow-x: auto; }
+  /* Disabilita lo scroll della pagina intera per farlo fare solo alla board */
+  body { background: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* ── FIX APP CONTENT (Impaginazione corretta) ── */
+  #app-content { display: none; flex-direction: column; height: 100%; width: 100%; }
 
   /* ── HEADER ── */
-  #header { background: var(--header-bg); color: #fff; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-  #header h1 { font-size: 18px; font-weight: 800; }
+  #header { background: var(--header-bg); color: #fff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-wrap: wrap; gap: 10px; }
+  #header h1 { font-size: 16px; font-weight: 800; margin: 0; }
   .header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 4px; }
+  .btn { padding: 6px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; transition: opacity 0.2s; display: inline-flex; align-items: center; gap: 4px; }
   .btn:hover { opacity: 0.8; }
   .btn-light { background: #fff; color: var(--header-bg); }
   
-  #user-badge { background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 12px; font-size: 12px; }
-  #sync-badge { font-size: 11px; padding: 4px 8px; border-radius: 4px; font-weight: bold; background: #e74c3c; color: #fff; }
+  #user-badge { background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 12px; font-size: 11px; }
+  #sync-badge { font-size: 10px; padding: 4px 6px; border-radius: 4px; font-weight: bold; background: #e74c3c; color: #fff; }
 
   /* ── BARRA RIEPILOGO ── */
-  #summary-bar { display: flex; gap: 16px; padding: 8px 24px; background: #fff; border-bottom: 1px solid #ddd; font-size: 13px; font-weight: 600; flex-wrap: wrap; align-items: center; }
+  #summary-bar { display: flex; gap: 12px; padding: 8px 16px; background: #fff; border-bottom: 1px solid #ddd; font-size: 12px; font-weight: 600; flex-wrap: wrap; align-items: center; flex-shrink: 0; }
 
   /* ── STRUTTURA BOARD ── */
-  #board { display: flex; padding: 20px; gap: 20px; flex-grow: 1; align-items: flex-start; overflow-x: auto; overflow-y: hidden; }
+  #board { display: flex; padding: 16px; gap: 16px; flex-grow: 1; align-items: flex-start; overflow-x: auto; overflow-y: hidden; width: 100%; }
   
-  .column { background: var(--col-bg); border-radius: 8px; width: 340px; flex-shrink: 0; max-height: calc(100vh - 120px); display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
-  .column-header { padding: 14px; font-weight: 800; font-size: 15px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
-  .column-count { background: rgba(255,255,255,0.25); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+  .column { background: var(--col-bg); border-radius: 8px; width: 300px; flex-shrink: 0; max-height: 100%; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+  .column-header { padding: 12px; font-weight: 800; font-size: 14px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+  .column-count { background: rgba(255,255,255,0.25); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
   
-  .group-list { padding: 10px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 12px; min-height: 20px; }
-  .add-group-btn { padding: 12px; text-align: center; color: #555; cursor: pointer; border-top: 1px solid rgba(0,0,0,0.05); background: rgba(0,0,0,0.02); font-weight: 600; transition: background 0.2s; }
+  .group-list { padding: 10px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 10px; min-height: 20px; }
+  .add-group-btn { padding: 12px; text-align: center; color: #555; cursor: pointer; border-top: 1px solid rgba(0,0,0,0.05); background: rgba(0,0,0,0.02); font-weight: 600; transition: background 0.2s; font-size: 13px; }
   .add-group-btn:hover { background: rgba(0,0,0,0.05); color: #000; }
 
   /* ── GRUPPI E PRATICHE ── */
   .group-card { background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); overflow: hidden; display: flex; flex-direction: column; transition: box-shadow 0.2s; }
   .group-card:hover { box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
   
-  .group-header { padding: 10px 12px; font-weight: bold; font-size: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05); }
+  .group-header { padding: 10px; font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05); }
   .group-header-left { display: flex; align-items: center; gap: 8px; flex: 1; }
-  .group-color-indicator { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); }
+  .group-color-indicator { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); }
   .group-title { flex: 1; word-wrap: break-word; }
   .group-controls { display: flex; gap: 6px; align-items: center; }
-  .btn-icon { background: none; border: none; cursor: pointer; font-size: 16px; opacity: 0.6; padding: 2px; }
+  .btn-icon { background: none; border: none; cursor: pointer; font-size: 14px; opacity: 0.6; padding: 2px; }
   .btn-icon:hover { opacity: 1; }
 
   .group-body { display: none; flex-direction: column; background: #fdfdfd; }
   .group-card.expanded .group-body { display: flex; }
 
   /* Elemento Singola Pratica */
-  .practice-item { padding: 10px 12px; border-bottom: 1px solid #eee; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: background 0.1s; border-left: 4px solid transparent; }
+  .practice-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: background 0.1s; border-left: 4px solid transparent; }
   .practice-item:hover { background: #f4f7f5; }
   .practice-item:last-child { border-bottom: none; }
   
   .prac-header { display: flex; justify-content: space-between; align-items: flex-start; }
-  .prac-code { font-size: 11px; font-weight: bold; color: #555; background: #eee; padding: 2px 6px; border-radius: 4px; }
-  .prac-icons { display: flex; gap: 4px; font-size: 13px; }
+  .prac-code { font-size: 10px; font-weight: bold; color: #555; background: #eee; padding: 2px 6px; border-radius: 4px; }
+  .prac-icons { display: flex; gap: 4px; font-size: 12px; }
   
-  .prac-client { font-size: 13px; font-weight: bold; color: #222; }
-  .prac-details { font-size: 11px; color: #666; display: flex; gap: 10px; flex-wrap: wrap; }
-  .prac-operator { margin-top: 4px; font-size: 10px; font-style: italic; color: #888; text-align: right; }
+  .prac-client { font-size: 12px; font-weight: bold; color: #222; }
+  .prac-details { font-size: 10px; color: #666; display: flex; gap: 10px; flex-wrap: wrap; }
+  .prac-operator { margin-top: 4px; font-size: 9px; font-style: italic; color: #888; text-align: right; }
 
-  .add-practice-btn { padding: 8px 12px; font-size: 12px; font-weight: bold; color: #0f341e; cursor: pointer; background: #f1f5f2; text-align: center; transition: background 0.2s; }
+  .add-practice-btn { padding: 8px 10px; font-size: 11px; font-weight: bold; color: #0f341e; cursor: pointer; background: #f1f5f2; text-align: center; transition: background 0.2s; }
   .add-practice-btn:hover { background: #e2ebd5; }
 
   /* ── MODALI UTENTI E CONFIGURAZIONI ── */
   .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 10px; }
-  .modal { background: #fff; padding: 24px; border-radius: 8px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; display: flex; flex-direction: column; }
-  .modal h2 { margin-bottom: 16px; font-size: 18px; color: var(--header-bg); font-weight: 800; }
+  .modal { background: #fff; padding: 20px; border-radius: 8px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 95vh; display: flex; flex-direction: column; }
+  .modal h2 { margin-bottom: 12px; font-size: 16px; color: var(--header-bg); font-weight: 800; }
   
   .modal-scroll-body { overflow-y: auto; flex-grow: 1; margin-bottom: 15px; padding-right: 4px; }
   
-  .field-group { margin-bottom: 14px; }
+  .field-group { margin-bottom: 12px; }
   .field-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #444; text-transform: uppercase; letter-spacing: 0.05em; }
-  .field-group input[type=text], .field-group textarea, .field-group input[type=date] { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; outline: none; background: #fff; font-family: inherit; }
+  .field-group input[type=text], .field-group textarea, .field-group input[type=date] { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; outline: none; background: #fff; font-family: inherit; font-size: 13px; }
   .field-group input:focus, .field-group textarea:focus { border-color: var(--header-bg); }
   
-  .field-group-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; padding: 4px 0; }
+  .field-group-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; font-weight: 600; padding: 4px 0; }
   .field-group-checkbox input { width: 16px; height: 16px; cursor: pointer; }
 
   /* COLOR PICKER */
-  .color-picker { display: flex; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
-  .color-swatch { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.1s; }
-  .color-swatch:hover { transform: scale(1.1); }
+  .color-picker { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+  .color-swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.1s; }
   .color-swatch.selected { border-color: #1a2a1e; transform: scale(1.15); box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
 
   .manager-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #e9ecef; }
-  .manager-row input[type=text] { flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; }
+  .manager-row input[type=text] { flex: 1; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
   .manager-row input[type=color] { width: 34px; height: 30px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 0; background: none; }
 
-  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; padding-top: 10px; border-top: 1px solid #eee; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; padding-top: 10px; border-top: 1px solid #eee; }
   .btn-save { background: var(--header-bg); color: #fff; }
   .btn-cancel { background: #e2e8f0; color: #334155; }
   .btn-delete { background: #e74c3c; color: #fff; }
   .modal-actions .btn-delete { margin-right: auto; }
 
   #login-overlay { display: flex; }
-  #app-content { display: none; }
 </style>
 </head>
 <body>
 
+<!-- OVERLAY DI ACCESSO -->
 <div class="modal-overlay" id="login-overlay">
   <div class="modal">
     <h2>Accesso Monitor 360Drone</h2>
     <div class="field-group">
-      <label>Operatore in turno (Nome Cognome / Sigla):</label>
+      <label>Operatore in turno (Nome/Sigla):</label>
       <input type="text" id="login-name" placeholder="Es. Mario Rossi">
     </div>
     <div class="modal-actions">
@@ -123,12 +126,13 @@
   </div>
 </div>
 
+<!-- APP PRINCIPALE -->
 <div id="app-content">
   <div id="header">
-    <h1>Lavagna Operativa Pratiche a due livelli</h1>
+    <h1>Lavagna Pratiche</h1>
     <div class="header-actions">
       <span id="sync-badge">OFFLINE</span>
-      <span id="user-badge">Operatore: </span>
+      <span id="user-badge"></span>
       <button class="btn btn-light" onclick="openColumnsManager()">⚙️ Colonne</button>
       <input type="file" id="file-import" accept=".json" style="display:none" onchange="importData(event)">
       <button class="btn btn-light" onclick="document.getElementById('file-import').click()">📥 Importa</button>
@@ -143,25 +147,25 @@
 <!-- MODAL GRUPPO (Cantiere/Cliente) -->
 <div class="modal-overlay" id="group-modal">
   <div class="modal">
-    <h2 id="group-modal-title">Gestione Cantiere / Gruppo</h2>
+    <h2 id="group-modal-title">Gestione Cantiere</h2>
     <input type="hidden" id="group-id">
     <input type="hidden" id="group-column">
     
     <div class="modal-scroll-body">
       <div class="field-group">
-        <label>Nome del Gruppo o Cantiere</label>
+        <label>Nome del Cantiere / Cliente</label>
         <input type="text" id="group-name" placeholder="Es. Rilievo Linate Srl">
       </div>
       <div class="field-group">
-        <label>Colore del Gruppo (Cantiere)</label>
+        <label>Colore del Cantiere</label>
         <div class="color-picker" id="group-color-picker"></div>
       </div>
     </div>
     
     <div class="modal-actions">
-      <button class="btn btn-delete" id="btn-group-delete" onclick="deleteGroup()">Elimina Intero Gruppo</button>
+      <button class="btn btn-delete" id="btn-group-delete" onclick="deleteGroup()">Elimina</button>
       <button class="btn btn-cancel" onclick="closeGroupModal()">Annulla</button>
-      <button class="btn btn-save" onclick="saveGroup()">Salva Gruppo</button>
+      <button class="btn btn-save" onclick="saveGroup()">Salva</button>
     </div>
   </div>
 </div>
@@ -185,15 +189,15 @@
         </div>
       </div>
       <div class="field-group">
-        <label>Cliente / Oggetto specifico</label>
-        <input type="text" id="prac-client" placeholder="Es. Richiesta Sorvolo Centro">
+        <label>Oggetto Pratica / Dettaglio</label>
+        <input type="text" id="prac-client" placeholder="Es. Richiesta Sorvolo">
       </div>
       <div class="field-group">
         <label>Luogo / Località</label>
         <input type="text" id="prac-location" placeholder="Es. Milano (MI)">
       </div>
       <div class="field-group">
-        <label>Stato Pratica (Colore) <span id="prac-color-badge" style="font-weight:normal; font-style:italic; color:#666; display:none;">- Ereditato dal Cantiere</span></label>
+        <label>Stato Pratica (Colore) <span id="prac-color-badge" style="font-weight:normal; font-style:italic; color:#666; display:none;">- Da cantiere</span></label>
         <div class="color-picker" id="prac-color-picker"></div>
       </div>
       <div class="field-group">
@@ -209,9 +213,9 @@
     </div>
     
     <div class="modal-actions">
-      <button class="btn btn-delete" id="btn-prac-delete" onclick="deletePractice()">Elimina Pratica</button>
+      <button class="btn btn-delete" id="btn-prac-delete" onclick="deletePractice()">Elimina</button>
       <button class="btn btn-cancel" onclick="closePracticeModal()">Annulla</button>
-      <button class="btn btn-save" onclick="savePractice()">Salva Pratica</button>
+      <button class="btn btn-save" onclick="savePractice()">Salva</button>
     </div>
   </div>
 </div>
@@ -219,28 +223,23 @@
 <!-- MODAL GESTIONE COLONNE -->
 <div class="modal-overlay" id="columns-modal">
   <div class="modal">
-    <h2>Configurazione Colonne</h2>
+    <h2>Gestione Colonne</h2>
     <div class="modal-scroll-body" id="columns-list"></div>
     <div class="modal-actions">
-      <button class="btn btn-save" onclick="addColumnFromUI()">+ Aggiungi Colonna</button>
+      <button class="btn btn-save" onclick="addColumnFromUI()">+ Aggiungi</button>
       <button class="btn btn-cancel" onclick="closeColumnsManager()">Chiudi</button>
     </div>
   </div>
 </div>
 
 <script>
-// ── ESCAPE HTML (Sicurezza Dati) ──
+// ── ESCAPE HTML ──
 function escapeHTML(str) {
   if (!str) return "";
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
-// ── COLORI PREDEFINITI PER GRUPPI E PRATICHE ──
+// ── COLORI PREDEFINITI ──
 const PRESET_COLORS = [
   { value: "#f8f9fa", name: "Grigio Chiaro (Neutro)" },
   { value: "#ffdddd", name: "Rosso" },
@@ -253,23 +252,17 @@ const PRESET_COLORS = [
 let selectedGroupColor = "#f8f9fa";
 let selectedPracticeColor = "#f8f9fa";
 
-// ── DATABASE (Due Livelli) ──
-let appData = {
-  columns: [],
-  groups: [] 
-};
-
+let appData = { columns: [], groups: [] };
 let currentUser = "";
 let socket = null;
 let usingServer = false;
 
-// ── INIT DEFAULT ──
 function initDefaultData() {
   if (appData.columns.length === 0) {
     appData.columns = [
       { id: "col-atm05b", title: "ATM-05b", color: "#0f341e", order: 0 },
       { id: "col-atm09a", title: "ATM-09A", color: "#1a5276", order: 1 },
-      { id: "col-sora", title: "Valutazioni / SORA", color: "#7d3c98", order: 2 },
+      { id: "col-sora", title: "SORA", color: "#7d3c98", order: 2 },
       { id: "col-altro", title: "Altre Pratiche", color: "#475569", order: 3 }
     ];
   }
@@ -287,7 +280,7 @@ window.onload = () => {
 
 function login() {
   const name = document.getElementById("login-name").value.trim();
-  if (!name) return alert("Inserisci il tuo nome per tracciare il lavoro.");
+  if (!name) return alert("Inserisci il tuo nome.");
   localStorage.setItem("360drone_user", name);
   currentUser = name;
   startApp();
@@ -295,19 +288,20 @@ function login() {
 
 function startApp() {
   document.getElementById("login-overlay").style.display = "none";
-  document.getElementById("app-content").style.display = "flex";
+  // FIX IMPORTANTE: Si assicura che il contenuto appaia in colonna, non in riga!
+  document.getElementById("app-content").style.display = "flex"; 
+  
   document.getElementById("user-badge").textContent = `Operatore: ${currentUser}`;
   
   const savedData = localStorage.getItem("360drone_board_data_v5");
   if (savedData) {
-    try { appData = JSON.parse(savedData); } catch(e) { console.error("Errore parse cache locale"); }
+    try { appData = JSON.parse(savedData); } catch(e) { console.error(e); }
   }
   initDefaultData();
   renderBoard();
   connectToServer();
 }
 
-// ── SOCKET E SALVATAGGIO ──
 function connectToServer() {
   if (typeof io === 'undefined') return;
   socket = io();
@@ -348,13 +342,10 @@ function saveToLocalOnly() {
 
 function saveAndSync() {
   saveToLocalOnly();
-  if (usingServer && socket) {
-    socket.emit('update', appData);
-  }
+  if (usingServer && socket) socket.emit('update', appData);
   renderBoard(); 
 }
 
-// ── RIEPILOGO PRATICHE ──
 function updateSummary() {
   const bar = document.getElementById('summary-bar');
   if (!bar) return;
@@ -375,13 +366,13 @@ function updateSummary() {
     });
   });
   
-  let html = `<span style="padding:4px 0;">Cantieri: <strong>${totalGroups}</strong> | Pratiche Totali: <strong>${totalPractices}</strong></span>`;
-  if (urgentPractices > 0) html += `<span style="color:#e74c3c; padding:4px 0; margin-left:10px;">📞 Urgenti: <strong>${urgentPractices}</strong></span>`;
+  let html = `<span style="padding:2px 0;">Cantieri: <strong>${totalGroups}</strong> | Pratiche: <strong>${totalPractices}</strong></span>`;
+  if (urgentPractices > 0) html += `<span style="color:#e74c3c; padding:2px 0; margin-left:10px;">📞 Urgenti: <strong>${urgentPractices}</strong></span>`;
   
-  html += `<span style="margin-left:auto; display:flex; gap:8px; align-items:center;">Pratiche per colore:`;
+  html += `<span style="margin-left:auto; display:flex; gap:6px; align-items:center;">Pratiche:`;
   PRESET_COLORS.forEach(c => {
     if(colorCounts[c.value] > 0) {
-      html += `<span style="background:${c.value}; width:24px; height:24px; border-radius:50%; border: 1px solid rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold;" title="${c.name}">${colorCounts[c.value]}</span>`;
+      html += `<span style="background:${c.value}; width:20px; height:20px; border-radius:50%; border: 1px solid rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:bold;" title="${c.name}">${colorCounts[c.value]}</span>`;
     }
   });
   html += `</span>`;
@@ -389,7 +380,6 @@ function updateSummary() {
   bar.innerHTML = html;
 }
 
-// ── TOGGLE ESPANSIONE GRUPPI ──
 function toggleGroup(e, groupId) {
   e.stopPropagation(); 
   const grp = appData.groups.find(g => g.id === groupId);
@@ -399,7 +389,6 @@ function toggleGroup(e, groupId) {
   }
 }
 
-// ── RENDER GRAPHIC ENGINE ──
 function renderBoard() {
   const board = document.getElementById("board");
   board.innerHTML = "";
@@ -418,7 +407,7 @@ function renderBoard() {
         <span class="column-count" title="Totale Pratiche">${practicesInColumn}</span>
       </div>
       <div class="group-list" id="list-${col.id}"></div>
-      <div class="add-group-btn" onclick="openGroupModal('${col.id}')">📁 Nuovo Cantiere / Gruppo</div>
+      <div class="add-group-btn" onclick="openGroupModal('${col.id}')">📁 Nuovo Cantiere</div>
     `;
     
     board.appendChild(colDiv);
@@ -438,7 +427,7 @@ function renderBoard() {
             <span class="group-title">${escapeHTML(group.title)} (${practices.length})</span>
           </div>
           <div class="group-controls">
-            <button class="btn-icon" onclick="toggleGroup(event, '${group.id}')" title="Espandi/Comprimi">
+            <button class="btn-icon" onclick="toggleGroup(event, '${group.id}')">
               ${group.expanded ? '▲' : '▼'}
             </button>
           </div>
@@ -448,7 +437,7 @@ function renderBoard() {
       
       practices.forEach(prac => {
         const pColor = prac.color || '#f8f9fa';
-        const pDate = prac.dueDate ? new Date(prac.dueDate).toLocaleDateString("it-IT", {day:'2-digit', month:'short'}) : '';
+        const pDate = prac.dueDate ? new Date(prac.dueDate).toLocaleDateString("it-IT", {day:'2-digit', month:'2-digit'}) : '';
         const pPhone = prac.phoneUrgent ? '📞' : '';
         
         html += `
@@ -462,24 +451,22 @@ function renderBoard() {
               ${prac.location ? `<span>📍 ${escapeHTML(prac.location)}</span>` : ''}
               ${pDate ? `<span>📅 ${pDate}</span>` : ''}
             </div>
-            <div class="prac-operator">A cura di: ${escapeHTML(prac.operator)}</div>
+            <div class="prac-operator">Op: ${escapeHTML(prac.operator)}</div>
           </div>
         `;
       });
       
       html += `
-          <div class="add-practice-btn" onclick="openPracticeModal('${group.id}')">+ Aggiungi Pratica</div>
+          <div class="add-practice-btn" onclick="openPracticeModal('${group.id}')">+ Pratica</div>
         </div>
       `;
       gDiv.innerHTML = html;
       listDiv.appendChild(gDiv);
     });
   });
-  
   updateSummary();
 }
 
-// ── COLOR PICKER UTILS ──
 function renderColorPicker(containerId, selectedColor, callbackName) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
@@ -496,19 +483,18 @@ function renderColorPicker(containerId, selectedColor, callbackName) {
   });
 }
 
-// ── LOGICA MODALE GRUPPO ──
 function openGroupModal(columnId = null, groupId = null) {
   document.getElementById("group-modal").style.display = "flex";
   if (groupId) {
     const group = appData.groups.find(g => g.id === groupId);
-    document.getElementById("group-modal-title").textContent = "Modifica Gruppo";
+    document.getElementById("group-modal-title").textContent = "Modifica Cantiere";
     document.getElementById("group-id").value = group.id;
     document.getElementById("group-column").value = group.columnId;
     document.getElementById("group-name").value = group.title;
     document.getElementById("btn-group-delete").style.display = "block";
     selectedGroupColor = group.color || "#f8f9fa";
   } else {
-    document.getElementById("group-modal-title").textContent = "Nuovo Gruppo";
+    document.getElementById("group-modal-title").textContent = "Nuovo Cantiere";
     document.getElementById("group-id").value = "";
     document.getElementById("group-column").value = columnId;
     document.getElementById("group-name").value = "";
@@ -522,7 +508,7 @@ function closeGroupModal() { document.getElementById("group-modal").style.displa
 
 function saveGroup() {
   const title = document.getElementById("group-name").value.trim();
-  if (!title) return alert("Inserisci il nome del gruppo.");
+  if (!title) return alert("Inserisci il nome del cantiere.");
 
   const id = document.getElementById("group-id").value;
   if (id) {
@@ -544,16 +530,14 @@ function saveGroup() {
 }
 
 function deleteGroup() {
-  if (!confirm("Eliminare interamente questo gruppo e TUTTE le pratiche al suo interno?")) return;
+  if (!confirm("Eliminare interamente questo cantiere e TUTTE le pratiche al suo interno?")) return;
   const id = document.getElementById("group-id").value;
   appData.groups = appData.groups.filter(g => g.id !== id);
   saveAndSync();
   closeGroupModal();
 }
 
-// ── LOGICA MODALE PRATICA SINGOLA ──
 function openPracticeModal(groupId, practiceId = null) {
-  // Chiamata pulita, la struttura HTML ora previene propagazioni indesiderate di default
   document.getElementById("practice-modal").style.display = "flex";
   const group = appData.groups.find(g => g.id === groupId);
   const badge = document.getElementById("prac-color-badge");
@@ -593,7 +577,7 @@ function closePracticeModal() { document.getElementById("practice-modal").style.
 
 function savePractice() {
   const client = document.getElementById("prac-client").value.trim();
-  if (!client) return alert("Inserisci il cliente o l'oggetto della pratica.");
+  if (!client) return alert("Inserisci il dettaglio della pratica.");
 
   const groupId = document.getElementById("prac-group-id").value;
   const pracId = document.getElementById("prac-id").value;
@@ -626,17 +610,15 @@ function savePractice() {
 }
 
 function deletePractice() {
-  if (!confirm("Eliminare questa pratica dal cantiere?")) return;
+  if (!confirm("Eliminare questa pratica?")) return;
   const groupId = document.getElementById("prac-group-id").value;
   const pracId = document.getElementById("prac-id").value;
   const group = appData.groups.find(g => g.id === groupId);
   group.practices = group.practices.filter(p => p.id !== pracId);
-  
   saveAndSync();
   closePracticeModal();
 }
 
-// ── MANAGER INTERFACCIA COLONNE ──
 function openColumnsManager() {
   const list = document.getElementById("columns-list");
   list.innerHTML = "";
@@ -645,8 +627,8 @@ function openColumnsManager() {
     div.className = "manager-row";
     div.innerHTML = `
       <input type="text" value="${escapeHTML(col.title)}" onchange="renameColumn('${col.id}', this.value)">
-      <input type="color" value="${col.color || '#4a5568'}" onchange="changeColumnColor('${col.id}', this.value)" title="Colore Intestazione">
-      <button class="btn btn-delete" onclick="if(confirm('Eliminare la colonna e tutti i gruppi associati?')) deleteColumn('${col.id}')">✕</button>
+      <input type="color" value="${col.color || '#4a5568'}" onchange="changeColumnColor('${col.id}', this.value)">
+      <button class="btn btn-delete" onclick="if(confirm('Eliminare la colonna e tutto il suo contenuto?')) deleteColumn('${col.id}')">✕</button>
     `;
     list.appendChild(div);
   });
@@ -676,7 +658,6 @@ function deleteColumn(colId) {
   openColumnsManager();
 }
 
-// ── UTILITY BACKUP E MIGRAZIONE ──
 function exportData() {
   const dataStr = JSON.stringify(appData, null, 2);
   const blob = new Blob([dataStr], { type: "application/json" });
@@ -693,8 +674,6 @@ function importData(event) {
     try {
       const importedData = JSON.parse(e.target.result);
       if (importedData.columns) {
-        
-        // ── SCRIPT MIGRAZIONE V4 -> V5 ──
         if (importedData.cards && !importedData.groups) {
           importedData.groups = importedData.cards.map(c => {
             const safeColor = c.color || "#f8f9fa";
@@ -721,10 +700,9 @@ function importData(event) {
           delete importedData.cards;
           delete importedData.statuses;
         }
-        
         appData = importedData;
         saveAndSync();
-        alert("Database importato e migrato con successo!");
+        alert("Database importato con successo!");
       } else { alert("Struttura file JSON non riconosciuta."); }
     } catch (err) { alert("Errore lettura file."); }
   };
