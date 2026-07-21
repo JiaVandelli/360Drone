@@ -15,10 +15,8 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
-  /* Disabilita lo scroll della pagina intera per farlo fare solo alla board */
   body { background: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-  /* ── FIX APP CONTENT (Impaginazione corretta) ── */
   #app-content { display: none; flex-direction: column; height: 100%; width: 100%; }
 
   /* ── HEADER ── */
@@ -35,47 +33,28 @@
   /* ── BARRA RIEPILOGO ── */
   #summary-bar { display: flex; gap: 12px; padding: 8px 16px; background: #fff; border-bottom: 1px solid #ddd; font-size: 12px; font-weight: 600; flex-wrap: wrap; align-items: center; flex-shrink: 0; }
 
-  /* ── STRUTTURA BOARD ── */
+  /* ── STRUTTURA BOARD (Singolo livello) ── */
   #board { display: flex; padding: 16px; gap: 16px; flex-grow: 1; align-items: flex-start; overflow-x: auto; overflow-y: hidden; width: 100%; }
   
   .column { background: var(--col-bg); border-radius: 8px; width: 300px; flex-shrink: 0; max-height: 100%; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
   .column-header { padding: 12px; font-weight: 800; font-size: 14px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
   .column-count { background: rgba(255,255,255,0.25); color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
   
-  .group-list { padding: 10px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 10px; min-height: 20px; }
-  .add-group-btn { padding: 12px; text-align: center; color: #555; cursor: pointer; border-top: 1px solid rgba(0,0,0,0.05); background: rgba(0,0,0,0.02); font-weight: 600; transition: background 0.2s; font-size: 13px; }
-  .add-group-btn:hover { background: rgba(0,0,0,0.05); color: #000; }
+  .task-list { padding: 10px; overflow-y: auto; flex-grow: 1; display: flex; flex-direction: column; gap: 10px; min-height: 20px; }
+  .add-task-btn { padding: 12px; text-align: center; color: #555; cursor: pointer; border-top: 1px solid rgba(0,0,0,0.05); background: rgba(0,0,0,0.02); font-weight: 600; transition: background 0.2s; font-size: 13px; }
+  .add-task-btn:hover { background: rgba(0,0,0,0.05); color: #000; }
 
-  /* ── GRUPPI E PRATICHE ── */
-  .group-card { background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.15); overflow: hidden; display: flex; flex-direction: column; transition: box-shadow 0.2s; }
-  .group-card:hover { box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
+  /* ── CARD DELLA PRATICA ── */
+  .card { border-radius: 6px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); cursor: pointer; border-left: 5px solid rgba(0,0,0,0.15); transition: transform 0.1s, box-shadow 0.1s; position: relative; display: flex; flex-direction: column; gap: 6px; }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
   
-  .group-header { padding: 10px; font-weight: bold; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05); }
-  .group-header-left { display: flex; align-items: center; gap: 8px; flex: 1; }
-  .group-color-indicator { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); }
-  .group-title { flex: 1; word-wrap: break-word; }
-  .group-controls { display: flex; gap: 6px; align-items: center; }
-  .btn-icon { background: none; border: none; cursor: pointer; font-size: 14px; opacity: 0.6; padding: 2px; }
-  .btn-icon:hover { opacity: 1; }
-
-  .group-body { display: none; flex-direction: column; background: #fdfdfd; }
-  .group-card.expanded .group-body { display: flex; }
-
-  /* Elemento Singola Pratica */
-  .practice-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: background 0.1s; border-left: 4px solid transparent; }
-  .practice-item:hover { background: #f4f7f5; }
-  .practice-item:last-child { border-bottom: none; }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .card-code { font-size: 11px; font-weight: bold; color: #555; background: rgba(0,0,0,0.08); padding: 2px 6px; border-radius: 4px; }
+  .card-icons { display: flex; gap: 4px; font-size: 13px; }
   
-  .prac-header { display: flex; justify-content: space-between; align-items: flex-start; }
-  .prac-code { font-size: 10px; font-weight: bold; color: #555; background: #eee; padding: 2px 6px; border-radius: 4px; }
-  .prac-icons { display: flex; gap: 4px; font-size: 12px; }
-  
-  .prac-client { font-size: 12px; font-weight: bold; color: #222; }
-  .prac-details { font-size: 10px; color: #666; display: flex; gap: 10px; flex-wrap: wrap; }
-  .prac-operator { margin-top: 4px; font-size: 9px; font-style: italic; color: #888; text-align: right; }
-
-  .add-practice-btn { padding: 8px 10px; font-size: 11px; font-weight: bold; color: #0f341e; cursor: pointer; background: #f1f5f2; text-align: center; transition: background 0.2s; }
-  .add-practice-btn:hover { background: #e2ebd5; }
+  .card-client { font-size: 14px; font-weight: bold; color: #222; word-wrap: break-word; }
+  .card-details { font-size: 11px; color: #555; display: flex; gap: 10px; flex-wrap: wrap; }
+  .card-operator { margin-top: 4px; font-size: 10px; font-style: italic; color: #888; text-align: right; }
 
   /* ── MODALI UTENTI E CONFIGURAZIONI ── */
   .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 10px; }
@@ -86,8 +65,8 @@
   
   .field-group { margin-bottom: 12px; }
   .field-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #444; text-transform: uppercase; letter-spacing: 0.05em; }
-  .field-group input[type=text], .field-group textarea, .field-group input[type=date] { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; outline: none; background: #fff; font-family: inherit; font-size: 13px; }
-  .field-group input:focus, .field-group textarea:focus { border-color: var(--header-bg); }
+  .field-group input[type=text], .field-group input[type=date] { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; outline: none; background: #fff; font-family: inherit; font-size: 13px; }
+  .field-group input:focus { border-color: var(--header-bg); }
   
   .field-group-checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; font-weight: 600; padding: 4px 0; }
   .field-group-checkbox input { width: 16px; height: 16px; cursor: pointer; }
@@ -115,7 +94,7 @@
 <!-- OVERLAY DI ACCESSO -->
 <div class="modal-overlay" id="login-overlay">
   <div class="modal">
-    <h2>Accesso Monitor 360Drone</h2>
+    <h2>Accesso Board 360Drone</h2>
     <div class="field-group">
       <label>Operatore in turno (Nome/Sigla):</label>
       <input type="text" id="login-name" placeholder="Es. Mario Rossi">
@@ -144,78 +123,48 @@
   <div id="board"></div>
 </div>
 
-<!-- MODAL GRUPPO (Cantiere/Cliente) -->
-<div class="modal-overlay" id="group-modal">
+<!-- MODAL PRATICA SINGOLA (Semplicissimo) -->
+<div class="modal-overlay" id="card-modal">
   <div class="modal">
-    <h2 id="group-modal-title">Gestione Cantiere</h2>
-    <input type="hidden" id="group-id">
-    <input type="hidden" id="group-column">
-    
-    <div class="modal-scroll-body">
-      <div class="field-group">
-        <label>Nome del Cantiere / Cliente</label>
-        <input type="text" id="group-name" placeholder="Es. Rilievo Linate Srl">
-      </div>
-      <div class="field-group">
-        <label>Colore del Cantiere</label>
-        <div class="color-picker" id="group-color-picker"></div>
-      </div>
-    </div>
-    
-    <div class="modal-actions">
-      <button class="btn btn-delete" id="btn-group-delete" onclick="deleteGroup()">Elimina</button>
-      <button class="btn btn-cancel" onclick="closeGroupModal()">Annulla</button>
-      <button class="btn btn-save" onclick="saveGroup()">Salva</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL PRATICA SINGOLA -->
-<div class="modal-overlay" id="practice-modal">
-  <div class="modal">
-    <h2 id="prac-modal-title">Dettagli Pratica</h2>
-    <input type="hidden" id="prac-id">
-    <input type="hidden" id="prac-group-id">
+    <h2 id="card-modal-title">Dettagli Pratica</h2>
+    <input type="hidden" id="card-id">
+    <input type="hidden" id="card-column">
     
     <div class="modal-scroll-body">
       <div class="field-group" style="display:flex; gap:10px;">
         <div style="flex:1;">
-          <label>ID Numerico</label>
-          <input type="text" id="prac-code" placeholder="Es. 001">
+          <label>Numero</label>
+          <input type="text" id="card-code" placeholder="Es. 001">
         </div>
         <div style="flex:2;">
-          <label>Data di Scadenza / Volo</label>
-          <input type="date" id="prac-date">
+          <label>Data di Volo</label>
+          <input type="date" id="card-date">
         </div>
       </div>
       <div class="field-group">
-        <label>Oggetto Pratica / Dettaglio</label>
-        <input type="text" id="prac-client" placeholder="Es. Richiesta Sorvolo">
+        <label>Nome e Cognome</label>
+        <input type="text" id="card-client" placeholder="Es. Mario Rossi">
       </div>
       <div class="field-group">
-        <label>Luogo / Località</label>
-        <input type="text" id="prac-location" placeholder="Es. Milano (MI)">
+        <label>Luogo</label>
+        <input type="text" id="card-location" placeholder="Es. Roma">
       </div>
       <div class="field-group">
-        <label>Stato Pratica (Colore) <span id="prac-color-badge" style="font-weight:normal; font-style:italic; color:#666; display:none;">- Da cantiere</span></label>
-        <div class="color-picker" id="prac-color-picker"></div>
+        <label>Colore Pratica</label>
+        <div class="color-picker" id="card-color-picker"></div>
       </div>
-      <div class="field-group">
+      <div class="field-group" style="margin-top: 15px;">
         <label class="field-group-checkbox">
-          <input type="checkbox" id="prac-phone-urgent">
-          <span>📞 Urgenza telefonica (H24)</span>
+          <input type="checkbox" id="card-phone-urgent">
+          <span>📞 Reperibilità telefonica H24</span>
         </label>
-      </div>
-      <div class="field-group">
-        <label>Note veloci</label>
-        <textarea id="prac-notes" rows="3" placeholder="Appunti..."></textarea>
       </div>
     </div>
     
     <div class="modal-actions">
-      <button class="btn btn-delete" id="btn-prac-delete" onclick="deletePractice()">Elimina</button>
-      <button class="btn btn-cancel" onclick="closePracticeModal()">Annulla</button>
-      <button class="btn btn-save" onclick="savePractice()">Salva</button>
+      <button class="btn btn-delete" id="btn-card-delete" onclick="deleteCard()">Elimina</button>
+      <button class="btn btn-cancel" onclick="closeCardModal()">Annulla</button>
+      <button class="btn btn-save" onclick="saveCard()">Salva</button>
     </div>
   </div>
 </div>
@@ -249,14 +198,13 @@ const PRESET_COLORS = [
   { value: "#e2d9f3", name: "Viola" }
 ];
 
-let selectedGroupColor = "#f8f9fa";
-let selectedPracticeColor = "#f8f9fa";
-
-let appData = { columns: [], groups: [] };
+let selectedCardColor = "#f8f9fa";
+let appData = { columns: [], cards: [] }; // Ritorno al modello piatto (niente gruppi)
 let currentUser = "";
 let socket = null;
 let usingServer = false;
 
+// ── INIT DEFAULT ──
 function initDefaultData() {
   if (appData.columns.length === 0) {
     appData.columns = [
@@ -265,6 +213,24 @@ function initDefaultData() {
       { id: "col-sora", title: "SORA", color: "#7d3c98", order: 2 },
       { id: "col-altro", title: "Altre Pratiche", color: "#475569", order: 3 }
     ];
+  }
+}
+
+// ── MIGRAZIONE SILENZIOSA DA V5 (Gruppi) a V6 (Piatto) ──
+function flattenDataIfNecessary() {
+  if (appData.groups) {
+    if (!appData.cards) appData.cards = [];
+    appData.groups.forEach(g => {
+      if (g.practices) {
+        g.practices.forEach(p => {
+          p.columnId = g.columnId; // La pratica eredita la colonna del suo ex-gruppo
+          if(!p.client && g.title) p.client = g.title; // Salva il nome del gruppo come nome cliente se vuoto
+          appData.cards.push(p);
+        });
+      }
+    });
+    delete appData.groups;
+    saveToLocalOnly(); // Salva subito il nuovo formato
   }
 }
 
@@ -288,15 +254,21 @@ function login() {
 
 function startApp() {
   document.getElementById("login-overlay").style.display = "none";
-  // FIX IMPORTANTE: Si assicura che il contenuto appaia in colonna, non in riga!
   document.getElementById("app-content").style.display = "flex"; 
+  document.getElementById("user-badge").textContent = `Op: ${currentUser}`;
   
-  document.getElementById("user-badge").textContent = `Operatore: ${currentUser}`;
-  
-  const savedData = localStorage.getItem("360drone_board_data_v5");
+  const savedData = localStorage.getItem("360drone_board_data_v6");
   if (savedData) {
     try { appData = JSON.parse(savedData); } catch(e) { console.error(e); }
+  } else {
+    // Prova a recuperare la v5 per migrazione
+    const savedV5 = localStorage.getItem("360drone_board_data_v5");
+    if(savedV5) {
+      try { appData = JSON.parse(savedV5); } catch(e) {}
+    }
   }
+  
+  flattenDataIfNecessary();
   initDefaultData();
   renderBoard();
   connectToServer();
@@ -314,8 +286,9 @@ function connectToServer() {
   });
   
   socket.on('init', (serverData) => {
-    if (serverData && serverData.columns && serverData.groups) {
+    if (serverData && serverData.columns) {
       appData = serverData;
+      flattenDataIfNecessary();
       saveToLocalOnly();
       renderBoard();
     }
@@ -324,6 +297,7 @@ function connectToServer() {
   socket.on('update', (serverData) => {
     if (serverData) {
       appData = serverData;
+      flattenDataIfNecessary();
       saveToLocalOnly();
       renderBoard();
     }
@@ -337,7 +311,7 @@ function connectToServer() {
 }
 
 function saveToLocalOnly() {
-  localStorage.setItem("360drone_board_data_v5", JSON.stringify(appData));
+  localStorage.setItem("360drone_board_data_v6", JSON.stringify(appData));
 }
 
 function saveAndSync() {
@@ -350,26 +324,22 @@ function updateSummary() {
   const bar = document.getElementById('summary-bar');
   if (!bar) return;
   
-  let totalGroups = appData.groups.length;
-  let totalPractices = 0;
+  let totalPractices = appData.cards.length;
   let urgentPractices = 0;
   let colorCounts = {};
   
   PRESET_COLORS.forEach(c => colorCounts[c.value] = 0);
   
-  appData.groups.forEach(g => {
-    totalPractices += (g.practices || []).length;
-    (g.practices || []).forEach(p => {
-      if (p.phoneUrgent) urgentPractices++;
-      const col = p.color || '#f8f9fa';
-      if(colorCounts[col] !== undefined) colorCounts[col]++;
-    });
+  appData.cards.forEach(c => {
+    if (c.phoneUrgent) urgentPractices++;
+    const col = c.color || '#f8f9fa';
+    if(colorCounts[col] !== undefined) colorCounts[col]++;
   });
   
-  let html = `<span style="padding:2px 0;">Cantieri: <strong>${totalGroups}</strong> | Pratiche: <strong>${totalPractices}</strong></span>`;
+  let html = `<span style="padding:2px 0;">Pratiche Totali: <strong>${totalPractices}</strong></span>`;
   if (urgentPractices > 0) html += `<span style="color:#e74c3c; padding:2px 0; margin-left:10px;">📞 Urgenti: <strong>${urgentPractices}</strong></span>`;
   
-  html += `<span style="margin-left:auto; display:flex; gap:6px; align-items:center;">Pratiche:`;
+  html += `<span style="margin-left:auto; display:flex; gap:6px; align-items:center;">Colori:`;
   PRESET_COLORS.forEach(c => {
     if(colorCounts[c.value] > 0) {
       html += `<span style="background:${c.value}; width:20px; height:20px; border-radius:50%; border: 1px solid rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:bold;" title="${c.name}">${colorCounts[c.value]}</span>`;
@@ -380,15 +350,6 @@ function updateSummary() {
   bar.innerHTML = html;
 }
 
-function toggleGroup(e, groupId) {
-  e.stopPropagation(); 
-  const grp = appData.groups.find(g => g.id === groupId);
-  if (grp) {
-    grp.expanded = !grp.expanded;
-    saveAndSync();
-  }
-}
-
 function renderBoard() {
   const board = document.getElementById("board");
   board.innerHTML = "";
@@ -397,228 +358,135 @@ function renderBoard() {
     const colDiv = document.createElement("div");
     colDiv.className = "column";
     
-    const columnGroups = appData.groups.filter(g => g.columnId === col.id);
-    let practicesInColumn = 0;
-    columnGroups.forEach(g => practicesInColumn += (g.practices || []).length);
+    const columnCards = appData.cards.filter(c => c.columnId === col.id);
     
     colDiv.innerHTML = `
       <div class="column-header" style="background: ${col.color || '#4a5568'}">
         <span>${escapeHTML(col.title)}</span>
-        <span class="column-count" title="Totale Pratiche">${practicesInColumn}</span>
+        <span class="column-count" title="Totale Pratiche">${columnCards.length}</span>
       </div>
-      <div class="group-list" id="list-${col.id}"></div>
-      <div class="add-group-btn" onclick="openGroupModal('${col.id}')">📁 Nuovo Cantiere</div>
+      <div class="task-list" id="list-${col.id}"></div>
+      <div class="add-task-btn" onclick="openCardModal('${col.id}')">+ Aggiungi Pratica</div>
     `;
     
     board.appendChild(colDiv);
-    const listDiv = colDiv.querySelector(".group-list");
+    const listDiv = colDiv.querySelector(".task-list");
     
-    columnGroups.forEach(group => {
-      const gDiv = document.createElement("div");
-      gDiv.className = `group-card ${group.expanded ? 'expanded' : ''}`;
+    columnCards.forEach(card => {
+      const cardDiv = document.createElement("div");
+      cardDiv.className = "card";
+      cardDiv.style.background = card.color || "#f8f9fa";
+      cardDiv.onclick = () => openCardModal(null, card.id);
       
-      const practices = group.practices || [];
-      const bgColor = group.color || '#f8f9fa';
+      const cDate = card.dueDate ? new Date(card.dueDate).toLocaleDateString("it-IT", {day:'2-digit', month:'short'}) : '';
+      const cPhone = card.phoneUrgent ? '📞' : '';
       
-      let html = `
-        <div class="group-header" style="background: ${bgColor}" onclick="openGroupModal(null, '${group.id}')">
-          <div class="group-header-left">
-            <span class="group-color-indicator" style="background:${bgColor}"></span>
-            <span class="group-title">${escapeHTML(group.title)} (${practices.length})</span>
-          </div>
-          <div class="group-controls">
-            <button class="btn-icon" onclick="toggleGroup(event, '${group.id}')">
-              ${group.expanded ? '▲' : '▼'}
-            </button>
-          </div>
+      cardDiv.innerHTML = `
+        <div class="card-header">
+          <span class="card-code">${escapeHTML(card.code || '--')}</span>
+          <span class="card-icons">${cPhone}</span>
         </div>
-        <div class="group-body">
-      `;
-      
-      practices.forEach(prac => {
-        const pColor = prac.color || '#f8f9fa';
-        const pDate = prac.dueDate ? new Date(prac.dueDate).toLocaleDateString("it-IT", {day:'2-digit', month:'2-digit'}) : '';
-        const pPhone = prac.phoneUrgent ? '📞' : '';
-        
-        html += `
-          <div class="practice-item" style="border-left-color: ${pColor};" onclick="openPracticeModal('${group.id}', '${prac.id}')">
-            <div class="prac-header">
-              <span class="prac-code">${escapeHTML(prac.code || '--')}</span>
-              <span class="prac-icons">${pPhone}</span>
-            </div>
-            <div class="prac-client">${escapeHTML(prac.client)}</div>
-            <div class="prac-details">
-              ${prac.location ? `<span>📍 ${escapeHTML(prac.location)}</span>` : ''}
-              ${pDate ? `<span>📅 ${pDate}</span>` : ''}
-            </div>
-            <div class="prac-operator">Op: ${escapeHTML(prac.operator)}</div>
-          </div>
-        `;
-      });
-      
-      html += `
-          <div class="add-practice-btn" onclick="openPracticeModal('${group.id}')">+ Pratica</div>
+        <div class="card-client">${escapeHTML(card.client)}</div>
+        <div class="card-details">
+          ${card.location ? `<span>📍 ${escapeHTML(card.location)}</span>` : ''}
+          ${cDate ? `<span>📅 ${cDate}</span>` : ''}
         </div>
+        <div class="card-operator">A cura di: ${escapeHTML(card.operator)}</div>
       `;
-      gDiv.innerHTML = html;
-      listDiv.appendChild(gDiv);
+      listDiv.appendChild(cardDiv);
     });
   });
   updateSummary();
 }
 
-function renderColorPicker(containerId, selectedColor, callbackName) {
-  const container = document.getElementById(containerId);
+function renderColorPicker() {
+  const container = document.getElementById('card-color-picker');
   container.innerHTML = '';
   PRESET_COLORS.forEach(c => {
     const div = document.createElement('div');
-    div.className = `color-swatch ${c.value === selectedColor ? 'selected' : ''}`;
+    div.className = `color-swatch ${c.value === selectedCardColor ? 'selected' : ''}`;
     div.style.background = c.value;
     div.title = c.name;
     div.onclick = () => {
-      window[callbackName] = c.value;
-      renderColorPicker(containerId, c.value, callbackName);
+      selectedCardColor = c.value;
+      renderColorPicker();
     };
     container.appendChild(div);
   });
 }
 
-function openGroupModal(columnId = null, groupId = null) {
-  document.getElementById("group-modal").style.display = "flex";
-  if (groupId) {
-    const group = appData.groups.find(g => g.id === groupId);
-    document.getElementById("group-modal-title").textContent = "Modifica Cantiere";
-    document.getElementById("group-id").value = group.id;
-    document.getElementById("group-column").value = group.columnId;
-    document.getElementById("group-name").value = group.title;
-    document.getElementById("btn-group-delete").style.display = "block";
-    selectedGroupColor = group.color || "#f8f9fa";
-  } else {
-    document.getElementById("group-modal-title").textContent = "Nuovo Cantiere";
-    document.getElementById("group-id").value = "";
-    document.getElementById("group-column").value = columnId;
-    document.getElementById("group-name").value = "";
-    document.getElementById("btn-group-delete").style.display = "none";
-    selectedGroupColor = "#f8f9fa";
-  }
-  renderColorPicker('group-color-picker', selectedGroupColor, 'selectedGroupColor');
-}
-
-function closeGroupModal() { document.getElementById("group-modal").style.display = "none"; }
-
-function saveGroup() {
-  const title = document.getElementById("group-name").value.trim();
-  if (!title) return alert("Inserisci il nome del cantiere.");
-
-  const id = document.getElementById("group-id").value;
-  if (id) {
-    const group = appData.groups.find(g => g.id === id);
-    group.title = title;
-    group.color = selectedGroupColor;
-  } else {
-    appData.groups.push({
-      id: "grp-" + Date.now(),
-      columnId: document.getElementById("group-column").value,
-      title: title,
-      color: selectedGroupColor,
-      expanded: true,
-      practices: []
-    });
-  }
-  saveAndSync();
-  closeGroupModal();
-}
-
-function deleteGroup() {
-  if (!confirm("Eliminare interamente questo cantiere e TUTTE le pratiche al suo interno?")) return;
-  const id = document.getElementById("group-id").value;
-  appData.groups = appData.groups.filter(g => g.id !== id);
-  saveAndSync();
-  closeGroupModal();
-}
-
-function openPracticeModal(groupId, practiceId = null) {
-  document.getElementById("practice-modal").style.display = "flex";
-  const group = appData.groups.find(g => g.id === groupId);
-  const badge = document.getElementById("prac-color-badge");
+// ── LOGICA MODALE PRATICA SINGOLA E SEMPLIFICATA ──
+function openCardModal(columnId = null, cardId = null) {
+  document.getElementById("card-modal").style.display = "flex";
   
-  if (practiceId) {
-    const prac = group.practices.find(p => p.id === practiceId);
-    document.getElementById("prac-modal-title").textContent = "Modifica Pratica";
-    document.getElementById("prac-id").value = prac.id;
-    document.getElementById("prac-group-id").value = groupId;
-    document.getElementById("prac-code").value = prac.code || "";
-    document.getElementById("prac-client").value = prac.client || "";
-    document.getElementById("prac-location").value = prac.location || "";
-    document.getElementById("prac-date").value = prac.dueDate || "";
-    document.getElementById("prac-phone-urgent").checked = prac.phoneUrgent || false;
-    document.getElementById("prac-notes").value = prac.notes || "";
-    document.getElementById("btn-prac-delete").style.display = "block";
-    selectedPracticeColor = prac.color || "#f8f9fa";
-    badge.style.display = "none";
+  if (cardId) {
+    const card = appData.cards.find(c => c.id === cardId);
+    document.getElementById("card-modal-title").textContent = "Modifica Pratica";
+    document.getElementById("card-id").value = card.id;
+    document.getElementById("card-column").value = card.columnId;
+    document.getElementById("card-code").value = card.code || "";
+    document.getElementById("card-client").value = card.client || "";
+    document.getElementById("card-location").value = card.location || "";
+    document.getElementById("card-date").value = card.dueDate || "";
+    document.getElementById("card-phone-urgent").checked = card.phoneUrgent || false;
+    document.getElementById("btn-card-delete").style.display = "block";
+    selectedCardColor = card.color || "#f8f9fa";
   } else {
-    document.getElementById("prac-modal-title").textContent = "Nuova Pratica";
-    document.getElementById("prac-id").value = "";
-    document.getElementById("prac-group-id").value = groupId;
-    document.getElementById("prac-code").value = "";
-    document.getElementById("prac-client").value = group.title; 
-    document.getElementById("prac-location").value = "";
-    document.getElementById("prac-date").value = "";
-    document.getElementById("prac-phone-urgent").checked = false;
-    document.getElementById("prac-notes").value = "";
-    document.getElementById("btn-prac-delete").style.display = "none";
-    selectedPracticeColor = group.color || "#f8f9fa"; 
-    badge.style.display = "inline";
+    document.getElementById("card-modal-title").textContent = "Nuova Pratica";
+    document.getElementById("card-id").value = "";
+    document.getElementById("card-column").value = columnId;
+    document.getElementById("card-code").value = "";
+    document.getElementById("card-client").value = "";
+    document.getElementById("card-location").value = "";
+    document.getElementById("card-date").value = "";
+    document.getElementById("card-phone-urgent").checked = false;
+    document.getElementById("btn-card-delete").style.display = "none";
+    selectedCardColor = "#f8f9fa"; 
   }
-  renderColorPicker('prac-color-picker', selectedPracticeColor, 'selectedPracticeColor');
+  renderColorPicker();
 }
 
-function closePracticeModal() { document.getElementById("practice-modal").style.display = "none"; }
+function closeCardModal() { document.getElementById("card-modal").style.display = "none"; }
 
-function savePractice() {
-  const client = document.getElementById("prac-client").value.trim();
-  if (!client) return alert("Inserisci il dettaglio della pratica.");
+function saveCard() {
+  const client = document.getElementById("card-client").value.trim();
+  if (!client) return alert("Inserisci il Nome e Cognome / Cliente.");
 
-  const groupId = document.getElementById("prac-group-id").value;
-  const pracId = document.getElementById("prac-id").value;
-  const group = appData.groups.find(g => g.id === groupId);
-  
-  const pracData = {
-    code: document.getElementById("prac-code").value.trim(),
+  const id = document.getElementById("card-id").value;
+  const cardData = {
+    code: document.getElementById("card-code").value.trim(),
     client: client,
-    location: document.getElementById("prac-location").value.trim(),
-    dueDate: document.getElementById("prac-date").value,
-    color: selectedPracticeColor,
-    phoneUrgent: document.getElementById("prac-phone-urgent").checked,
-    notes: document.getElementById("prac-notes").value,
+    location: document.getElementById("card-location").value.trim(),
+    dueDate: document.getElementById("card-date").value,
+    columnId: document.getElementById("card-column").value,
+    color: selectedCardColor,
+    phoneUrgent: document.getElementById("card-phone-urgent").checked,
     operator: currentUser,
     lastEdit: new Date().toISOString()
   };
 
-  if (pracId) {
-    const index = group.practices.findIndex(p => p.id === pracId);
-    pracData.id = pracId;
-    group.practices[index] = pracData;
+  if (id) {
+    const index = appData.cards.findIndex(c => c.id === id);
+    cardData.id = id;
+    appData.cards[index] = cardData;
   } else {
-    pracData.id = "prac-" + Date.now();
-    if(!group.practices) group.practices = [];
-    group.practices.push(pracData);
+    cardData.id = "card-" + Date.now();
+    appData.cards.push(cardData);
   }
 
   saveAndSync();
-  closePracticeModal();
+  closeCardModal();
 }
 
-function deletePractice() {
+function deleteCard() {
   if (!confirm("Eliminare questa pratica?")) return;
-  const groupId = document.getElementById("prac-group-id").value;
-  const pracId = document.getElementById("prac-id").value;
-  const group = appData.groups.find(g => g.id === groupId);
-  group.practices = group.practices.filter(p => p.id !== pracId);
+  const id = document.getElementById("card-id").value;
+  appData.cards = appData.cards.filter(c => c.id !== id);
   saveAndSync();
-  closePracticeModal();
+  closeCardModal();
 }
 
+// ── MANAGER COLONNE ──
 function openColumnsManager() {
   const list = document.getElementById("columns-list");
   list.innerHTML = "";
@@ -628,7 +496,7 @@ function openColumnsManager() {
     div.innerHTML = `
       <input type="text" value="${escapeHTML(col.title)}" onchange="renameColumn('${col.id}', this.value)">
       <input type="color" value="${col.color || '#4a5568'}" onchange="changeColumnColor('${col.id}', this.value)">
-      <button class="btn btn-delete" onclick="if(confirm('Eliminare la colonna e tutto il suo contenuto?')) deleteColumn('${col.id}')">✕</button>
+      <button class="btn btn-delete" onclick="if(confirm('Eliminare la colonna e tutte le sue pratiche?')) deleteColumn('${col.id}')">✕</button>
     `;
     list.appendChild(div);
   });
@@ -653,11 +521,12 @@ function changeColumnColor(colId, color) {
 }
 function deleteColumn(colId) {
   appData.columns = appData.columns.filter(c => c.id !== colId);
-  appData.groups = appData.groups.filter(g => g.columnId !== colId);
+  appData.cards = appData.cards.filter(c => c.columnId !== colId);
   saveAndSync();
   openColumnsManager();
 }
 
+// ── UTILITY BACKUP E IMPORTAZIONE ──
 function exportData() {
   const dataStr = JSON.stringify(appData, null, 2);
   const blob = new Blob([dataStr], { type: "application/json" });
@@ -674,33 +543,8 @@ function importData(event) {
     try {
       const importedData = JSON.parse(e.target.result);
       if (importedData.columns) {
-        if (importedData.cards && !importedData.groups) {
-          importedData.groups = importedData.cards.map(c => {
-            const safeColor = c.color || "#f8f9fa";
-            return {
-              id: "grp-migrated-" + c.id,
-              columnId: c.columnId,
-              title: c.title || "Cantiere senza nome",
-              color: safeColor,
-              expanded: true,
-              practices: [{
-                id: "prac-migrated-" + c.id,
-                code: c.code || "",
-                client: c.title || "Pratica Migrata",
-                location: "",
-                dueDate: c.dueDate || "",
-                color: safeColor,
-                phoneUrgent: c.phoneUrgent || false,
-                notes: c.notes || "",
-                operator: c.operator || "",
-                lastEdit: c.lastEdit
-              }]
-            };
-          });
-          delete importedData.cards;
-          delete importedData.statuses;
-        }
         appData = importedData;
+        flattenDataIfNecessary();
         saveAndSync();
         alert("Database importato con successo!");
       } else { alert("Struttura file JSON non riconosciuta."); }
